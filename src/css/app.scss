@@ -1,1 +1,13 @@
-// app global css
+// SCSS-only overrides. Tailwind v4 lives in tailwind.css (pure CSS) so its
+// @import and @source directives reach @tailwindcss/postcss untouched.
+
+// Force Inter from Metronic over Quasar's default font stack.
+html,
+body,
+#q-app {
+  font-family:
+    'Inter',
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+}

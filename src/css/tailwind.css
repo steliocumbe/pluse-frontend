@@ -1,0 +1,14 @@
+/*
+ * Tailwind v4 entry. Kept as pure CSS (not SCSS) so the Tailwind v4
+ * `@import` and `@source` directives are processed by `@tailwindcss/postcss`
+ * directly, instead of being intercepted by the SASS compiler.
+ *
+ * Tells Tailwind to scan the project for class names, so utilities used
+ * in our Vue components (like `max-w-[400px]`, `!w-auto`, etc.) are
+ * generated. The pre-built `public/keenthemes/dist/assets/css/styles.css`
+ * only ships utilities used by Metronic templates.
+ */
+@import 'tailwindcss';
+
+@source "../**/*.{vue,js,ts,jsx,tsx}";
+@source "../../index.html";

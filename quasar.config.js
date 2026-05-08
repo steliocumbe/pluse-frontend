@@ -12,10 +12,12 @@ export default defineConfig((ctx) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['i18n'],
+    boot: ['i18n', 'axios'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
-    css: ['app.scss'],
+    // Tailwind v4 entry must come BEFORE app.scss so SCSS overrides win
+    // and so SASS doesn't intercept Tailwind's directives (@import 'tailwindcss';, @source).
+    css: ['tailwind.css', 'app.scss'],
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
     extras: [
@@ -27,8 +29,10 @@ export default defineConfig((ctx) => {
       // 'line-awesome',
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
-      'roboto-font', // optional, you are not bound to it
-      'material-icons', // optional, you are not bound to it
+      // Inter is loaded via Google Fonts in src/css/app.scss.
+      // Material Icons kept as a fallback for Quasar components that ship
+      // with default icons (e.g. q-btn-dropdown). Lucide is the primary set.
+      'material-icons',
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
