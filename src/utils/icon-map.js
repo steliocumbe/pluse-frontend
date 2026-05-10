@@ -19,14 +19,18 @@ export const KI_TO_LUCIDE = {
   'check': 'Check',
   'plus': 'Plus',
   'minus': 'Minus',
+  'black-left-line': 'ChevronLeft',
+  'black-right-line': 'ChevronRight',
 
   // Users / people
   'people': 'Users',
+  'users': 'Users',
   'user': 'User',
   'user-tick': 'UserCheck',
   'user-edit': 'UserPen',
   'profile-circle': 'CircleUser',
   'profile-user': 'UserCircle',
+  'security-user': 'ShieldUser',
 
   // Security / auth
   'shield-tick': 'ShieldCheck',
@@ -54,8 +58,12 @@ export const KI_TO_LUCIDE = {
   'cloud-download': 'CloudDownload',
   'magnifier': 'Search',
   'filter': 'Filter',
+  'setting': 'Settings',
   'setting-2': 'Settings',
   'setting-3': 'SlidersHorizontal',
+  'artificial-intelligence': 'Sparkles',
+  'python': 'Code2',
+  'cheque': 'Receipt',
 
   // Domain — security / surveillance / fleet (PLUSE-specific)
   'home-2': 'House',

@@ -12,3 +12,17 @@
 
 @source "../**/*.{vue,js,ts,jsx,tsx}";
 @source "../../index.html";
+
+/*
+ * Match Metronic's class-based dark-mode strategy.
+ *
+ * Metronic compiles `dark:` utilities as `.dark\:X:is(.dark *)` — i.e. only
+ * active when an ancestor has class `.dark`. Tailwind v4's default uses
+ * `@media (prefers-color-scheme: dark)`, which would activate `dark:hidden`
+ * automatically when the user's OS is in dark mode and break light-mode
+ * markup like `<a class="dark:hidden">` (the Metronic light logo wrapper).
+ *
+ * Overriding the variant ensures both Metronic's pre-built CSS and our
+ * Tailwind-generated CSS evaluate `dark:` against the same condition.
+ */
+@custom-variant dark (&:where(.dark, .dark *));

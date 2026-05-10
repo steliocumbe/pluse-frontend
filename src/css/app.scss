@@ -11,3 +11,63 @@ body,
     system-ui,
     sans-serif;
 }
+
+// Quasar ships `.hidden { display: none !important }` which always beats
+// Tailwind's responsive utilities (`.lg:flex`, `.lg:block`, ...) because they
+// don't carry !important. Templates ported from Metronic rely heavily on the
+// `hidden lg:flex` pattern to be hidden on mobile and visible at lg+.
+//
+// We restore the intent for the `lg:` and `dark:` variants by re-asserting
+// `display` with !important on the COMPOUND selector. `.hidden.lg\:flex`
+// has higher specificity (0,2,0) than `.hidden` (0,1,0), so when both carry
+// !important the compound rule wins — which is the desired behaviour at lg+.
+@media (min-width: 64rem) {
+  .hidden.lg\:flex {
+    display: flex !important;
+  }
+  .hidden.lg\:block {
+    display: block !important;
+  }
+  .hidden.lg\:inline {
+    display: inline !important;
+  }
+  .hidden.lg\:inline-flex {
+    display: inline-flex !important;
+  }
+  .hidden.lg\:grid {
+    display: grid !important;
+  }
+}
+
+// Same fix for dark-mode toggles (e.g. <a class="hidden dark:block"> for the
+// dark-only logo). Without this, the dark logo would stay hidden even after
+// switching theme because Quasar's `.hidden !important` would still apply.
+.dark .hidden.dark\:block {
+  display: block !important;
+}
+.dark .hidden.dark\:flex {
+  display: flex !important;
+}
+.dark .hidden.dark\:inline {
+  display: inline !important;
+}
+.dark .hidden.dark\:inline-flex {
+  display: inline-flex !important;
+}
+
+// Sidebar collapse toggle. The button is positioned at the right edge of the
+// kt-sidebar-header via `absolute start-full -translate-x-2/4` so half of it
+// sticks out into the kt-wrapper area. Without these guards the chain of
+// fixed/absolute parents and the kt-header (z-10) covering the right half
+// can hide it visually after the sidebar collapses or expands.
+#sidebar_toggle {
+  z-index: 50 !important;
+  pointer-events: auto;
+}
+
+// Don't let kt-sidebar / kt-sidebar-header clip the toggle that overflows
+// their right edge.
+.kt-sidebar,
+.kt-sidebar-header {
+  overflow: visible !important;
+}
