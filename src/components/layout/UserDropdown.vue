@@ -126,26 +126,76 @@
         </div>
         <button
           type="button"
-          class="kt-btn kt-btn-outline justify-center w-full"
+          class="logout-btn justify-center w-full inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors"
           :disabled="auth.loading"
-          @click="onLogout(close)"
+          @click="askLogout(close)"
         >
-          <AppIcon name="ki-arrow-left" :size="14" icon-class="me-1.5" />
-          Sair
+          <AppIcon name="ki-arrow-left" :size="14" />
+          Terminar sessão
         </button>
       </div>
     </template>
   </AppDropdown>
+
+  <!-- Logout confirmation modal -->
+  <AppModal v-model="showLogoutConfirm" size="md">
+    <div class="p-6 flex flex-col items-center text-center">
+      <span class="size-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+        <AppIcon name="ki-warning-2" :size="24" icon-class="text-destructive" />
+      </span>
+      <!-- div with role+aria-level instead of <h3>: Quasar's typography
+           bundle resets <hN> sizes/weights with high cascade priority that
+           Tailwind utilities don't override reliably. Screen readers treat
+           this as a level-3 heading. -->
+      <div
+        role="heading"
+        aria-level="3"
+        class="text-base font-semibold text-mono leading-tight mb-1.5"
+      >
+        Terminar sessão?
+      </div>
+      <p class="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
+        Vais ter de iniciar sessão outra vez para voltar a usar o PLUSE.
+        Quaisquer alterações não guardadas serão perdidas.
+      </p>
+    </div>
+    <div class="px-6 pb-6 flex gap-2.5">
+      <button
+        type="button"
+        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+        :disabled="loggingOut"
+        @click="showLogoutConfirm = false"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md bg-destructive text-destructive-foreground px-3 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
+        :disabled="loggingOut"
+        @click="confirmLogout"
+      >
+        <AppIcon
+          v-if="loggingOut"
+          name="loader-circle"
+          :size="14"
+          icon-class="animate-spin"
+        />
+        <AppIcon v-else name="ki-arrow-left" :size="14" />
+        {{ loggingOut ? 'A sair…' : 'Sim, terminar sessão' }}
+      </button>
+    </div>
+  </AppModal>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useTheme } from 'src/composables/useTheme'
 import AppDropdown from 'src/components/ui/AppDropdown.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppSwitch from 'src/components/ui/AppSwitch.vue'
+import AppModal from 'src/components/ui/AppModal.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -174,10 +224,28 @@ const primaryRole = computed(() => {
   return groups[0]
 })
 
-async function onLogout(close) {
-  close()
-  await auth.logout()
-  await router.replace({ name: 'login' })
+// Logout flow: dropdown click only OPENS the confirmation modal. The actual
+// logout happens after the user confirms — a small friction step that
+// prevents accidental sign-outs (especially on touch devices) and gives a
+// chance to save in-progress work.
+const showLogoutConfirm = ref(false)
+const loggingOut = ref(false)
+
+function askLogout(closeDropdown) {
+  closeDropdown?.()
+  showLogoutConfirm.value = true
+}
+
+async function confirmLogout() {
+  if (loggingOut.value) return
+  loggingOut.value = true
+  try {
+    await auth.logout()
+  } finally {
+    loggingOut.value = false
+    showLogoutConfirm.value = false
+    await router.replace({ name: 'login' })
+  }
 }
 </script>
 
@@ -203,6 +271,25 @@ async function onLogout(close) {
   background-color: var(--accent);
 }
 
-/* (Theme toggle styling moved to AppSwitch.vue — button-based, no
-   browser checkbox quirks.) */
+/* (Theme toggle styling moved to AppSwitch.vue.) */
+
+/*
+ * Logout button — destructive emphasis. Default state is a calm tinted
+ * variant (so the dropdown doesn't feel alarmist) that flips to full
+ * destructive on hover, signalling "you're about to leave the system."
+ */
+.logout-btn {
+  border-color: color-mix(in oklab, var(--destructive) 30%, transparent);
+  background-color: color-mix(in oklab, var(--destructive) 8%, transparent);
+  color: var(--destructive);
+}
+.logout-btn:hover:not(:disabled) {
+  background-color: var(--destructive);
+  color: var(--destructive-foreground);
+  border-color: var(--destructive);
+}
+.logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 </style>
