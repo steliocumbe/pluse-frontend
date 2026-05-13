@@ -164,7 +164,7 @@ function onLeafClick(navigate) {
 }
 
 .sidebar-menu-link :deep(.kt-menu-title) {
-  font-size: 0.94rem;
+  font-size: 1.0rem;
 }
 
 .kt-menu-heading {
