@@ -12,18 +12,17 @@
 // to match your app's branding.
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
-// Aligned with Metronic theme tokens (Tailwind v4 colour palette).
-// Keep these in sync with src/css/tailwind.css if the palette changes.
-$primary: #3b82f6; // tailwind blue-500
-$secondary: #f4f4f5; // zinc-100
-$accent: #2563eb; // blue-600
+// Aligned with the PLUSE runtime palette in src/css/app.scss.
+$primary: #2563eb; // PLUSE blue-600
+$secondary: #eef4ff; // PLUSE light action surface
+$accent: #06b6d4; // PLUSE cyan-500
 
-$dark: #09090b; // zinc-950
-$dark-page: #18181b; // zinc-900
+$dark: #07111f; // PLUSE navy-950
+$dark-page: #0b1728; // PLUSE navy-900
 
-$positive: #16a34a; // green-600
+$positive: #10b981; // emerald-500
 $negative: #dc2626; // red-600
-$info: #0ea5e9; // sky-500
+$info: #06b6d4; // cyan-500
 $warning: #f59e0b; // amber-500
 
 // Font: Inter (mesma do template Metronic).

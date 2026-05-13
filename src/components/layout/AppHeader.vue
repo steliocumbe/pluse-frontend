@@ -14,7 +14,7 @@
 -->
 <template>
   <header
-    class="kt-header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border"
+    class="kt-header pluse-header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 border-b border-border"
     id="header"
   >
     <!--
@@ -24,14 +24,10 @@
     -->
     <div class="kt-container-fluid flex justify-between items-stretch lg:gap-4">
       <!--
-        Mobile logo + sidebar toggle. Hidden at >=768px (`md:hidden`) instead
-        of >=1024px so users on smaller laptops or with browser zoom still
-        get the desktop layout without the redundant hamburger. Quasar's
-        `.hidden { display: none !important }` doesn't apply here because we
-        use `md:hidden` (different class), but we add !important on our own
-        rule below for safety.
+        Mobile/tablet logo + sidebar toggle. It stays visible until `lg`,
+        matching the desktop sidebar breakpoint.
       -->
-      <div class="header-mobile-cluster flex gap-2.5 md:hidden items-center -ms-1">
+      <div class="header-mobile-cluster flex gap-2.5 lg:hidden items-center -ms-1">
         <router-link to="/" class="shrink-0 flex items-center gap-2">
           <span class="text-lg font-bold text-mono leading-none">PLUSE</span>
         </router-link>
@@ -54,7 +50,7 @@
       <div class="flex items-center gap-2 ms-auto">
         <button
           type="button"
-          class="group kt-btn kt-btn-ghost kt-btn-icon size-9 rounded-full hover:bg-primary/10"
+          class="group kt-btn kt-btn-ghost kt-btn-icon size-9 rounded-full header-icon-button"
           aria-label="Pesquisar"
           title="Pesquisar (em breve)"
           @click="onSearch"
@@ -64,7 +60,7 @@
 
         <button
           type="button"
-          class="group kt-btn kt-btn-ghost kt-btn-icon size-9 rounded-full hover:bg-primary/10 relative"
+          class="group kt-btn kt-btn-ghost kt-btn-icon size-9 rounded-full header-icon-button relative"
           aria-label="Notificações"
           title="Notificações (em breve)"
           @click="onNotifications"
@@ -107,9 +103,29 @@ function onNotifications() {
  * is gone from any viewport that's at least tablet-wide, even if some
  * other rule with !important tries to force it back to display: flex.
  */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .header-mobile-cluster {
     display: none !important;
   }
+}
+
+.pluse-header {
+  background: var(--pluse-header-bg);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--border) 64%, transparent);
+}
+
+.header-icon-button {
+  color: var(--muted-foreground);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.header-icon-button:hover {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  color: var(--primary);
+  transform: translateY(-1px);
 }
 </style>

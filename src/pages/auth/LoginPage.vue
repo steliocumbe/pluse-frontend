@@ -1,102 +1,158 @@
 <template>
-  <div class="kt-card max-w-[400px] w-full">
-    <form class="kt-card-content flex flex-col gap-6 p-10" novalidate @submit.prevent="onSubmit">
-      <div class="text-center mb-2.5">
-        <span class="text-3xl font-medium text-mono leading-none mb-2.5 whitespace-nowrap">
-          Bem vindo!
-        </span>
+  <section class="login-shell w-full max-w-[1080px]" aria-labelledby="login-title">
+    <div class="kt-card login-card overflow-hidden">
+      <div class="grid min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
+        <aside class="login-intro hidden lg:flex flex-col justify-between gap-8 p-12">
+          <div class="login-intro-content">
+            <div class="brand-mark mb-8">
+              <span>PL</span>
+            </div>
 
-        <div class="flex items-center justify-center font-medium">
-          <span class="text-lg text-secondary-foreground"> Ao PLUSE </span>
-        </div>
+            <p class="login-kicker">
+              Plataforma PLUSE
+            </p>
+            <div class="login-intro-title">
+              Aceda ao seu centro de operações.
+            </div>
+            <p class="login-intro-copy">
+              Monitorize equipas, pedidos e dados críticos num ambiente seguro, rápido e preparado
+              para o trabalho diário.
+            </p>
+          </div>
+
+          <div class="login-feature-list">
+            <div class="flex items-center gap-3">
+              <span class="feature-icon">
+                <AppIcon name="ki-shield-tick" :size="18" />
+              </span>
+              <span>Sessão protegida e controlada</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="feature-icon">
+                <AppIcon name="ki-chart-simple" :size="18" />
+              </span>
+              <span>Informação pronta para decisão</span>
+            </div>
+          </div>
+        </aside>
+
+        <form
+          class="login-form flex flex-col justify-center gap-6 p-6 sm:p-10 lg:px-16 xl:px-20"
+          novalidate
+          @submit.prevent="onSubmit"
+        >
+          <div class="login-form-inner">
+            <div class="lg:hidden">
+              <div class="brand-mark mb-5">
+                <span>PL</span>
+              </div>
+              <p class="login-kicker mb-2">PLUSE</p>
+            </div>
+
+            <div class="login-form-heading">
+              <p id="login-title" class="login-form-title">
+                Iniciar sessão
+              </p>
+              <p class="login-form-copy">
+                Entre com as suas credenciais para continuar a gerir a operação.
+              </p>
+            </div>
+
+            <div
+              v-if="errorMessage"
+              class="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-start gap-2"
+              role="alert"
+              aria-live="polite"
+            >
+              <AppIcon name="ki-warning-2" :size="16" class="mt-0.5 shrink-0" />
+              <span>{{ errorMessage }}</span>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="kt-form-label !w-auto font-normal text-mono" for="identifier">
+                Utilizador ou telefone
+              </label>
+              <input
+                id="identifier"
+                v-model="form.identifier"
+                class="kt-input"
+                type="text"
+                placeholder="exemplo@empresa.co.mz"
+                autocomplete="username"
+                inputmode="email"
+                :disabled="auth.loading"
+                autofocus
+                required
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <label class="kt-form-label !w-auto font-normal text-mono shrink-0" for="password">
+                  Palavra-passe
+                </label>
+                <span class="text-xs text-secondary-foreground">Recuperação disponível em breve</span>
+              </div>
+              <div class="kt-input">
+                <input
+                  id="password"
+                  v-model="form.password"
+                  name="user_password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="Insira a palavra-passe"
+                  autocomplete="current-password"
+                  :disabled="auth.loading"
+                  required
+                />
+                <button
+                  type="button"
+                  class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon bg-transparent! -me-1.5"
+                  :disabled="auth.loading"
+                  :aria-label="showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'"
+                  @click="showPassword = !showPassword"
+                >
+                  <AppIcon
+                    :name="showPassword ? 'ki-eye-slash' : 'ki-eye'"
+                    :size="18"
+                    icon-class="text-muted-foreground"
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-4">
+              <label class="kt-label">
+                <input
+                  v-model="form.rememberMe"
+                  class="kt-checkbox kt-checkbox-sm"
+                  type="checkbox"
+                  :disabled="auth.loading"
+                />
+                <span class="kt-checkbox-label">Manter sessão iniciada</span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              class="kt-btn kt-btn-primary flex justify-center w-full"
+              :disabled="auth.loading || !canSubmit"
+            >
+              <span v-if="auth.loading" class="flex items-center gap-2">
+                <AppIcon name="loader-circle" :size="16" icon-class="animate-spin" />
+                A entrar...
+              </span>
+              <span v-else>Entrar no PLUSE</span>
+            </button>
+          </div>
+        </form>
       </div>
-
-      <div
-        v-if="errorMessage"
-        class="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-start gap-2"
-      >
-        <AppIcon name="ki-warning-2" :size="16" class="mt-0.5 shrink-0" />
-        <span>{{ errorMessage }}</span>
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <label class="kt-form-label !w-auto font-normal text-mono" for="identifier">
-          Utilizador ou telefone
-        </label>
-        <input
-          id="identifier"
-          v-model="form.identifier"
-          class="kt-input"
-          type="text"
-          placeholder="exemplo@empresa.co.mz"
-          autocomplete="username"
-          :disabled="auth.loading"
-          required
-        />
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <div class="flex items-center justify-between gap-2">
-          <label class="kt-form-label !w-auto font-normal text-mono shrink-0" for="password">
-            Senha
-          </label>
-          <a
-            class="text-sm kt-link shrink-0 opacity-50 cursor-not-allowed"
-            title="Ainda não disponível"
-          >
-            Esqueci a senha?
-          </a>
-        </div>
-        <div class="kt-input">
-          <input
-            id="password"
-            v-model="form.password"
-            name="user_password"
-            :type="showPassword ? 'text' : 'password'"
-            placeholder="Insira a senha"
-            autocomplete="current-password"
-            :disabled="auth.loading"
-            required
-          />
-          <button
-            type="button"
-            class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon bg-transparent! -me-1.5"
-            tabindex="-1"
-            :aria-label="showPassword ? 'Esconder password' : 'Mostrar password'"
-            @click="showPassword = !showPassword"
-          >
-            <AppIcon
-              :name="showPassword ? 'ki-eye-slash' : 'ki-eye'"
-              :size="18"
-              icon-class="text-muted-foreground"
-            />
-          </button>
-        </div>
-      </div>
-
-      <label class="kt-label">
-        <input v-model="form.rememberMe" class="kt-checkbox kt-checkbox-sm" type="checkbox" />
-        <span class="kt-checkbox-label">Manter sessão iniciada</span>
-      </label>
-
-      <button
-        type="submit"
-        class="kt-btn kt-btn-primary flex justify-center grow"
-        :disabled="auth.loading"
-      >
-        <span v-if="auth.loading" class="flex items-center gap-2">
-          <AppIcon name="loader-circle" :size="16" icon-class="animate-spin" />
-          A entrar…
-        </span>
-        <span v-else>Entrar</span>
-      </button>
-    </form>
-  </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
@@ -108,15 +164,228 @@ const form = reactive({ identifier: '', password: '', rememberMe: false })
 const showPassword = ref(false)
 
 const errorMessage = computed(() => auth.error)
+const canSubmit = computed(() => Boolean(form.identifier.trim() && form.password))
 
 async function onSubmit() {
-  if (!form.identifier.trim() || !form.password) return
+  if (!canSubmit.value) return
   try {
     await auth.login(form.identifier.trim(), form.password)
     const redirectTo = route.query.redirect || '/'
     await router.replace(redirectTo)
   } catch {
-    // store já carrega a mensagem de erro em auth.error
+    // A store já carrega a mensagem de erro em auth.error.
   }
 }
 </script>
+
+<style scoped>
+.login-card {
+  animation: login-card-in 520ms ease-out both;
+  box-shadow:
+    0 24px 70px color-mix(in oklab, var(--foreground) 8%, transparent),
+    0 1px 0 color-mix(in oklab, var(--border) 80%, transparent);
+}
+
+.login-intro {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--muted) 54%, transparent), var(--background)),
+    linear-gradient(135deg, color-mix(in oklab, var(--primary) 16%, transparent), transparent 60%);
+  border-inline-end: 1px solid var(--border);
+}
+
+.login-intro::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  content: '';
+  background: linear-gradient(180deg, var(--primary), color-mix(in oklab, var(--primary) 28%, var(--background)));
+}
+
+.login-intro::after {
+  position: absolute;
+  right: 42px;
+  bottom: 42px;
+  width: 138px;
+  height: 138px;
+  content: '';
+  border: 1px solid color-mix(in oklab, var(--primary) 18%, transparent);
+  border-radius: 24px;
+  transform: rotate(12deg);
+}
+
+.login-intro-content,
+.login-feature-list,
+.login-form-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.login-kicker {
+  margin: 0 0 12px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.login-intro-title {
+  max-width: 380px;
+  margin-bottom: 18px;
+  color: var(--mono);
+  font-size: 3rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.login-intro-copy {
+  max-width: 365px;
+  margin: 0;
+  color: var(--secondary-foreground);
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.login-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--secondary-foreground);
+  font-size: 0.9rem;
+}
+
+.login-form {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--primary) 4%, transparent), transparent 34%),
+    var(--background);
+}
+
+.login-form-inner {
+  display: flex;
+  width: min(100%, 430px);
+  flex-direction: column;
+  gap: 24px;
+  margin-inline: auto;
+  animation: login-form-in 620ms 120ms ease-out both;
+}
+
+.login-form-heading {
+  padding-bottom: 4px;
+}
+
+.login-form-title {
+  margin: 0 0 10px;
+  color: var(--mono);
+  font-size: 2.35rem;
+  font-weight: 620;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.login-form-copy {
+  max-width: 340px;
+  margin: 0;
+  color: var(--secondary-foreground);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.brand-mark {
+  position: relative;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 700;
+  letter-spacing: 0;
+  box-shadow: 0 12px 28px color-mix(in oklab, var(--primary) 28%, transparent);
+  animation: brand-float 5.5s ease-in-out infinite;
+}
+
+.feature-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  flex: none;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.login-form :deep(.kt-input:focus-within),
+.login-form :deep(input.kt-input:focus) {
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 10%, transparent);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+@keyframes login-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes login-form-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes brand-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 1180px) {
+  .login-shell {
+    max-width: 980px;
+  }
+
+  .login-intro-title {
+    font-size: 2.65rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-card {
+    box-shadow: 0 16px 48px color-mix(in oklab, var(--foreground) 8%, transparent);
+  }
+
+  .login-form-title {
+    font-size: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card,
+  .login-form-inner,
+  .brand-mark {
+    animation: none;
+  }
+}
+</style>

@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh lpR fFf">
     <q-page-container>
-      <main class="flex items-center justify-center grow bg-center bg-no-repeat page-bg min-h-screen">
+      <main class="auth-page flex items-center justify-center grow min-h-screen px-4 py-8 sm:px-6">
         <router-view />
       </main>
     </q-page-container>
@@ -15,10 +15,9 @@
 </script>
 
 <style scoped>
-.page-bg {
-  background-image: url('/keenthemes/dist/assets/media/images/2600x1200/bg-10.png');
-}
-:global(.dark) .page-bg {
-  background-image: url('/keenthemes/dist/assets/media/images/2600x1200/bg-10-dark.png');
+.auth-page {
+  background:
+    linear-gradient(180deg, var(--background) 0%, color-mix(in oklab, var(--muted) 58%, transparent) 100%),
+    radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--primary) 8%, transparent), transparent 36rem);
 }
 </style>
