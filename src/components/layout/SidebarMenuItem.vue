@@ -13,20 +13,28 @@
   <div v-else-if="hasChildren" class="kt-menu-item" :class="{ active: hasActiveDescendant, 'kt-menu-item-show': expanded }">
     <button
       type="button"
-      class="kt-menu-link sidebar-menu-link flex items-center grow cursor-pointer border border-transparent gap-2.5 ps-2.5 pe-2.5 py-1.5 rounded-md w-full text-left"
+      class="kt-menu-link sidebar-menu-link flex flex-nowrap items-center grow cursor-pointer border border-transparent gap-2.5 ps-2.5 pe-2.5 py-1.5 rounded-md w-full text-left"
       :aria-expanded="expanded"
       @click="expanded = !expanded"
     >
       <span v-if="item.icon" class="kt-menu-icon items-start text-white/52 w-5 shrink-0">
         <AppIcon :name="item.icon" :size="18" />
       </span>
+      <!--
+        `min-w-0 truncate` is what keeps the arrow on the side: flex items
+        default to `min-width: auto` (≈ content size), so a long label would
+        push the arrow off the row. min-w-0 lets the title shrink; truncate
+        keeps it on a single line with an ellipsis.
+        The `title` attribute exposes the full text on hover.
+      -->
       <span
-        class="kt-menu-title text-sm font-medium grow"
+        class="kt-menu-title text-sm font-medium grow min-w-0 truncate"
         :class="hasActiveDescendant ? 'text-white font-semibold' : 'text-white/74'"
+        :title="item.label"
       >
         {{ item.label }}
       </span>
-      <span v-if="item.badge" class="me-1">
+      <span v-if="item.badge" class="shrink-0">
         <SidebarBadge :value="item.badge" />
       </span>
       <span class="kt-menu-arrow text-white/42 w-5 shrink-0 flex justify-end">
@@ -60,7 +68,7 @@
     <div class="kt-menu-item" :class="{ active: isActive || isExactActive }">
       <a
         :href="href"
-        class="kt-menu-link sidebar-menu-link border border-transparent items-center grow flex gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+        class="kt-menu-link sidebar-menu-link border border-transparent items-center grow flex flex-nowrap gap-[14px] ps-[10px] pe-[10px] py-[8px]"
         :class="(isActive || isExactActive) ? 'sidebar-menu-link-active rounded-lg' : ''"
         @click="onLeafClick(navigate)"
       >
@@ -79,12 +87,13 @@
           </span>
         </template>
         <span
-          class="kt-menu-title text-sm font-normal grow"
+          class="kt-menu-title text-sm font-normal grow min-w-0 truncate"
           :class="(isActive || isExactActive) ? 'text-white font-semibold' : 'text-white/74'"
+          :title="item.label"
         >
           {{ item.label }}
         </span>
-        <SidebarBadge v-if="item.badge" :value="item.badge" />
+        <SidebarBadge v-if="item.badge" :value="item.badge" class="shrink-0" />
       </a>
     </div>
   </router-link>

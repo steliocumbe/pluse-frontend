@@ -143,17 +143,9 @@
       <span class="size-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
         <AppIcon name="ki-warning-2" :size="24" icon-class="text-destructive" />
       </span>
-      <!-- div with role+aria-level instead of <h3>: Quasar's typography
-           bundle resets <hN> sizes/weights with high cascade priority that
-           Tailwind utilities don't override reliably. Screen readers treat
-           this as a level-3 heading. -->
-      <div
-        role="heading"
-        aria-level="3"
-        class="text-base font-semibold text-mono leading-tight mb-1.5"
-      >
+      <AppHeading :level="3" class="text-base font-semibold text-mono leading-tight mb-1.5">
         Terminar sessão?
-      </div>
+      </AppHeading>
       <p class="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
         Vais ter de iniciar sessão outra vez para voltar a usar o PLUSE.
         Quaisquer alterações não guardadas serão perdidas.
@@ -196,6 +188,7 @@ import AppDropdown from 'src/components/ui/AppDropdown.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppSwitch from 'src/components/ui/AppSwitch.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
+import AppHeading from 'src/components/ui/AppHeading.vue'
 
 const auth = useAuthStore()
 const router = useRouter()

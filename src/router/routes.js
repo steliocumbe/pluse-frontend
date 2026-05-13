@@ -15,10 +15,36 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: '', name: 'dashboard', component: () => import('pages/IndexPage.vue') },
-      // Catch-all under MainLayout → renders the placeholder page so menu items
-      // pointing to not-yet-implemented sections still navigate cleanly.
-      // Concrete routes added later (e.g. /colaboradores/vigilantes) take
-      // precedence because they're defined before this entry.
+
+      // ─────────────── Employees ───────────────
+      // Order matters: more-specific routes must come before /:id.
+      {
+        path: 'employees',
+        name: 'employees-list',
+        component: () => import('pages/employees/EmployeesListPage.vue'),
+      },
+      {
+        path: 'employees/new',
+        name: 'employees-new',
+        component: () => import('pages/employees/EmployeeNewPage.vue'),
+      },
+      {
+        path: 'employees/approvals',
+        name: 'employees-approvals',
+        component: () => import('pages/employees/EmployeeApprovalsPage.vue'),
+      },
+      {
+        path: 'employees/:id/edit',
+        name: 'employees-edit',
+        component: () => import('pages/employees/EmployeeEditPage.vue'),
+      },
+      {
+        path: 'employees/:id',
+        name: 'employees-detail',
+        component: () => import('pages/employees/EmployeeDetailPage.vue'),
+      },
+
+      // Catch-all under MainLayout → placeholder for not-yet-implemented sections.
       {
         path: ':section(.*)*',
         name: 'placeholder',
@@ -27,8 +53,6 @@ const routes = [
     ],
   },
 
-  // Last-resort catch-all (only matches when not authenticated, since
-  // anything authenticated falls into MainLayout's catch-all above).
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),

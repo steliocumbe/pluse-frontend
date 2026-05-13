@@ -153,3 +153,47 @@ body,
     radial-gradient(circle at top left, color-mix(in oklab, var(--primary) 9%, transparent), transparent 30rem),
     linear-gradient(180deg, var(--pluse-admin-bg), color-mix(in oklab, var(--pluse-admin-bg) 88%, var(--background)));
 }
+
+/*
+ * Helpers for buttons that live INSIDE the dark hero of AdminPageTemplate.
+ * Default Quasar/q-btn variants don't read well against the navy gradient,
+ * so we expose two reusable classes used across admin pages.
+ */
+.admin-hero-button {
+  border-color: rgba(255, 255, 255, 0.26) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: white !important;
+}
+.admin-hero-button:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+.admin-hero-primary {
+  border-color: white !important;
+  background: white !important;
+  color: var(--pluse-navy-950) !important;
+}
+.admin-hero-primary:hover {
+  background: color-mix(in oklab, white 90%, var(--pluse-cyan-500)) !important;
+}
+
+/*
+ * Chips/meta items rendered in the AdminPageTemplate hero `#meta` slot.
+ * Glassy pill that stays legible on the dark gradient.
+ */
+.admin-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.admin-meta-chip--accent {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+}
