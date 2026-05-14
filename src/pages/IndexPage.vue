@@ -1,8 +1,8 @@
 <template>
   <AdminPageTemplate
-    eyebrow="Visao geral"
+    eyebrow="Visão geral"
     title="Dashboard administrativo"
-    :description="`Resumo das operacoes, equipas e sinais criticos do PLUSE em ${today}.`"
+    :description="`Resumo das operações, equipas e sinais críticos do PLUSE em ${today}.`"
   >
     <template #actions>
       <button type="button" class="kt-btn kt-btn-outline pluse-dashboard-hero-action">
@@ -22,7 +22,7 @@
       </span>
       <span class="pluse-dashboard-meta">
         <AppIcon name="ki-shield-tick" :size="14" />
-        Sessao segura
+        Sessão segura
       </span>
     </template>
 
@@ -52,7 +52,7 @@
         <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
           <div class="pluse-dashboard-panel-head">
             <div>
-              <span>Operacao diaria</span>
+              <span>Operação diária</span>
               <strong>Check-ins vs. cobertura prevista</strong>
             </div>
             <span class="pluse-dashboard-chip success">95.7% validado</span>
@@ -63,8 +63,8 @@
         <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
           <div class="pluse-dashboard-panel-head">
             <div>
-              <span>Sinais criticos</span>
-              <strong>Ocorrencias por categoria</strong>
+              <span>Sinais críticos</span>
+              <strong>Ocorrências por categoria</strong>
             </div>
             <span class="pluse-dashboard-chip danger">27 registos</span>
           </div>
@@ -97,7 +97,7 @@
         <article class="pluse-dashboard-panel">
           <div class="pluse-dashboard-panel-head compact">
             <div>
-              <span>Cobertura geografica</span>
+              <span>Cobertura geográfica</span>
               <strong>Estado por zona operacional</strong>
             </div>
             <span class="pluse-dashboard-chip neutral">5 zonas</span>
@@ -109,7 +109,7 @@
           <div class="pluse-dashboard-panel-head compact">
             <div>
               <span>Prioridades</span>
-              <strong>Accoes recomendadas</strong>
+              <strong>Ações recomendadas</strong>
             </div>
             <button type="button" class="kt-btn kt-btn-outline kt-btn-sm">Ver tudo</button>
           </div>
@@ -129,7 +129,7 @@
           <div class="pluse-dashboard-panel-head compact">
             <div>
               <span>Financeiro</span>
-              <strong>Base de faturacao do periodo</strong>
+              <strong>Base de faturação do período</strong>
             </div>
             <span class="pluse-dashboard-chip success">87% pronto</span>
           </div>
@@ -138,7 +138,7 @@
             <div v-for="client in billingBase" :key="client.name" class="pluse-dashboard-billing-row">
               <div>
                 <strong>{{ client.name }}</strong>
-                <p>{{ client.posts }} postos, {{ client.presences }} presencas validadas</p>
+                <p>{{ client.posts }} postos, {{ client.presences }} presenças validadas</p>
               </div>
               <span>{{ client.amount }}</span>
             </div>
@@ -198,8 +198,8 @@ const today = computed(() =>
 
 const heroStats = [
   { label: 'Cobertura prevista', value: '98%' },
-  { label: 'Escalas em revisao', value: '12' },
-  { label: 'Alertas criticos', value: '3' },
+  { label: 'Escalas em revisão', value: '12' },
+  { label: 'Alertas críticos', value: '3' },
 ]
 
 const kpiCards = [
@@ -214,7 +214,7 @@ const kpiCards = [
   {
     label: 'Check-ins confirmados',
     value: '312',
-    caption: 'entrada validada por localizacao',
+    caption: 'entrada validada por localização',
     trend: '95.7%',
     icon: 'ki-qr-code',
     tone: 'is-green',
@@ -228,9 +228,9 @@ const kpiCards = [
     tone: 'is-amber',
   },
   {
-    label: 'Alertas criticos',
+    label: 'Alertas críticos',
     value: '3',
-    caption: 'requerem accao do CCO',
+    caption: 'requerem ação do Centro de Controlo Operacional',
     trend: 'Prioridade',
     icon: 'ki-warning-2',
     tone: 'is-red',
@@ -277,7 +277,7 @@ const incidentOptions = {
       distributed: true,
     },
   },
-  xaxis: { categories: ['Atrasos', 'Ausencias', 'Rondas incompletas', 'Equipamento'] },
+  xaxis: { categories: ['Atrasos', 'Ausências', 'Rondas incompletas', 'Equipamento'] },
   legend: { show: false },
 }
 
@@ -302,20 +302,20 @@ const zoneOptions = {
 
 const insights = [
   {
-    title: 'CCO acompanha a operacao em tempo real',
-    copy: 'Postos descobertos, atrasos, ausencias e check-ins fora do raio ficam visiveis no mesmo painel.',
+    title: 'Centro de Controlo Operacional acompanha a operação em tempo real',
+    copy: 'Postos descobertos, atrasos, ausências e check-ins fora do raio ficam visíveis no mesmo painel.',
     icon: 'ki-monitor-mobile',
     tone: 'is-blue',
   },
   {
-    title: 'Escalas alimentam presencas e faturacao',
-    copy: 'O fluxo importante para a apresentacao e ligar contrato, posto, escala, presenca validada e valor a faturar.',
+    title: 'Escalas alimentam presenças e faturação',
+    copy: 'O fluxo importante para a apresentação e ligar contrato, posto, escala, presença validada e valor a faturar.',
     icon: 'ki-route',
     tone: 'is-green',
   },
   {
-    title: 'Prioridades ficam accionaveis',
-    copy: 'A dashboard destaca apenas o que precisa de decisao, sem transformar a pagina num relatorio longo.',
+    title: 'Prioridades ficam acionáveis',
+    copy: 'A dashboard destaca apenas o que precisa de decisão, sem transformar a página num relatório longo.',
     icon: 'ki-notification-status',
     tone: 'is-amber',
   },
@@ -324,7 +324,7 @@ const insights = [
 const tasks = [
   {
     title: 'Resolver postos descobertos',
-    copy: '3 postos sem vigilante confirmado para o proximo turno.',
+    copy: '3 postos sem vigilante confirmado para o próximo turno.',
     badge: '3',
     tone: 'is-red',
   },
@@ -335,7 +335,7 @@ const tasks = [
     tone: 'is-amber',
   },
   {
-    title: 'Sincronizar presencas offline',
+    title: 'Sincronizar presenças offline',
     copy: '14 check-ins aguardam internet para entrar na base operacional.',
     badge: '14',
     tone: 'is-blue',
@@ -343,27 +343,27 @@ const tasks = [
 ]
 
 const billingBase = [
-  { name: 'MozMall Retail', posts: 18, presences: 426, amount: '1.28M MT' },
-  { name: 'Porto Logistica', posts: 12, presences: 311, amount: '940K MT' },
-  { name: 'Banco Central', posts: 9, presences: 268, amount: '810K MT' },
+  { name: 'MozMall Retail', posts: 18, presences: 426, amount: '1.280.000 MT' },
+  { name: 'Porto Logística', posts: 12, presences: 311, amount: '940.000 MT' },
+  { name: 'Banco Central', posts: 9, presences: 268, amount: '810.000 MT' },
 ]
 
 const timeline = [
   {
     title: 'Check-in fora do raio permitido',
-    copy: 'Posto Matola Centro, validacao enviada ao supervisor.',
+    copy: 'Posto Matola Centro, validação enviada ao supervisor.',
     time: '09:42',
     tone: 'is-amber',
   },
   {
-    title: 'Ronda concluida sem ocorrencias',
-    copy: 'Supervisor fechou a ronda do turno da manha.',
+    title: 'Ronda concluída sem ocorrências',
+    copy: 'Supervisor fechou a ronda do turno da manhã.',
     time: '09:18',
     tone: 'is-green',
   },
   {
-    title: 'Ocorrencia critica escalada',
-    copy: 'CCO notificou equipa de resposta e cliente.',
+    title: 'Ocorrência crítica escalada',
+    copy: 'Centro de Controlo Operacional notificou equipa de resposta e cliente.',
     time: '08:57',
     tone: 'is-red',
   },

@@ -15,7 +15,7 @@
       type="button"
       class="kt-menu-link sidebar-menu-link flex flex-nowrap items-center grow cursor-pointer border border-transparent gap-2.5 ps-2.5 pe-2.5 py-1.5 rounded-md w-full text-left"
       :aria-expanded="expanded"
-      @click="expanded = !expanded"
+      @click="toggleGroup"
     >
       <span v-if="item.icon" class="kt-menu-icon items-start text-white/52 w-5 shrink-0">
         <AppIcon :name="item.icon" :size="18" />
@@ -56,11 +56,43 @@
       >
         <div class="overflow-hidden">
           <div class="flex flex-col gap-0.5 pt-1">
-            <SidebarMenuItem v-for="(child, idx) in item.children" :key="child.to ?? child.label ?? idx" :item="child" :nested="true" />
+        <SidebarMenuItem
+          v-for="(child, idx) in item.children"
+          :key="child.to ?? child.label ?? idx"
+          :item="child"
+          :nested="true"
+        />
           </div>
         </div>
       </div>
     </transition>
+  </div>
+
+  <!-- External/new-tab leaf link -->
+  <div v-else-if="item.external" class="kt-menu-item">
+    <a
+      :href="item.to ?? '#'"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="kt-menu-link sidebar-menu-link border border-transparent items-center grow flex flex-nowrap gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+      @click="closeMobileDrawer"
+    >
+      <template v-if="!nested">
+        <span v-if="item.icon" class="kt-menu-icon items-start text-white/52 w-5 shrink-0">
+          <AppIcon :name="item.icon" :size="18" />
+        </span>
+      </template>
+      <template v-else>
+        <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative shrink-0">
+          <span class="absolute top-1/2 size-[6px] rounded-full -translate-y-1/2 bg-transparent" />
+        </span>
+      </template>
+      <span class="kt-menu-title text-sm font-normal grow min-w-0 truncate text-white/74" :title="item.label">
+        {{ item.label }}
+      </span>
+      <AppIcon name="ki-exit-right" :size="13" icon-class="text-white/42 shrink-0" />
+      <SidebarBadge v-if="item.badge" :value="item.badge" class="shrink-0" />
+    </a>
   </div>
 
   <!-- Leaf link -->
@@ -100,7 +132,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import SidebarBadge from 'src/components/layout/SidebarBadge.vue'
@@ -111,6 +143,7 @@ const props = defineProps({
 })
 
 const route = useRoute()
+const accordionId = `sidebar-item-${Math.random().toString(36).slice(2)}`
 
 const hasChildren = computed(
   () => Array.isArray(props.item.children) && props.item.children.length > 0,
@@ -133,6 +166,37 @@ const expanded = ref(hasActiveDescendant.value)
 
 watch(hasActiveDescendant, (active) => {
   if (active) expanded.value = true
+})
+
+function toggleGroup() {
+  const nextValue = !expanded.value
+  expanded.value = nextValue
+
+  if (nextValue && typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('pluse-sidebar-group-opened', {
+        detail: { id: accordionId },
+      }),
+    )
+  }
+}
+
+function handleGroupOpened(event) {
+  if (event.detail?.id !== accordionId) {
+    expanded.value = false
+  }
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pluse-sidebar-group-opened', handleGroupOpened)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('pluse-sidebar-group-opened', handleGroupOpened)
+  }
 })
 
 function closeMobileDrawer() {
@@ -165,15 +229,36 @@ function onLeafClick(navigate) {
 <style scoped>
 .sidebar-menu-link {
   position: relative;
+  display: flex !important;
+  align-items: center !important;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
+  flex-wrap: nowrap !important;
+  line-height: 1.2;
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
     transform 160ms ease;
 }
 
-.sidebar-menu-link :deep(.kt-menu-title) {
+.sidebar-menu-link .kt-menu-title {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   font-size: 1.0rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+.sidebar-menu-link .kt-menu-icon,
+.sidebar-menu-link .kt-menu-arrow,
+.sidebar-menu-link .kt-menu-bullet {
+  align-self: center;
+  flex: none;
 }
 
 .kt-menu-heading {

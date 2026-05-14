@@ -5,7 +5,7 @@
   Adaptations:
     - <i class="ki-..."> → <AppIcon name="ki-..."> (keenicons font missing)
     - Static avatar/name/email → reactive from auth store
-    - "Pro" badge → user's primary group name (e.g. CCO, Admin)
+    - "Pro" badge → user's primary group name (e.g. Centro de Controlo Operacional, Admin)
     - "Log out" link → real logout action
     - "Dark Mode" toggle → wired to useTheme() composable
     - Dev Forum / Language sections trimmed (irrelevant for PLUSE MVP)

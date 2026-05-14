@@ -32,7 +32,7 @@ export const sidebarMenu = [
     label: 'Contratos',
     icon: 'ki-document',
     children: [
-      { label: 'Activos', to: '/contracts/active' },
+      { label: 'Ativos', to: '/contracts/active' },
       { label: 'Pendentes', to: '/contracts/pending' },
       { label: 'A expirar (30 dias)', to: '/contracts/expiring' },
     ],
@@ -67,7 +67,40 @@ export const sidebarMenu = [
       { label: 'Sem check-out', to: '/attendances/missing-checkout' },
     ],
   },
-  { label: 'Painel CCO', icon: 'ki-chart-line', to: '/cco' },
+  {
+    label: 'Vigilante Mobile',
+    icon: 'ki-phone',
+    children: [
+      { label: 'Escala do dia', to: '/#/vigilante/escala', external: true },
+      { label: 'Detalhe do posto', to: '/#/vigilante/posto', external: true },
+      { label: 'Check-in GPS/QR', to: '/#/vigilante/check-in', external: true },
+      { label: 'Resultado do check-in', to: '/#/vigilante/resultado', external: true },
+      { label: 'Offline pendente', to: '/#/vigilante/offline', external: true },
+      { label: 'Nova ocorrência', to: '/#/vigilante/ocorrencia', external: true },
+    ],
+  },
+  {
+    label: 'Supervisor',
+    icon: 'ki-route',
+    children: [
+      { label: 'Equipa em campo', to: '/supervisor/team' },
+      { label: 'Rondas', to: '/supervisor/patrols' },
+      { label: 'Validar ocorrência', to: '/supervisor/incidents/validation' },
+      { label: 'Confirmar presença', to: '/supervisor/attendance-confirmation' },
+    ],
+  },
+  {
+    label: 'Centro de Controlo Operacional',
+    icon: 'ki-chart-line',
+    children: [
+      { label: 'Centro de comando', to: '/cco' },
+      { label: 'Painel de presenças', to: '/cco/presences' },
+      { label: 'Postos cobertos', to: '/cco/coverage' },
+      { label: 'Atrasos', to: '/cco/delays' },
+      { label: 'Fora do raio', to: '/cco/out-of-radius' },
+      { label: 'Ocorrências abertas', to: '/cco/incidents' },
+    ],
+  },
   {
     label: 'Ocorrências',
     icon: 'ki-warning-2',
@@ -95,8 +128,8 @@ export const sidebarMenu = [
   { label: 'Exportações', icon: 'ki-cloud-download', to: '/billing/exports' },
 
   // ────────────────────────────────────────────────────────────────────────
-  // Section heading absorbs the (only) group name "Activos e equipamento".
-  { type: 'heading', label: 'Activos e equipamento' },
+  // Section heading absorbs the (only) group name "Ativos e equipamento".
+  { type: 'heading', label: 'Ativos e equipamento' },
   { label: 'Lista', icon: 'ki-setting-2', to: '/assets' },
   { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
   { label: 'Movimentação', icon: 'ki-route', to: '/assets/transfers' },
