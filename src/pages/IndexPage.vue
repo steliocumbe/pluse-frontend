@@ -1,135 +1,191 @@
 <template>
   <AdminPageTemplate
-    eyebrow="Visão geral"
+    eyebrow="Visao geral"
     title="Dashboard administrativo"
-    :description="`Acompanhe a operação, prioridades e sinais críticos do PLUSE em ${today}.`"
+    :description="`Resumo das operacoes, equipas e sinais criticos do PLUSE em ${today}.`"
   >
     <template #actions>
-      <button type="button" class="kt-btn kt-btn-outline admin-hero-button">
+      <button type="button" class="kt-btn kt-btn-outline pluse-dashboard-hero-action">
         <AppIcon name="ki-cloud-download" :size="16" icon-class="me-1.5" />
         Exportar
       </button>
-      <button type="button" class="kt-btn kt-btn-primary admin-hero-primary">
+      <button type="button" class="kt-btn kt-btn-primary pluse-dashboard-hero-primary">
         <AppIcon name="ki-plus" :size="16" icon-class="me-1.5" />
         Nova escala
       </button>
     </template>
 
     <template #meta>
-      <span class="admin-meta-chip">
+      <span class="pluse-dashboard-meta">
         <AppIcon name="ki-time" :size="14" />
         Actualizado agora
       </span>
-      <span class="admin-meta-chip">
+      <span class="pluse-dashboard-meta">
         <AppIcon name="ki-shield-tick" :size="14" />
-        Sessão segura
+        Sessao segura
       </span>
     </template>
 
     <template #hero>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div v-for="item in heroStats" :key="item.label" class="hero-stat">
+      <div class="pluse-dashboard-hero-grid">
+        <div v-for="item in heroStats" :key="item.label" class="pluse-dashboard-hero-stat">
           <span>{{ item.label }}</span>
           <strong>{{ item.value }}</strong>
         </div>
       </div>
     </template>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-      <article
-        v-for="card in cards"
-        :key="card.label"
-        class="admin-kpi-card"
-        :style="{ '--card-accent': card.color }"
-      >
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="admin-kpi-label">{{ card.label }}</p>
-            <div class="admin-kpi-value">{{ card.value }}</div>
-          </div>
-          <span class="admin-kpi-icon">
-            <AppIcon :name="card.icon" :size="20" />
+    <div class="pluse-dashboard">
+      <section class="pluse-dashboard-kpis">
+        <article v-for="card in kpiCards" :key="card.label" class="pluse-dashboard-kpi" :class="card.tone">
+          <span class="pluse-dashboard-kpi-icon">
+            <AppIcon :name="card.icon" :size="19" />
           </span>
-        </div>
-        <div class="admin-kpi-footer">
-          <span>{{ card.hint }}</span>
-          <span class="admin-kpi-trend">{{ card.trend }}</span>
-        </div>
-      </article>
-    </div>
+          <span class="pluse-dashboard-kpi-label">{{ card.label }}</span>
+          <strong>{{ card.value }}</strong>
+          <span class="pluse-dashboard-kpi-caption">{{ card.caption }}</span>
+          <span class="pluse-dashboard-kpi-trend">{{ card.trend }}</span>
+        </article>
+      </section>
 
-    <div class="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-5">
-      <section class="kt-card admin-panel">
-        <div class="admin-panel-header">
-          <div>
-            <p class="admin-panel-kicker">Operação</p>
-            <div class="admin-panel-title">Prioridades de hoje</div>
-          </div>
-          <button type="button" class="kt-btn kt-btn-outline kt-btn-sm">
-            Ver tudo
-          </button>
-        </div>
-        <div class="admin-task-list">
-          <div v-for="task in tasks" :key="task.title" class="admin-task-row">
-            <span class="admin-task-icon" :style="{ '--task-color': task.color }">
-              <AppIcon :name="task.icon" :size="17" />
-            </span>
-            <div class="min-w-0 grow">
-              <div class="admin-task-title">{{ task.title }}</div>
-              <p class="admin-task-copy">{{ task.copy }}</p>
+      <section class="pluse-dashboard-main-grid">
+        <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
+          <div class="pluse-dashboard-panel-head">
+            <div>
+              <span>Operacao diaria</span>
+              <strong>Check-ins vs. cobertura prevista</strong>
             </div>
-            <span class="admin-task-badge">{{ task.badge }}</span>
+            <span class="pluse-dashboard-chip success">95.7% validado</span>
           </div>
-        </div>
+          <AppApexChart type="area" :height="282" :series="attendanceSeries" :options="attendanceOptions" />
+        </article>
+
+        <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
+          <div class="pluse-dashboard-panel-head">
+            <div>
+              <span>Sinais criticos</span>
+              <strong>Ocorrencias por categoria</strong>
+            </div>
+            <span class="pluse-dashboard-chip danger">27 registos</span>
+          </div>
+          <AppApexChart type="bar" :height="282" :series="incidentSeries" :options="incidentOptions" />
+        </article>
       </section>
 
-      <section class="kt-card admin-panel">
-        <div class="admin-panel-header">
-          <div>
-            <p class="admin-panel-kicker">Sistema</p>
-            <div class="admin-panel-title">Modelo para novas páginas</div>
+      <section class="pluse-dashboard-secondary-grid">
+        <article class="pluse-dashboard-panel">
+          <div class="pluse-dashboard-panel-head compact">
+            <div>
+              <span>Resumo executivo</span>
+              <strong>O que importa hoje</strong>
+            </div>
           </div>
+
+          <div class="pluse-dashboard-insights">
+            <div v-for="item in insights" :key="item.title" class="pluse-dashboard-insight">
+              <span :class="item.tone">
+                <AppIcon :name="item.icon" :size="17" />
+              </span>
+              <div>
+                <strong>{{ item.title }}</strong>
+                <p>{{ item.copy }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="pluse-dashboard-panel">
+          <div class="pluse-dashboard-panel-head compact">
+            <div>
+              <span>Cobertura geografica</span>
+              <strong>Estado por zona operacional</strong>
+            </div>
+            <span class="pluse-dashboard-chip neutral">5 zonas</span>
+          </div>
+          <AppApexChart type="donut" :height="224" :series="zoneSeries" :options="zoneOptions" />
+        </article>
+
+        <article class="pluse-dashboard-panel">
+          <div class="pluse-dashboard-panel-head compact">
+            <div>
+              <span>Prioridades</span>
+              <strong>Accoes recomendadas</strong>
+            </div>
+            <button type="button" class="kt-btn kt-btn-outline kt-btn-sm">Ver tudo</button>
+          </div>
+
+          <div class="pluse-dashboard-tasks">
+            <div v-for="task in tasks" :key="task.title" class="pluse-dashboard-task">
+              <span :class="task.tone">{{ task.badge }}</span>
+              <div>
+                <strong>{{ task.title }}</strong>
+                <p>{{ task.copy }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="pluse-dashboard-panel">
+          <div class="pluse-dashboard-panel-head compact">
+            <div>
+              <span>Financeiro</span>
+              <strong>Base de faturacao do periodo</strong>
+            </div>
+            <span class="pluse-dashboard-chip success">87% pronto</span>
+          </div>
+
+          <div class="pluse-dashboard-billing">
+            <div v-for="client in billingBase" :key="client.name" class="pluse-dashboard-billing-row">
+              <div>
+                <strong>{{ client.name }}</strong>
+                <p>{{ client.posts }} postos, {{ client.presences }} presencas validadas</p>
+              </div>
+              <span>{{ client.amount }}</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="pluse-dashboard-panel pluse-dashboard-timeline-panel">
+        <div class="pluse-dashboard-panel-head compact">
+          <div>
+            <span>Actividade recente</span>
+            <strong>Linha do tempo operacional</strong>
+          </div>
+          <span class="pluse-dashboard-chip neutral">Ao vivo</span>
         </div>
-        <div class="admin-template-note">
-          <p>
-            Use <code class="kt-kbd">AdminPageTemplate</code> para criar novas páginas com hero,
-            acções, metadados e conteúdo consistente.
-          </p>
-          <pre><code>&lt;AdminPageTemplate
-  eyebrow="Operações"
-  title="Postos"
-  description="Gestão dos postos activos."
-&gt;
-  &lt;template #actions&gt;...&lt;/template&gt;
-  Conteúdo da página
-&lt;/AdminPageTemplate&gt;</code></pre>
+
+        <div class="pluse-dashboard-timeline">
+          <div v-for="event in timeline" :key="event.title" class="pluse-dashboard-event">
+            <span :class="event.tone" />
+            <div>
+              <strong>{{ event.title }}</strong>
+              <p>{{ event.copy }}</p>
+            </div>
+            <time>{{ event.time }}</time>
+          </div>
         </div>
       </section>
     </div>
-
-    <section class="kt-card admin-welcome">
-      <span class="admin-welcome-icon">
-        <AppIcon name="ki-profile-circle" :size="22" />
-      </span>
-      <div>
-        <div class="admin-panel-title">Bem-vindo ao PLUSE</div>
-        <p>
-          Olá <span class="text-mono font-semibold">{{ auth.user?.full_name || auth.user?.email }}</span>.
-          Os indicadores continuam como marcadores enquanto as APIs não estão ligadas, mas a
-          estrutura visual já fica pronta para receber dados reais.
-        </p>
-      </div>
-    </section>
   </AdminPageTemplate>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useAuthStore } from 'src/stores/auth'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
+import AppApexChart from 'src/components/ui/AppApexChart.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
-const auth = useAuthStore()
+const palette = {
+  navy: '#0f2544',
+  blue: '#3f6df6',
+  cyan: '#0ea5e9',
+  emerald: '#16b981',
+  amber: '#f59e0b',
+  red: '#ef4444',
+  slate: '#64748b',
+  grid: '#e5edf7',
+}
 
 const today = computed(() =>
   new Date().toLocaleDateString('pt-PT', {
@@ -142,290 +198,549 @@ const today = computed(() =>
 
 const heroStats = [
   { label: 'Cobertura prevista', value: '98%' },
-  { label: 'Escalas em revisão', value: '12' },
-  { label: 'Alertas críticos', value: '3' },
+  { label: 'Escalas em revisao', value: '12' },
+  { label: 'Alertas criticos', value: '3' },
 ]
 
-const cards = [
+const kpiCards = [
   {
-    label: 'Postos cobertos',
-    value: '—',
-    hint: 'em tempo real',
-    trend: 'Live',
-    icon: 'ki-geolocation',
-    color: 'var(--pluse-blue-600)',
+    label: 'Cobertura prevista',
+    value: '98%',
+    caption: '181 de 184 postos cobertos',
+    trend: '+4% vs ontem',
+    icon: 'ki-shield-tick',
+    tone: 'is-blue',
   },
   {
-    label: 'Vigilantes em serviço',
-    value: '—',
-    hint: 'check-in confirmado',
-    trend: 'Turnos',
-    icon: 'ki-people',
-    color: 'var(--pluse-emerald-500)',
+    label: 'Check-ins confirmados',
+    value: '312',
+    caption: 'entrada validada por localizacao',
+    trend: '95.7%',
+    icon: 'ki-qr-code',
+    tone: 'is-green',
   },
   {
-    label: 'Atrasos',
-    value: '—',
-    hint: 'últimas 24h',
-    trend: 'Atenção',
+    label: 'Atrasos monitorados',
+    value: '18',
+    caption: '9 resolvidos nas ultimas 2h',
+    trend: '-12%',
     icon: 'ki-time',
-    color: 'var(--pluse-amber-500)',
+    tone: 'is-amber',
   },
   {
-    label: 'Ocorrências abertas',
-    value: '—',
-    hint: 'pendentes',
-    trend: 'Risco',
+    label: 'Alertas criticos',
+    value: '3',
+    caption: 'requerem accao do CCO',
+    trend: 'Prioridade',
     icon: 'ki-warning-2',
-    color: 'var(--pluse-red-600)',
+    tone: 'is-red',
+  },
+]
+
+const baseChart = {
+  dataLabels: { enabled: false },
+  grid: { borderColor: palette.grid, strokeDashArray: 4 },
+  tooltip: { theme: 'light' },
+  legend: { labels: { colors: palette.slate } },
+}
+
+const attendanceSeries = [
+  { name: 'Check-ins confirmados', data: [46, 112, 92, 84, 107, 132, 96] },
+  { name: 'Cobertura prevista', data: [50, 118, 96, 90, 111, 136, 100] },
+]
+
+const attendanceOptions = {
+  ...baseChart,
+  colors: [palette.blue, palette.emerald],
+  stroke: { curve: 'smooth', width: 3 },
+  fill: {
+    type: 'gradient',
+    gradient: { opacityFrom: 0.32, opacityTo: 0.04 },
+  },
+  xaxis: { categories: ['06h', '08h', '10h', '12h', '14h', '16h', '18h'] },
+  yaxis: { labels: { formatter: (value) => Math.round(value) } },
+  legend: { position: 'top', horizontalAlign: 'right' },
+}
+
+const incidentSeries = [
+  { name: 'Registos', data: [10, 7, 6, 4] },
+]
+
+const incidentOptions = {
+  ...baseChart,
+  colors: [palette.red],
+  plotOptions: {
+    bar: {
+      borderRadius: 7,
+      horizontal: true,
+      barHeight: '46%',
+      distributed: true,
+    },
+  },
+  xaxis: { categories: ['Atrasos', 'Ausencias', 'Rondas incompletas', 'Equipamento'] },
+  legend: { show: false },
+}
+
+const zoneSeries = [62, 48, 33, 27, 14]
+const zoneOptions = {
+  labels: ['Centro urbano', 'Industrial', 'Norte', 'Sul', 'Remotos'],
+  colors: [palette.blue, palette.emerald, palette.cyan, palette.amber, palette.red],
+  stroke: { width: 0 },
+  legend: { position: 'bottom' },
+  plotOptions: {
+    pie: {
+      donut: {
+        size: '72%',
+        labels: {
+          show: true,
+          total: { show: true, label: 'Postos', formatter: () => '184' },
+        },
+      },
+    },
+  },
+}
+
+const insights = [
+  {
+    title: 'CCO acompanha a operacao em tempo real',
+    copy: 'Postos descobertos, atrasos, ausencias e check-ins fora do raio ficam visiveis no mesmo painel.',
+    icon: 'ki-monitor-mobile',
+    tone: 'is-blue',
+  },
+  {
+    title: 'Escalas alimentam presencas e faturacao',
+    copy: 'O fluxo importante para a apresentacao e ligar contrato, posto, escala, presenca validada e valor a faturar.',
+    icon: 'ki-route',
+    tone: 'is-green',
+  },
+  {
+    title: 'Prioridades ficam accionaveis',
+    copy: 'A dashboard destaca apenas o que precisa de decisao, sem transformar a pagina num relatorio longo.',
+    icon: 'ki-notification-status',
+    tone: 'is-amber',
   },
 ]
 
 const tasks = [
   {
-    title: 'Validar check-ins pendentes',
-    copy: 'Confirme localizações fora do posto antes do fecho do turno.',
-    badge: 'CCO',
-    icon: 'ki-qr-code',
-    color: 'var(--pluse-blue-600)',
-  },
-  {
-    title: 'Rever escalas incompletas',
-    copy: 'Há postos sem cobertura confirmada para as próximas 24 horas.',
-    badge: '12',
-    icon: 'ki-calendar',
-    color: 'var(--pluse-amber-500)',
-  },
-  {
-    title: 'Acompanhar ocorrências abertas',
-    copy: 'Priorize ocorrências com impacto directo no cliente.',
+    title: 'Resolver postos descobertos',
+    copy: '3 postos sem vigilante confirmado para o proximo turno.',
     badge: '3',
-    icon: 'ki-warning-2',
-    color: 'var(--pluse-red-600)',
+    tone: 'is-red',
+  },
+  {
+    title: 'Rever escalas em conflito',
+    copy: '12 escalas precisam de ajuste antes do fecho operacional.',
+    badge: '12',
+    tone: 'is-amber',
+  },
+  {
+    title: 'Sincronizar presencas offline',
+    copy: '14 check-ins aguardam internet para entrar na base operacional.',
+    badge: '14',
+    tone: 'is-blue',
+  },
+]
+
+const billingBase = [
+  { name: 'MozMall Retail', posts: 18, presences: 426, amount: '1.28M MT' },
+  { name: 'Porto Logistica', posts: 12, presences: 311, amount: '940K MT' },
+  { name: 'Banco Central', posts: 9, presences: 268, amount: '810K MT' },
+]
+
+const timeline = [
+  {
+    title: 'Check-in fora do raio permitido',
+    copy: 'Posto Matola Centro, validacao enviada ao supervisor.',
+    time: '09:42',
+    tone: 'is-amber',
+  },
+  {
+    title: 'Ronda concluida sem ocorrencias',
+    copy: 'Supervisor fechou a ronda do turno da manha.',
+    time: '09:18',
+    tone: 'is-green',
+  },
+  {
+    title: 'Ocorrencia critica escalada',
+    copy: 'CCO notificou equipa de resposta e cliente.',
+    time: '08:57',
+    tone: 'is-red',
   },
 ]
 </script>
 
-<style scoped>
-.admin-hero-button {
-  border-color: rgba(255, 255, 255, 0.26);
+<style>
+.pluse-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.pluse-dashboard-hero-action {
+  border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.08);
-  color: white;
+  color: #ffffff;
 }
 
-.admin-hero-button:hover {
-  background: rgba(255, 255, 255, 0.15);
+.pluse-dashboard-hero-primary {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #0f2544;
 }
 
-.admin-hero-primary {
-  border-color: white;
-  background: white;
-  color: var(--pluse-navy-950);
-}
-
-.admin-meta-chip,
-.hero-stat {
+.pluse-dashboard-meta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.82);
-  padding: 7px 10px;
-  font-size: 0.84rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  padding: 8px 11px;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
-.hero-stat {
+.pluse-dashboard-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pluse-dashboard-hero-stat {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  min-height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
-  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 14px 16px;
 }
 
-.hero-stat strong {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 720;
+.pluse-dashboard-hero-stat span {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
-.admin-kpi-card {
+.pluse-dashboard-hero-stat strong {
+  color: #ffffff;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.pluse-dashboard-kpis,
+.pluse-dashboard-main-grid,
+.pluse-dashboard-secondary-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.pluse-dashboard-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pluse-dashboard-main-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.85fr);
+}
+
+.pluse-dashboard-secondary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pluse-dashboard-panel,
+.pluse-dashboard-kpi {
+  border: 1px solid #dce5f1;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(15, 37, 68, 0.07);
+}
+
+.pluse-dashboard-kpi {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--card);
-  padding: 22px;
-  box-shadow: 0 12px 34px color-mix(in oklab, var(--pluse-navy-950) 6%, transparent);
+  min-height: 150px;
+  padding: 18px;
 }
 
-.admin-kpi-card::before {
+.pluse-dashboard-kpi::before {
   position: absolute;
   inset: 0 0 auto;
-  height: 4px;
+  height: 3px;
   content: '';
-  background: var(--card-accent);
+  background: var(--pluse-tone);
 }
 
-.admin-kpi-card::after {
+.pluse-dashboard-kpi::after {
   position: absolute;
-  right: -34px;
   top: -34px;
-  width: 108px;
-  height: 108px;
+  right: -26px;
+  width: 92px;
+  height: 92px;
   content: '';
   border-radius: 999px;
-  background: color-mix(in oklab, var(--card-accent) 14%, transparent);
+  background: var(--pluse-soft);
 }
 
-.admin-kpi-label,
-.admin-panel-kicker {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
-  font-weight: 650;
+.pluse-dashboard-kpi-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--pluse-soft);
+  color: var(--pluse-tone);
 }
 
-.admin-kpi-value {
-  margin-top: 10px;
-  color: var(--mono);
-  font-size: 2.12rem;
-  font-weight: 720;
+.pluse-dashboard-kpi-label,
+.pluse-dashboard-kpi-caption,
+.pluse-dashboard-kpi-trend {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.pluse-dashboard-kpi-label {
+  margin-top: 14px;
+  color: #58708e;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.pluse-dashboard-kpi strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 4px;
+  color: #07111f;
+  font-size: 1.85rem;
+  font-weight: 850;
   line-height: 1;
 }
 
-.admin-kpi-icon {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--card-accent) 12%, transparent);
-  color: var(--card-accent);
+.pluse-dashboard-kpi-caption {
+  margin-top: 14px;
+  color: #60758f;
+  font-size: 0.88rem;
 }
 
-.admin-kpi-footer {
+.pluse-dashboard-kpi-trend {
+  margin-top: 10px;
+  color: var(--pluse-tone);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.pluse-dashboard-panel {
+  min-width: 0;
+  padding: 18px;
+}
+
+.pluse-dashboard-chart-panel {
+  min-height: 366px;
+}
+
+.pluse-dashboard-panel-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 22px;
-  color: var(--muted-foreground);
-  font-size: 0.86rem;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-.admin-kpi-trend {
-  color: var(--card-accent);
-  font-weight: 700;
+.pluse-dashboard-panel-head.compact {
+  margin-bottom: 12px;
 }
 
-.admin-panel {
-  padding: 24px;
+.pluse-dashboard-panel-head span {
+  display: block;
+  color: #60758f;
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
-.admin-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
+.pluse-dashboard-panel-head strong {
+  display: block;
+  margin-top: 4px;
+  color: #07111f;
+  font-size: 1.05rem;
+  font-weight: 850;
 }
 
-.admin-panel-title {
-  color: var(--mono);
-  font-size: 1.16rem;
-  font-weight: 700;
-  line-height: 1.25;
+.pluse-dashboard-chip {
+  flex: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
-.admin-task-list {
+.pluse-dashboard-chip.success {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.pluse-dashboard-chip.danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.pluse-dashboard-chip.neutral {
+  background: #eef4ff;
+  color: #3152b8;
+}
+
+.pluse-dashboard-insights,
+.pluse-dashboard-tasks,
+.pluse-dashboard-billing,
+.pluse-dashboard-timeline {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
 }
 
-.admin-task-row {
+.pluse-dashboard-insight,
+.pluse-dashboard-task,
+.pluse-dashboard-billing-row,
+.pluse-dashboard-event {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--background) 82%, var(--muted));
-  padding: 14px;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #e4ebf5;
+  border-radius: 13px;
+  background: #fbfdff;
+  padding: 12px;
 }
 
-.admin-task-icon {
+.pluse-dashboard-insight > span,
+.pluse-dashboard-task > span {
   display: grid;
-  width: 38px;
-  height: 38px;
   place-items: center;
   flex: none;
-  border-radius: 10px;
-  background: color-mix(in oklab, var(--task-color) 12%, transparent);
-  color: var(--task-color);
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--pluse-soft);
+  color: var(--pluse-tone);
+  font-weight: 850;
 }
 
-.admin-task-title {
-  color: var(--mono);
-  font-size: 0.98rem;
-  font-weight: 700;
+.pluse-dashboard-insight strong,
+.pluse-dashboard-task strong,
+.pluse-dashboard-billing-row strong,
+.pluse-dashboard-event strong {
+  color: #07111f;
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
-.admin-task-copy {
-  margin: 3px 0 0;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
+.pluse-dashboard-insight p,
+.pluse-dashboard-task p,
+.pluse-dashboard-billing-row p,
+.pluse-dashboard-event p {
+  margin: 4px 0 0;
+  color: #60758f;
+  font-size: 0.87rem;
   line-height: 1.45;
 }
 
-.admin-task-badge {
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-foreground);
-  padding: 5px 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
+.pluse-dashboard-billing-row {
+  align-items: center;
+  justify-content: space-between;
 }
 
-.admin-template-note {
-  color: var(--secondary-foreground);
-  font-size: 0.96rem;
-  line-height: 1.65;
+.pluse-dashboard-billing-row > span {
+  color: #047857;
+  font-size: 0.95rem;
+  font-weight: 850;
 }
 
-.admin-template-note pre {
-  overflow-x: auto;
-  margin: 16px 0 0;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--pluse-navy-950) 96%, var(--primary));
-  color: #dbeafe;
-  padding: 16px;
-  font-size: 0.84rem;
+.pluse-dashboard-timeline-panel {
+  padding-bottom: 14px;
 }
 
-.admin-welcome {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 20px;
-  color: var(--secondary-foreground);
-  font-size: 0.98rem;
-  line-height: 1.65;
-}
-
-.admin-welcome p {
-  margin: 6px 0 0;
-}
-
-.admin-welcome-icon {
+.pluse-dashboard-timeline {
   display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pluse-dashboard-event > span {
   flex: none;
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--primary) 12%, transparent);
-  color: var(--primary);
+  width: 10px;
+  height: 10px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--pluse-tone);
+  box-shadow: 0 0 0 5px var(--pluse-soft);
+}
+
+.pluse-dashboard-event time {
+  margin-left: auto;
+  color: #60758f;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.pluse-dashboard .apexcharts-canvas,
+.pluse-dashboard .apexcharts-svg {
+  max-width: 100%;
+}
+
+.pluse-dashboard .is-blue,
+.pluse-dashboard-kpi.is-blue {
+  --pluse-tone: #3f6df6;
+  --pluse-soft: #e4ebff;
+}
+
+.pluse-dashboard .is-green,
+.pluse-dashboard-kpi.is-green {
+  --pluse-tone: #10b981;
+  --pluse-soft: #dcfce7;
+}
+
+.pluse-dashboard .is-amber,
+.pluse-dashboard-kpi.is-amber {
+  --pluse-tone: #f59e0b;
+  --pluse-soft: #fff3d7;
+}
+
+.pluse-dashboard .is-red,
+.pluse-dashboard-kpi.is-red {
+  --pluse-tone: #ef4444;
+  --pluse-soft: #fee2e2;
+}
+
+@media (max-width: 1390px) {
+  .pluse-dashboard-kpis,
+  .pluse-dashboard-secondary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pluse-dashboard-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pluse-dashboard-hero-grid,
+  .pluse-dashboard-kpis,
+  .pluse-dashboard-secondary-grid,
+  .pluse-dashboard-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .pluse-dashboard-hero-stat {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pluse-dashboard-panel,
+  .pluse-dashboard-kpi {
+    padding: 15px;
+  }
 }
 </style>
