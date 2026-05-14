@@ -99,16 +99,19 @@ const showTempPassword = ref(false)
 const tempPassword = ref('')
 const createdId = ref(null)
 
-async function onSubmit(payload) {
+async function onSubmit({ payload, initialDocuments = [] }) {
   try {
-    const created = await store.create(payload)
+    const created = await store.create(payload, initialDocuments)
     createdId.value = created.id
+    const docsHint = initialDocuments.length
+      ? ` (${initialDocuments.length} documento${initialDocuments.length === 1 ? '' : 's'} anexado${initialDocuments.length === 1 ? '' : 's'})`
+      : ''
     if (created?.user?.temporary_password) {
       tempPassword.value = created.user.temporary_password
       showTempPassword.value = true
-      toast.success('Colaborador criado e conta gerada.')
+      toast.success(`Colaborador criado e conta gerada${docsHint}.`)
     } else {
-      toast.success(`${created.full_name} foi criado como pendente.`)
+      toast.success(`${created.full_name} foi criado como pendente${docsHint}.`)
       router.push(`/employees/${created.id}`)
     }
   } catch (err) {

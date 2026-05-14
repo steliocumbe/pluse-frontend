@@ -205,6 +205,16 @@
       </q-banner>
     </AppFormSection>
 
+    <AppFormSection
+      v-if="mode === 'create'"
+      title="Documentos iniciais"
+      step="6"
+      description="Anexe já BI, NUIT, registo criminal ou outros documentos do colaborador. Pode também adicioná-los mais tarde."
+      :default-expanded="false"
+    >
+      <EmployeeFormDocuments v-model="form.initial_documents" />
+    </AppFormSection>
+
     <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
       <q-btn label="Cancelar" flat no-caps :disable="submitting" @click="$emit('cancel')" />
       <q-btn
@@ -223,6 +233,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppFormSection from 'src/components/ui/AppFormSection.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
+import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
 import { groupService } from 'src/services/group.service'
 
 const props = defineProps({
@@ -255,6 +266,7 @@ const blank = {
   hire_date: '',
   base_salary: '',
   create_account: false,
+  initial_documents: [],
 }
 
 const form = reactive({ ...blank })
@@ -300,16 +312,21 @@ async function onSubmit() {
   const ok = await formRef.value?.validate?.()
   if (ok === false) return
 
-  // Strip empty optional strings so the backend treats them as null.
+  // Separate the initial_documents array from regular fields so the parent
+  // page can build the multipart request properly. Strip empty optional
+  // strings so the backend treats them as null.
+  const initialDocuments = (form.initial_documents || []).filter(
+    (d) => d.type && d.file,
+  )
   const payload = {}
   for (const [k, v] of Object.entries(form)) {
+    if (k === 'initial_documents') continue
     if (v === '' || v === null || v === undefined) continue
     payload[k] = v
   }
-  // base_salary must be a string per DRF DecimalField (or omit if empty).
   if (payload.base_salary !== undefined) {
     payload.base_salary = String(payload.base_salary)
   }
-  emit('submit', payload)
+  emit('submit', { payload, initialDocuments })
 }
 </script>

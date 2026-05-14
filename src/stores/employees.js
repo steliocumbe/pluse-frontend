@@ -69,11 +69,11 @@ export const useEmployeesStore = defineStore('employees', {
       }
     },
 
-    async create(payload) {
+    async create(payload, initialDocuments = []) {
       this.submitting = true
       this.error = null
       try {
-        const created = await employeeService.create(payload)
+        const created = await employeeService.create(payload, initialDocuments)
         // Pre-pend to local list if it was loaded.
         if (this.items.length > 0) {
           this.items.unshift(created)

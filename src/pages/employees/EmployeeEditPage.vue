@@ -54,7 +54,8 @@ const toast = useToast()
 const employeeId = computed(() => route.params.id)
 const pageTitle = computed(() => store.current?.full_name || 'Editar colaborador')
 
-async function onSubmit(payload) {
+async function onSubmit({ payload }) {
+  // initialDocuments is ignored in edit mode (form hides that section anyway).
   try {
     await store.update(employeeId.value, payload)
     toast.success('Dados actualizados.')

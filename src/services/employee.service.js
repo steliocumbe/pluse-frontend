@@ -11,15 +11,50 @@ export const employeeService = {
   },
 
   /**
-   * Create employee. Backend expects:
-   *   { full_name, birth_date, gender, document_type, document_number, ...,
-   *     types: [groupId, ...], create_account: bool }
+   * Create employee.
    *
-   * When `create_account=true`, response.user.temporary_password is present
-   * — show it once to RH/Admin so they can deliver it to the colaborador.
+   * When `initialDocuments` is empty: sends regular JSON.
+   * When `initialDocuments` has entries: switches to multipart and sends:
+   *   - all payload fields
+   *   - `initial_documents`: JSON-encoded array of metadata
+   *   - `initial_documents_files_{N}`: each file
+   * The backend creates Employee + User + all Documents atomically.
    */
-  create(payload) {
-    return api.post('/employees/', payload).then((r) => r.data)
+  create(payload, initialDocuments = []) {
+    if (!initialDocuments || initialDocuments.length === 0) {
+      return api.post('/employees/', payload).then((r) => r.data)
+    }
+
+    const fd = new FormData()
+    for (const [k, v] of Object.entries(payload)) {
+      if (v === null || v === undefined) continue
+      if (k === 'types' && Array.isArray(v)) {
+        v.forEach((id) => fd.append('types', String(id)))
+      } else if (Array.isArray(v)) {
+        v.forEach((item) => fd.append(k, String(item)))
+      } else if (typeof v === 'boolean') {
+        fd.append(k, v ? 'true' : 'false')
+      } else {
+        fd.append(k, String(v))
+      }
+    }
+
+    const meta = initialDocuments.map((d) => ({
+      type: d.type,
+      issue_date: d.issue_date || null,
+      expiry_date: d.expiry_date || null,
+      notes: d.notes || '',
+    }))
+    fd.append('initial_documents', JSON.stringify(meta))
+    initialDocuments.forEach((d, i) => {
+      fd.append(`initial_documents_files_${i}`, d.file)
+    })
+
+    return api
+      .post('/employees/', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
   },
 
   update(id, payload) {
