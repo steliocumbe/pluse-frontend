@@ -69,6 +69,7 @@ onBeforeUnmount(clearCollapseState)
 <style scoped>
 .kt-sidebar-content {
   height: calc(100vh - var(--header-height, 70px));
+  overflow-x: hidden;
 }
 
 .pluse-sidebar {
@@ -110,6 +111,7 @@ onBeforeUnmount(clearCollapseState)
 }
 
 .kt-scroll {
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }

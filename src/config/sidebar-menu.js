@@ -68,7 +68,7 @@ export const sidebarMenu = [
     ],
   },
   {
-    label: 'Vigilante Mobile',
+    label: 'Vigilante',
     icon: 'ki-phone',
     children: [
       { label: 'Escala do dia', to: '/#/vigilante/escala', external: true },
@@ -90,7 +90,7 @@ export const sidebarMenu = [
     ],
   },
   {
-    label: 'Centro de Controlo Operacional',
+    label: 'Centro de Controlo',
     icon: 'ki-chart-line',
     children: [
       { label: 'Centro de comando', to: '/cco' },
@@ -101,23 +101,23 @@ export const sidebarMenu = [
       { label: 'Ocorrências abertas', to: '/cco/incidents' },
     ],
   },
-  {
-    label: 'Ocorrências',
-    icon: 'ki-warning-2',
-    children: [
-      { label: 'Abertas', to: '/incidents/open' },
-      { label: 'Em análise', to: '/incidents/in-review' },
-      { label: 'Resolvidas', to: '/incidents/resolved' },
-    ],
-  },
-  {
-    label: 'Rondas',
-    icon: 'ki-route',
-    children: [
-      { label: 'Em curso', to: '/patrols/ongoing' },
-      { label: 'Histórico', to: '/patrols' },
-    ],
-  },
+  // {
+  //   label: 'Ocorrências',
+  //   icon: 'ki-warning-2',
+  //   children: [
+  //     { label: 'Abertas', to: '/incidents/open' },
+  //     { label: 'Em análise', to: '/incidents/in-review' },
+  //     { label: 'Resolvidas', to: '/incidents/resolved' },
+  //   ],
+  // },
+  // {
+  //   label: 'Rondas',
+  //   icon: 'ki-route',
+  //   children: [
+  //     { label: 'Em curso', to: '/patrols/ongoing' },
+  //     { label: 'Histórico', to: '/patrols' },
+  //   ],
+  // },
 
   // ────────────────────────────────────────────────────────────────────────
   // Section heading absorbs the (only) group name "Faturação".

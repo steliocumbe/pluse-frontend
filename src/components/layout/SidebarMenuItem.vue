@@ -97,30 +97,30 @@
 
   <!-- Leaf link -->
   <router-link v-else :to="item.to ?? '#'" custom v-slot="{ navigate, href, isActive, isExactActive }">
-    <div class="kt-menu-item" :class="{ active: isActive || isExactActive }">
+    <div class="kt-menu-item" :class="{ active: isLeafActive(isActive, isExactActive) }">
       <a
         :href="href"
         class="kt-menu-link sidebar-menu-link border border-transparent items-center grow flex flex-nowrap gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-        :class="(isActive || isExactActive) ? 'sidebar-menu-link-active rounded-lg' : ''"
+        :class="isLeafActive(isActive, isExactActive) ? 'sidebar-menu-link-active rounded-lg' : ''"
         @click="onLeafClick(navigate)"
       >
         <!-- Top-level link gets icon, nested links get a bullet -->
         <template v-if="!nested">
           <span v-if="item.icon" class="kt-menu-icon items-start text-white/52 w-5 shrink-0">
-            <AppIcon :name="item.icon" :size="18" :icon-class="(isActive || isExactActive) ? 'text-white' : ''" />
+            <AppIcon :name="item.icon" :size="18" :icon-class="isLeafActive(isActive, isExactActive) ? 'text-white' : ''" />
           </span>
         </template>
         <template v-else>
           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative shrink-0">
             <span
               class="absolute top-1/2 size-[6px] rounded-full -translate-y-1/2"
-              :class="(isActive || isExactActive) ? 'bg-white' : 'bg-transparent'"
+              :class="isLeafActive(isActive, isExactActive) ? 'bg-white' : 'bg-transparent'"
             />
           </span>
         </template>
         <span
           class="kt-menu-title text-sm font-normal grow min-w-0 truncate"
-          :class="(isActive || isExactActive) ? 'text-white font-semibold' : 'text-white/74'"
+          :class="isLeafActive(isActive, isExactActive) ? 'text-white font-semibold' : 'text-white/74'"
           :title="item.label"
         >
           {{ item.label }}
@@ -224,6 +224,11 @@ function onLeafClick(navigate) {
   navigate()
   closeMobileDrawer()
 }
+
+function isLeafActive(isActive, isExactActive) {
+  if (props.item.to === '/') return isExactActive
+  return isActive || isExactActive
+}
 </script>
 
 <style scoped>
@@ -233,6 +238,7 @@ function onLeafClick(navigate) {
   align-items: center !important;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   flex-wrap: nowrap !important;
   line-height: 1.2;
@@ -252,6 +258,14 @@ function onLeafClick(navigate) {
   text-overflow: ellipsis;
   white-space: nowrap;
   word-break: normal;
+}
+
+.kt-menu-item,
+.kt-menu-accordion,
+.kt-menu-accordion > div {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar-menu-link .kt-menu-icon,
