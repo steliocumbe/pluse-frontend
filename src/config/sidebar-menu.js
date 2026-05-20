@@ -1,16 +1,15 @@
 /**
- * PLUSE sidebar menu — mapped 1:1 to the 12 product modules.
+ * PLUSE sidebar menu.
+ *
+ * CURRENT PHASE: Módulo RH (Recursos Humanos).
+ * Only RH-related entries are active. The rest of the product modules are
+ * kept in `parkedModules` below — uncomment / move them back into
+ * `sidebarMenu` as each module is built.
  *
  * Conventions:
  *   - Group with children only when there are 2+ meaningful entries.
- *   - "Novo X" actions live as buttons on the list pages, NOT in the menu.
+ *   - "Novo X" actions live as buttons on list pages, NOT in the menu.
  *   - Headings stay even with a single leaf below (visual scaffolding).
- *   - Section headings absorb their sole group's name when there's only one
- *     group (e.g. "Faturação" replaces "Financeiro > Faturação").
- *
- * NOTE: role-based filtering will be reintroduced when frontend permissions
- * land. For now the whole menu is shown to all authenticated users —
- * the backend enforces permission per request.
  */
 export const sidebarMenu = [
   // ────────────────────────────────────────────────────────────────────────
@@ -18,7 +17,7 @@ export const sidebarMenu = [
   { label: 'Dashboard', icon: 'ki-element-11', to: '/' },
 
   // ────────────────────────────────────────────────────────────────────────
-  { type: 'heading', label: 'Cadastros' },
+  { type: 'heading', label: 'Recursos Humanos' },
   {
     label: 'Colaboradores',
     icon: 'ki-people',
@@ -27,6 +26,33 @@ export const sidebarMenu = [
       { label: 'Aprovações pendentes', to: '/employees/approvals' },
     ],
   },
+  { label: 'Contratos de trabalho', icon: 'ki-document', to: '/employment-contracts' },
+  { label: 'Férias e ausências', icon: 'ki-calendar-tick', to: '/leaves' },
+  { label: 'Formação e certificações', icon: 'ki-information-2', to: '/training' },
+  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
+  {
+    label: 'Escalas',
+    icon: 'ki-calendar',
+    children: [
+      { label: 'Calendário', to: '/schedules' },
+      { label: 'Por posto', to: '/schedules/by-post' },
+      { label: 'Por colaborador', to: '/schedules/by-employee' },
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  { type: 'heading', label: 'Conta' },
+  { label: 'Meu perfil', icon: 'ki-profile-circle', to: '/profile' },
+  { label: 'Ajuda e suporte', icon: 'ki-information-3', to: '/support' },
+]
+
+/**
+ * Modules parked until their phase arrives. Keeping the definitions here
+ * (instead of deleting) means re-enabling a module is a copy-paste back
+ * into `sidebarMenu` — no need to re-derive routes/icons.
+ */
+export const parkedModules = [
+  { type: 'heading', label: 'Cadastros' },
   { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
   {
     label: 'Contratos',
@@ -46,17 +72,7 @@ export const sidebarMenu = [
     ],
   },
 
-  // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Operações' },
-  {
-    label: 'Escalas',
-    icon: 'ki-calendar',
-    children: [
-      { label: 'Calendário', to: '/schedules' },
-      { label: 'Por posto', to: '/schedules/by-post' },
-      { label: 'Por colaborador', to: '/schedules/by-employee' },
-    ],
-  },
   {
     label: 'Presenças e Check-ins',
     icon: 'ki-check-circle',
@@ -65,18 +81,6 @@ export const sidebarMenu = [
       { label: 'Hoje', to: '/attendances/today' },
       { label: 'Atrasos', to: '/attendances/late' },
       { label: 'Sem check-out', to: '/attendances/missing-checkout' },
-    ],
-  },
-  {
-    label: 'Vigilante',
-    icon: 'ki-phone',
-    children: [
-      { label: 'Escala do dia', to: '/#/vigilante/escala', external: true },
-      { label: 'Detalhe do posto', to: '/#/vigilante/posto', external: true },
-      { label: 'Check-in GPS/QR', to: '/#/vigilante/check-in', external: true },
-      { label: 'Resultado do check-in', to: '/#/vigilante/resultado', external: true },
-      { label: 'Offline pendente', to: '/#/vigilante/offline', external: true },
-      { label: 'Nova ocorrência', to: '/#/vigilante/ocorrencia', external: true },
     ],
   },
   {
@@ -101,50 +105,23 @@ export const sidebarMenu = [
       { label: 'Ocorrências abertas', to: '/cco/incidents' },
     ],
   },
-  // {
-  //   label: 'Ocorrências',
-  //   icon: 'ki-warning-2',
-  //   children: [
-  //     { label: 'Abertas', to: '/incidents/open' },
-  //     { label: 'Em análise', to: '/incidents/in-review' },
-  //     { label: 'Resolvidas', to: '/incidents/resolved' },
-  //   ],
-  // },
-  // {
-  //   label: 'Rondas',
-  //   icon: 'ki-route',
-  //   children: [
-  //     { label: 'Em curso', to: '/patrols/ongoing' },
-  //     { label: 'Histórico', to: '/patrols' },
-  //   ],
-  // },
 
-  // ────────────────────────────────────────────────────────────────────────
-  // Section heading absorbs the (only) group name "Faturação".
   { type: 'heading', label: 'Faturação' },
   { label: 'Relatórios por período', icon: 'ki-cheque', to: '/billing/periods' },
   { label: 'Por cliente', icon: 'ki-profile-user', to: '/billing/by-client' },
   { label: 'Por contrato', icon: 'ki-document', to: '/billing/by-contract' },
   { label: 'Exportações', icon: 'ki-cloud-download', to: '/billing/exports' },
 
-  // ────────────────────────────────────────────────────────────────────────
-  // Section heading absorbs the (only) group name "Ativos e equipamento".
   { type: 'heading', label: 'Ativos e equipamento' },
   { label: 'Lista', icon: 'ki-setting-2', to: '/assets' },
   { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
   { label: 'Movimentação', icon: 'ki-route', to: '/assets/transfers' },
 
-  // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Administração' },
   { label: 'Utilizadores', icon: 'ki-user', to: '/admin/users' },
   { label: 'Perfis e permissões', icon: 'ki-shield', to: '/admin/roles' },
   { label: 'Auditoria', icon: 'ki-information-2', to: '/admin/audit' },
   { label: 'Configurações', icon: 'ki-setting', to: '/admin/settings' },
-
-  // ────────────────────────────────────────────────────────────────────────
-  { type: 'heading', label: 'Conta' },
-  { label: 'Meu perfil', icon: 'ki-profile-circle', to: '/profile' },
-  { label: 'Ajuda e suporte', icon: 'ki-information-3', to: '/support' },
 ]
 
 /**

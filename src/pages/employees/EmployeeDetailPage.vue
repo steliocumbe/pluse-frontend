@@ -201,8 +201,16 @@
                 </span>
               </div>
               <div class="field-row">
+                <span class="field-row__label">Validade do documento</span>
+                <span class="field-row__value">{{ formatDate(employee.document_expiry) || '—' }}</span>
+              </div>
+              <div class="field-row">
                 <span class="field-row__label">NUIT</span>
                 <span class="field-row__value">{{ employee.nuit || '—' }}</span>
+              </div>
+              <div class="field-row">
+                <span class="field-row__label">Situação militar</span>
+                <span class="field-row__value">{{ employee.military_status_display || '—' }}</span>
               </div>
               <div class="field-row field-row--wide">
                 <span class="field-row__label">Morada</span>
@@ -211,11 +219,41 @@
             </div>
           </section>
 
-          <!-- Contactos -->
+          <!-- Departamento e posto -->
           <section class="detail-section">
             <header class="detail-section__head">
-              <span class="detail-section__icon"><AppIcon name="ki-phone" :size="16" /></span>
-              <span class="detail-section__title">Contactos</span>
+              <span class="detail-section__icon"><AppIcon name="ki-geolocation" :size="16" /></span>
+              <span class="detail-section__title">Departamento e posto</span>
+            </header>
+            <div class="detail-section__body">
+              <div class="field-row">
+                <span class="field-row__label">Departamento</span>
+                <span class="field-row__value">{{ employee.department_display || '—' }}</span>
+              </div>
+              <div v-if="employee.department === 'operations'" class="field-row">
+                <span class="field-row__label">Cliente</span>
+                <span class="field-row__value">{{ employee.client_name || '—' }}</span>
+              </div>
+              <div v-if="employee.department === 'support'" class="field-row">
+                <span class="field-row__label">Unidade de suporte</span>
+                <span class="field-row__value">{{ employee.support_unit_display || '—' }}</span>
+              </div>
+              <div class="field-row">
+                <span class="field-row__label">Posto</span>
+                <span class="field-row__value">{{ employee.post_name || '—' }}</span>
+              </div>
+              <div class="field-row field-row--wide">
+                <span class="field-row__label">Turno</span>
+                <span class="field-row__value">{{ employee.shift || '—' }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Família e contactos -->
+          <section class="detail-section">
+            <header class="detail-section__head">
+              <span class="detail-section__icon"><AppIcon name="ki-people" :size="16" /></span>
+              <span class="detail-section__title">Família e contactos</span>
             </header>
             <div class="detail-section__body">
               <div class="field-row">
@@ -227,21 +265,31 @@
                 <span class="field-row__value">{{ employee.email || '—' }}</span>
               </div>
               <div class="field-row">
-                <span class="field-row__label">Contacto de emergência</span>
-                <span class="field-row__value">{{ employee.emergency_contact_name || '—' }}</span>
+                <span class="field-row__label">Pai</span>
+                <span class="field-row__value">{{ pairOf(employee.father_name, employee.father_phone) }}</span>
               </div>
               <div class="field-row">
-                <span class="field-row__label">Telefone de emergência</span>
-                <span class="field-row__value">{{ employee.emergency_contact_phone || '—' }}</span>
+                <span class="field-row__label">Mãe</span>
+                <span class="field-row__value">{{ pairOf(employee.mother_name, employee.mother_phone) }}</span>
+              </div>
+              <div class="field-row">
+                <span class="field-row__label">Cônjuge</span>
+                <span class="field-row__value">{{ pairOf(employee.spouse_name, employee.spouse_phone) }}</span>
+              </div>
+              <div class="field-row">
+                <span class="field-row__label">Emergência</span>
+                <span class="field-row__value">
+                  {{ pairOf(employee.emergency_contact_name, employee.emergency_contact_phone) }}
+                </span>
               </div>
             </div>
           </section>
 
-          <!-- Função e contrato -->
+          <!-- Função e salário -->
           <section class="detail-section">
             <header class="detail-section__head">
               <span class="detail-section__icon"><AppIcon name="ki-calendar-tick" :size="16" /></span>
-              <span class="detail-section__title">Função e contrato</span>
+              <span class="detail-section__title">Função e salário</span>
             </header>
             <div class="detail-section__body">
               <div class="field-row">
@@ -253,32 +301,44 @@
                 <span class="field-row__value">{{ formatDate(employee.hire_date) }}</span>
               </div>
               <div class="field-row">
-                <span class="field-row__label">Salário base</span>
-                <span class="field-row__value">
-                  {{ employee.base_salary ? `${employee.base_salary} MZN` : '—' }}
-                </span>
+                <span class="field-row__label">Categoria salarial</span>
+                <span class="field-row__value">{{ employee.salary_category?.label || '—' }}</span>
               </div>
               <div class="field-row">
-                <span class="field-row__label">Estado</span>
-                <span class="field-row__value">{{ employee.status_display }}</span>
+                <span class="field-row__label">Salário efectivo</span>
+                <span class="field-row__value">
+                  {{ employee.effective_salary ? `${employee.effective_salary} MZN` : '—' }}
+                </span>
               </div>
             </div>
           </section>
 
-          <!-- Dados bancários -->
+          <!-- Banca e M-pesa -->
           <section class="detail-section">
             <header class="detail-section__head">
               <span class="detail-section__icon"><AppIcon name="ki-bank" :size="16" /></span>
-              <span class="detail-section__title">Dados bancários</span>
+              <span class="detail-section__title">Banca e M-pesa</span>
             </header>
             <div class="detail-section__body">
               <div class="field-row">
-                <span class="field-row__label">NIB</span>
-                <span class="field-row__value">{{ employee.nib || '—' }}</span>
+                <span class="field-row__label">Número INSS</span>
+                <span class="field-row__value">{{ employee.inss_number || '—' }}</span>
+              </div>
+              <div class="field-row">
+                <span class="field-row__label">M-pesa</span>
+                <span class="field-row__value">{{ pairOf(employee.mpesa_name, employee.mpesa_number) }}</span>
               </div>
               <div class="field-row">
                 <span class="field-row__label">Banco</span>
                 <span class="field-row__value">{{ employee.bank || '—' }}</span>
+              </div>
+              <div class="field-row">
+                <span class="field-row__label">Número de conta</span>
+                <span class="field-row__value">{{ employee.bank_account_number || '—' }}</span>
+              </div>
+              <div class="field-row field-row--wide">
+                <span class="field-row__label">NIB</span>
+                <span class="field-row__value">{{ employee.nib || '—' }}</span>
               </div>
             </div>
           </section>
@@ -555,6 +615,11 @@ function genderLabel(g) {
 }
 function documentTypeLabel(t) {
   return { id_card: 'BI', passport: 'Passaporte', dire: 'DIRE' }[t] || t
+}
+/* Joins a name + phone pair into "Nome · +258..." — "—" when both empty. */
+function pairOf(name, phone) {
+  const parts = [name, phone].filter(Boolean)
+  return parts.length ? parts.join(' · ') : '—'
 }
 function isExpired(date) {
   if (!date) return false
