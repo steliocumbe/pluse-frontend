@@ -76,10 +76,10 @@
                   <option>Pendente de aprovação</option>
                 </select>
               </div>
-              <div class="pluse-demo-field">
+              <!-- <div class="pluse-demo-field">
                 <label>Centro de custo <span class="optional">Opcional</span></label>
                 <input value="MZ-MAPUTO-RETAIL" />
-              </div>
+              </div> -->
             </div>
           </article>
 
@@ -190,7 +190,7 @@
           </div>
         </form>
 
-        <aside class="pluse-demo-panel pluse-demo-side-note">
+        <!-- <aside class="pluse-demo-panel pluse-demo-side-note">
           <div class="pluse-demo-section-head">
             <div>
               <span>Questoes de negocio</span>
@@ -208,7 +208,7 @@
               </div>
             </div>
           </div>
-        </aside>
+        </aside> -->
       </section>
     </div>
   </AdminPageTemplate>
@@ -219,9 +219,12 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
-const checklist = [
-  { title: 'Faturação por posto ou presença?', copy: 'Define como o financeiro fecha o período.', icon: 'ki-dollar', tone: 'is-blue' },
-  { title: 'Quem aprova contratos?', copy: 'Direção, financeiro ou ambos podem ser necessários.', icon: 'ki-shield-tick', tone: 'is-red' },
-  { title: 'Turnos padrao', copy: 'Precisamos confirmar turnos usados na operação real.', icon: 'ki-time', tone: 'is-amber' },
-]
+// Side-panel data — paired with the commented-out <aside> in the template.
+// Kept commented so ESLint doesn't flag it as unused; uncomment together
+// with the matching <aside> when the panel is re-enabled.
+// const checklist = [
+//   { title: 'Faturação por posto ou presença?', copy: 'Define como o financeiro fecha o período.', icon: 'ki-dollar', tone: 'is-blue' },
+//   { title: 'Quem aprova contratos?', copy: 'Direção, financeiro ou ambos podem ser necessários.', icon: 'ki-shield-tick', tone: 'is-red' },
+//   { title: 'Turnos padrao', copy: 'Precisamos confirmar turnos usados na operação real.', icon: 'ki-time', tone: 'is-amber' },
+// ]
 </script>

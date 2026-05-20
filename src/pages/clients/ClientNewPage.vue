@@ -124,14 +124,14 @@
                 <label>Contacto alternativo <span class="optional">Opcional</span></label>
                 <input value="+258 82 555 4433" />
               </div>
-              <div class="pluse-demo-field">
+              <!-- <div class="pluse-demo-field">
                 <label>Responsável financeiro <span class="optional">Opcional</span></label>
                 <input value="Rui Mucavele" />
               </div>
               <div class="pluse-demo-field">
                 <label>Email financeiro <span class="optional">Opcional</span></label>
                 <input value="financeiro@mozmall.co.mz" />
-              </div>
+              </div> -->
               <div class="pluse-demo-field is-wide">
                 <label>Notas internas <span class="optional">Opcional</span></label>
                 <textarea>Cliente exige relatório operacional semanal e validação mensal de presenças.</textarea>
@@ -186,7 +186,7 @@
           </div>
         </form>
 
-        <aside class="pluse-demo-panel pluse-demo-side-note">
+        <!-- <aside class="pluse-demo-panel pluse-demo-side-note">
           <div class="pluse-demo-section-head">
             <div>
               <span>Validacao do formulario</span>
@@ -204,7 +204,7 @@
               </div>
             </div>
           </div>
-        </aside>
+        </aside> -->
       </section>
     </div>
   </AdminPageTemplate>
@@ -215,9 +215,12 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
-const checklist = [
-  { title: 'NUIT deve ser obrigatório?', copy: 'Importante se a faturação entrar no MVP.', icon: 'ki-document', tone: 'is-blue' },
-  { title: 'Responsável operacional', copy: 'Necessário para alertas de ausência e ocorrências.', icon: 'ki-profile-user', tone: 'is-green' },
-  { title: 'Endereco fiscal vs. local operacional', copy: 'Podem ser dados diferentes em clientes com varios postos.', icon: 'ki-geolocation', tone: 'is-amber' },
-]
+// Side-panel data — paired with the commented-out <aside> in the template.
+// Kept commented so ESLint doesn't flag it as unused; uncomment together
+// with the matching <aside> when the panel is re-enabled.
+// const checklist = [
+//   { title: 'NUIT deve ser obrigatório?', copy: 'Importante se a faturação entrar no MVP.', icon: 'ki-document', tone: 'is-blue' },
+//   { title: 'Responsável operacional', copy: 'Necessário para alertas de ausência e ocorrências.', icon: 'ki-profile-user', tone: 'is-green' },
+//   { title: 'Endereco fiscal vs. local operacional', copy: 'Podem ser dados diferentes em clientes com varios postos.', icon: 'ki-geolocation', tone: 'is-amber' },
+// ]
 </script>

@@ -191,7 +191,7 @@
           </div>
         </form>
 
-        <aside class="pluse-demo-panel pluse-demo-side-note">
+        <!-- <aside class="pluse-demo-panel pluse-demo-side-note">
           <div class="pluse-demo-section-head">
             <div>
               <span>Decisoes de campo</span>
@@ -209,7 +209,7 @@
               </div>
             </div>
           </div>
-        </aside>
+        </aside> -->
       </section>
     </div>
   </AdminPageTemplate>
@@ -220,9 +220,12 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
-const checklist = [
-  { title: 'GPS sempre obrigatório?', copy: 'Essencial para provar presenca, mas pode variar por conectividade.', icon: 'ki-geolocation', tone: 'is-blue' },
-  { title: 'QR Code fisico', copy: 'Precisamos decidir se sera impresso, colado no posto ou mostrado pelo cliente.', icon: 'ki-qr-code', tone: 'is-amber' },
-  { title: 'Foto no check-in', copy: 'Aumenta prova, mas pode tornar o fluxo mais pesado no campo.', icon: 'ki-picture', tone: 'is-red' },
-]
+// Side-panel data — paired with the commented-out <aside> in the template.
+// Kept commented so ESLint doesn't flag it as unused; uncomment together
+// with the matching <aside> when the panel is re-enabled.
+// const checklist = [
+//   { title: 'GPS sempre obrigatório?', copy: 'Essencial para provar presenca, mas pode variar por conectividade.', icon: 'ki-geolocation', tone: 'is-blue' },
+//   { title: 'QR Code fisico', copy: 'Precisamos decidir se sera impresso, colado no posto ou mostrado pelo cliente.', icon: 'ki-qr-code', tone: 'is-amber' },
+//   { title: 'Foto no check-in', copy: 'Aumenta prova, mas pode tornar o fluxo mais pesado no campo.', icon: 'ki-picture', tone: 'is-red' },
+// ]
 </script>
