@@ -109,12 +109,22 @@ const routes = [
       {
         path: 'clients',
         name: 'clients-list',
-        component: () => import('pages/clients/ClientsPage.vue'),
+        component: () => import('pages/clients/ClientsListPage.vue'),
       },
       {
         path: 'clients/new',
         name: 'clients-new',
-        component: () => import('pages/clients/ClientNewPage.vue'),
+        component: () => import('pages/clients/ClientFormPage.vue'),
+      },
+      {
+        path: 'clients/:id/edit',
+        name: 'clients-edit',
+        component: () => import('pages/clients/ClientFormPage.vue'),
+      },
+      {
+        path: 'clients/:id',
+        name: 'clients-detail',
+        component: () => import('pages/clients/ClientDetailPage.vue'),
       },
       {
         path: 'contracts/new',
@@ -129,17 +139,27 @@ const routes = [
       {
         path: 'posts/new',
         name: 'posts-new',
-        component: () => import('pages/posts/PostNewPage.vue'),
-      },
-      {
-        path: 'posts',
-        name: 'posts-list',
-        component: () => import('pages/posts/PostsPage.vue'),
+        component: () => import('pages/posts/PostFormPage.vue'),
       },
       {
         path: 'posts/map',
         name: 'posts-map',
         component: () => import('pages/posts/PostsMapPage.vue'),
+      },
+      {
+        path: 'posts/:id/edit',
+        name: 'posts-edit',
+        component: () => import('pages/posts/PostFormPage.vue'),
+      },
+      {
+        path: 'posts/:id',
+        name: 'posts-detail',
+        component: () => import('pages/posts/PostDetailPage.vue'),
+      },
+      {
+        path: 'posts',
+        name: 'posts-list',
+        component: () => import('pages/posts/PostsListPage.vue'),
       },
 
       {

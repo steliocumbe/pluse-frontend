@@ -204,10 +204,13 @@ async function openModal() {
       clientOptions.value = (cli?.results ?? cli ?? []).map((c) => ({
         label: c.name, value: c.id,
       }))
-      postOptions.value = (pos?.results ?? pos ?? []).map((p) => ({
-        label: p.client_name ? `${p.name} — ${p.client_name}` : p.name,
-        value: p.id,
-      }))
+      postOptions.value = (pos?.results ?? pos ?? []).map((p) => {
+        const base = p.client_name ? `${p.name} — ${p.client_name}` : p.name
+        const cap = p.max_guards != null
+          ? ` (${p.current_guards}/${p.max_guards}${p.has_capacity ? '' : ' · cheio'})`
+          : ''
+        return { label: base + cap, value: p.id, disable: p.has_capacity === false }
+      })
     } catch { /* ignore */ } finally {
       loadingRefs.value = false
     }

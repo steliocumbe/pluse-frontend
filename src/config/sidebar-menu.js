@@ -53,6 +53,11 @@ export const sidebarMenu = [
   { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
 
   // ────────────────────────────────────────────────────────────────────────
+  { type: 'heading', label: 'Cadastros' },
+  { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
+  { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },
+
+  // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Conta' },
   { label: 'Meu perfil', icon: 'ki-profile-circle', to: '/profile' },
   { label: 'Ajuda e suporte', icon: 'ki-information-3', to: '/support' },

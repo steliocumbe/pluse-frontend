@@ -412,10 +412,13 @@ onMounted(async () => {
   try {
     const data = await postService.list({ page_size: 200 })
     const rows = data?.results ?? data ?? []
-    postOptions.value = rows.map((p) => ({
-      label: p.client_name ? `${p.name} — ${p.client_name}` : p.name,
-      value: p.id,
-    }))
+    postOptions.value = rows.map((p) => {
+      const base = p.client_name ? `${p.name} — ${p.client_name}` : p.name
+      const cap = p.max_guards != null
+        ? ` (${p.current_guards}/${p.max_guards}${p.has_capacity ? '' : ' · cheio'})`
+        : ''
+      return { label: base + cap, value: p.id, disable: p.has_capacity === false }
+    })
   } catch {
     /* ignore */
   } finally {
