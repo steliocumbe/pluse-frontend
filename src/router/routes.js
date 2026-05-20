@@ -72,7 +72,7 @@ const routes = [
       {
         path: 'employees/approvals',
         name: 'employees-approvals',
-        component: () => import('pages/employees/EmployeeApprovalsPage.vue'),
+        component: () => import('pages/hr/HrApprovalsPage.vue'),
       },
       {
         path: 'employees/:id/edit',
@@ -83,6 +83,27 @@ const routes = [
         path: 'employees/:id',
         name: 'employees-detail',
         component: () => import('pages/employees/EmployeeDetailPage.vue'),
+      },
+
+      {
+        path: 'employment-contracts',
+        name: 'employment-contracts-list',
+        component: () => import('pages/employment/ContractsListPage.vue'),
+      },
+      {
+        path: 'employment-contracts/new',
+        name: 'employment-contracts-new',
+        component: () => import('pages/employment/ContractFormPage.vue'),
+      },
+      {
+        path: 'employment-contracts/:id/edit',
+        name: 'employment-contracts-edit',
+        component: () => import('pages/employment/ContractFormPage.vue'),
+      },
+      {
+        path: 'employment-contracts/:id',
+        name: 'employment-contracts-detail',
+        component: () => import('pages/employment/ContractDetailPage.vue'),
       },
 
       {

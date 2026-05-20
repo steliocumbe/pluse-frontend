@@ -48,6 +48,10 @@
         </article>
       </section>
 
+      <section class="pluse-dashboard-alerts">
+        <HrAlertsPanel :days="30" :limit="5" />
+      </section>
+
       <section class="pluse-dashboard-main-grid">
         <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
           <div class="pluse-dashboard-panel-head">
@@ -175,6 +179,7 @@ import { computed } from 'vue'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppApexChart from 'src/components/ui/AppApexChart.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
+import HrAlertsPanel from 'src/components/employment/HrAlertsPanel.vue'
 
 const palette = {
   navy: '#0f2544',

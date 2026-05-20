@@ -99,9 +99,9 @@ const showTempPassword = ref(false)
 const tempPassword = ref('')
 const createdId = ref(null)
 
-async function onSubmit({ payload, initialDocuments = [] }) {
+async function onSubmit({ payload, initialDocuments = [], initialContract = null }) {
   try {
-    const created = await store.create(payload, initialDocuments)
+    const created = await store.create(payload, initialDocuments, initialContract)
     createdId.value = created.id
     const docsHint = initialDocuments.length
       ? ` (${initialDocuments.length} documento${initialDocuments.length === 1 ? '' : 's'} anexado${initialDocuments.length === 1 ? '' : 's'})`

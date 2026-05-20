@@ -15,7 +15,7 @@
   <AdminPageTemplate
     :eyebrow="`Colaboradores · ${employee?.employee_number || '…'}`"
     :title="employee?.full_name || 'Colaborador'"
-    :description="employee?.role_title || 'Detalhes do colaborador'"
+    :description="employee?.current_job_title || 'Detalhes do colaborador'"
   >
     <template #meta>
       <span v-if="employee" class="admin-meta-chip admin-meta-chip--accent">
@@ -144,6 +144,7 @@
           inline-label
         >
           <q-tab name="general" no-caps icon="info" label="Geral" />
+          <q-tab name="contracts" no-caps icon="description" label="Contratos" />
           <q-tab name="documents" no-caps icon="folder">
             <template #default>
               <div class="flex items-center gap-2">
@@ -152,6 +153,8 @@
               </div>
             </template>
           </q-tab>
+          <q-tab name="disciplinary" no-caps icon="gavel" label="Disciplina" />
+          <q-tab name="transfers" no-caps icon="swap_horiz" label="Transferências" />
           <q-tab name="history" no-caps icon="history" label="Histórico" />
         </q-tabs>
       </q-card>
@@ -285,29 +288,28 @@
             </div>
           </section>
 
-          <!-- Função e salário -->
+          <!-- Função e admissão -->
           <section class="detail-section">
             <header class="detail-section__head">
               <span class="detail-section__icon"><AppIcon name="ki-calendar-tick" :size="16" /></span>
-              <span class="detail-section__title">Função e salário</span>
+              <span class="detail-section__title">Função e admissão</span>
             </header>
             <div class="detail-section__body">
-              <div class="field-row">
-                <span class="field-row__label">Cargo</span>
-                <span class="field-row__value">{{ employee.role_title || '—' }}</span>
-              </div>
               <div class="field-row">
                 <span class="field-row__label">Data de admissão</span>
                 <span class="field-row__value">{{ formatDate(employee.hire_date) }}</span>
               </div>
               <div class="field-row">
-                <span class="field-row__label">Categoria salarial</span>
-                <span class="field-row__value">{{ employee.salary_category?.label || '—' }}</span>
+                <span class="field-row__label">Cargo actual</span>
+                <span class="field-row__value">{{ employee.current_job_title || '—' }}</span>
               </div>
-              <div class="field-row">
-                <span class="field-row__label">Salário efectivo</span>
+              <div class="field-row field-row--wide">
+                <span class="field-row__label">Salário em vigor</span>
                 <span class="field-row__value">
                   {{ employee.effective_salary ? `${employee.effective_salary} MZN` : '—' }}
+                  <span class="field-hint">
+                    Definido pelo contrato activo — ver separador <strong>Contratos</strong>.
+                  </span>
                 </span>
               </div>
             </div>
@@ -354,6 +356,11 @@
             </div>
           </section>
         </div>
+      </q-tab-panel>
+
+      <!-- Contratos -->
+      <q-tab-panel name="contracts" class="p-0">
+        <EmployeeContractsTab :employee-id="employee.id" />
       </q-tab-panel>
 
       <!-- Documentos -->
@@ -457,6 +464,16 @@
           description="Anexe BI, NUIT, registo criminal, certificados ou contratos. Pode também adicioná-los logo no momento do registo."
           icon="ki-document"
         />
+      </q-tab-panel>
+
+      <!-- Disciplina -->
+      <q-tab-panel name="disciplinary" class="p-0">
+        <EmployeeDisciplinaryTab :employee-id="employee.id" />
+      </q-tab-panel>
+
+      <!-- Transferências -->
+      <q-tab-panel name="transfers" class="p-0">
+        <EmployeeTransfersTab :employee-id="employee.id" @changed="reloadEmployee" />
       </q-tab-panel>
 
       <!-- Histórico -->
@@ -563,6 +580,9 @@ import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
 import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
+import EmployeeContractsTab from 'src/components/employment/EmployeeContractsTab.vue'
+import EmployeeDisciplinaryTab from 'src/components/employment/EmployeeDisciplinaryTab.vue'
+import EmployeeTransfersTab from 'src/components/employment/EmployeeTransfersTab.vue'
 import { absoluteFileUrl } from 'src/utils/file-url'
 import { documentCategories, documentTypeMap, documentTypeLabel } from 'src/config/document-types'
 
@@ -690,6 +710,13 @@ async function inactivate() {
       toast.error('Não foi possível inactivar.', { caption: err?.response?.data?.detail })
     }
   })
+}
+
+/* Re-fetch the employee — used after a transfer is approved (placement changes). */
+async function reloadEmployee() {
+  try {
+    await store.fetchOne(route.params.id)
+  } catch { /* ignore */ }
 }
 
 async function fetchDocuments() {
@@ -931,6 +958,12 @@ onMounted(async () => {
   font-size: 0.9rem;
   color: var(--foreground);
   word-break: break-word;
+}
+.field-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
 }
 
 /* ── Documents — header ────────────────────────────────────────────────── */

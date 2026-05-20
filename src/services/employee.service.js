@@ -11,18 +11,23 @@ export const employeeService = {
   },
 
   /**
-   * Create employee.
+   * Create employee + initial work contract (always) + initial documents.
+   *
+   * `initialContract` is mandatory — the backend creates the Employee, its
+   * User (if requested), the first EmploymentContract (PENDING) and all
+   * Documents atomically.
    *
    * When `initialDocuments` is empty: sends regular JSON.
-   * When `initialDocuments` has entries: switches to multipart and sends:
-   *   - all payload fields
-   *   - `initial_documents`: JSON-encoded array of metadata
-   *   - `initial_documents_files_{N}`: each file
-   * The backend creates Employee + User + all Documents atomically.
+   * When `initialDocuments` has entries: switches to multipart and sends
+   * the files as `initial_documents_files_{N}`.
    */
-  create(payload, initialDocuments = []) {
+  create(payload, initialDocuments = [], initialContract = null) {
+    const contractJson = JSON.stringify(initialContract || {})
+
     if (!initialDocuments || initialDocuments.length === 0) {
-      return api.post('/employees/', payload).then((r) => r.data)
+      return api
+        .post('/employees/', { ...payload, initial_contract: contractJson })
+        .then((r) => r.data)
     }
 
     const fd = new FormData()
@@ -38,6 +43,8 @@ export const employeeService = {
         fd.append(k, String(v))
       }
     }
+
+    fd.append('initial_contract', contractJson)
 
     const meta = initialDocuments.map((d) => ({
       type: d.type,

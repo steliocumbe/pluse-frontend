@@ -100,26 +100,16 @@
                    hint="Padrão livre nesta fase (ex: 12h trabalho / 24h descanso). Formalizado nas Escalas." />
         </div>
 
-        <div class="form-group-label">Função e salário</div>
+        <div class="form-group-label">Função e admissão</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-select v-model="form.types" :options="groupOptions" label="Tipos de função *"
                     outlined dense multiple use-chips emit-value map-options options-dense
                     class="md:col-span-2"
                     hint="Pode acumular várias funções (ex: Vigilante + Supervisor)"
                     :rules="[(v) => (Array.isArray(v) && v.length > 0) || 'Selecione pelo menos um tipo']" />
-          <q-input v-model="form.role_title" label="Cargo" outlined dense
-                   hint="Texto livre (ex: Vigilante Senior)" />
           <q-input v-model="form.hire_date" label="Data de admissão *" type="date"
-                   outlined dense stack-label :rules="[req]" />
-          <q-select v-model="form.salary_category" :options="salaryCategoryOptions"
-                    label="Categoria salarial" outlined dense emit-value map-options
-                    clearable :loading="loadingSalary"
-                    hint="Aplicável a vigilantes (4 escalões fixos)." />
-          <q-input v-model="form.base_salary" label="Salário base" type="number"
-                   outlined dense step="0.01" :disable="!!form.salary_category"
-                   :hint="form.salary_category
-                     ? 'Definido pela categoria salarial'
-                     : 'Salário livre (MZN), para cargos sem categoria'" />
+                   outlined dense stack-label :rules="[req]"
+                   hint="Data de entrada na empresa. O cargo e o salário são definidos no contrato." />
         </div>
       </q-form>
     </q-step>
@@ -162,6 +152,49 @@
       <EmployeeFormDocuments v-model="form.initial_documents" />
     </q-step>
 
+    <!-- ─────────────── Step 5 — Contrato inicial (create only) ─────────────── -->
+    <q-step v-if="mode === 'create'" :name="5" title="Contrato inicial" icon="description">
+      <q-form ref="form5" greedy class="flex flex-col gap-5">
+        <div class="form-group-label">Contrato de trabalho</div>
+        <p class="text-sm text-muted-foreground">
+          O colaborador é registado já com o seu primeiro contrato — é aqui que
+          se define o cargo e o salário. O contrato fica pendente até aprovação
+          do Diretor Financeiro.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <q-select v-model="contract.contract_type" :options="contractTypeOptions"
+                    label="Tipo de contrato *" outlined dense emit-value map-options
+                    :rules="[req]" />
+          <q-input v-model="contract.job_title" label="Cargo *" outlined dense :rules="[req]"
+                   hint="Ex: Vigilante, Supervisor de Zona" />
+          <q-input v-model="contract.start_date" label="Início do contrato *" type="date"
+                   outlined dense stack-label :rules="[req]" />
+          <q-input v-if="contractNeedsEnd" v-model="contract.end_date"
+                   label="Fim do contrato *" type="date" outlined dense stack-label
+                   :rules="[req]" />
+          <q-input v-model="contract.probation_end_date" label="Fim do período probatório"
+                   type="date" outlined dense stack-label />
+          <q-input v-model.number="contract.weekly_hours" label="Horas semanais"
+                   type="number" outlined dense min="0" max="80" />
+          <q-select v-model="contract.salary_category" :options="salaryCategoryOptions"
+                    label="Categoria salarial" outlined dense emit-value map-options
+                    clearable :loading="loadingSalary"
+                    hint="Aplicável a vigilantes (4 escalões fixos)" />
+          <q-input v-model="contract.base_salary" label="Salário do contrato (MZN)"
+                   type="number" outlined dense step="0.01"
+                   :disable="!!contract.salary_category"
+                   :rules="[(v) => !!contract.salary_category || !!v
+                     || 'Indique o salário ou escolha uma categoria']"
+                   :hint="contract.salary_category
+                     ? 'Definido pela categoria salarial'
+                     : 'Salário livre acordado (MZN)'" />
+          <q-input v-model="contract.workplace" label="Local de trabalho" outlined dense
+                   class="md:col-span-2"
+                   hint="Posto, cliente ou unidade à data da assinatura" />
+        </div>
+      </q-form>
+    </q-step>
+
     <!-- ─────────────── Navigation ─────────────── -->
     <template #navigation>
       <q-stepper-navigation class="flex flex-wrap items-center justify-between gap-2">
@@ -201,6 +234,7 @@ import { groupService } from 'src/services/group.service'
 import { clientService } from 'src/services/client.service'
 import { postService } from 'src/services/post.service'
 import { salaryCategoryService } from 'src/services/salary-category.service'
+import { contractTypeOptions, termedContractTypes } from 'src/config/employment'
 
 const props = defineProps({
   mode: { type: String, default: 'create', validator: (v) => ['create', 'edit'].includes(v) },
@@ -218,11 +252,12 @@ const stepperRef = ref(null)
 const form1 = ref(null)
 const form2 = ref(null)
 const form3 = ref(null)
-// Step 4 (documents) has no required fields, so no form ref needed.
-const stepForms = { 1: form1, 2: form2, 3: form3 }
+// Step 4 (documents) has no required fields. Step 5 (initial contract) does.
+const form5 = ref(null)
+const stepForms = { 1: form1, 2: form2, 3: form3, 5: form5 }
 
-// Last step depends on mode — documents step only exists when creating.
-const lastStep = computed(() => (props.mode === 'create' ? 4 : 3))
+// Last step depends on mode — documents + contract steps are create-only.
+const lastStep = computed(() => (props.mode === 'create' ? 5 : 3))
 
 const blank = {
   full_name: '',
@@ -251,10 +286,7 @@ const blank = {
   phone: '',
   email: '',
   types: [],
-  role_title: '',
   hire_date: '',
-  salary_category: null,
-  base_salary: '',
   inss_number: '',
   mpesa_number: '',
   mpesa_name: '',
@@ -267,6 +299,25 @@ const blank = {
 
 const form = reactive({ ...blank })
 
+// Step 5 — the initial work contract. Kept separate from `form` because it
+// is a distinct entity; emitted to the parent as `initialContract`.
+const blankContract = {
+  contract_type: 'fixed_term',
+  job_title: '',
+  start_date: '',
+  end_date: '',
+  probation_end_date: '',
+  weekly_hours: null,
+  salary_category: null,
+  base_salary: '',
+  workplace: '',
+}
+const contract = reactive({ ...blankContract })
+
+const contractNeedsEnd = computed(
+  () => termedContractTypes.includes(contract.contract_type),
+)
+
 watch(
   () => props.initial,
   (val) => {
@@ -274,17 +325,22 @@ watch(
     if (Array.isArray(form.types) && form.types.length && typeof form.types[0] === 'object') {
       form.types = form.types.map((t) => t.id)
     }
-    if (form.salary_category && typeof form.salary_category === 'object') {
-      form.salary_category = form.salary_category.id
-    }
   },
   { immediate: true, deep: true },
 )
 
+// Salary category overrides the free salary field on the contract.
 watch(
-  () => form.salary_category,
+  () => contract.salary_category,
   (cat) => {
-    if (cat) form.base_salary = ''
+    if (cat) contract.base_salary = ''
+  },
+)
+// Prefill the contract start with the admission date (until edited).
+watch(
+  () => form.hire_date,
+  (date) => {
+    if (date && !contract.start_date) contract.start_date = date
   },
 )
 watch(
@@ -406,7 +462,7 @@ function back() {
 async function onSubmit() {
   // Validate every step that has a form — guards against header navigation
   // skipping a step or editing a prior field after advancing.
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 3, 5]) {
     if (!(await validateStep(n))) {
       step.value = n
       toast.warning('Há campos por preencher. Reveja os passos destacados.')
@@ -421,10 +477,18 @@ async function onSubmit() {
     if (v === '' || v === null || v === undefined) continue
     payload[k] = v
   }
-  if (payload.base_salary !== undefined) {
-    payload.base_salary = String(payload.base_salary)
+
+  // Build the initial contract payload — drop empty fields.
+  const initialContract = {}
+  for (const [k, v] of Object.entries(contract)) {
+    if (v === '' || v === null || v === undefined) continue
+    initialContract[k] = v
   }
-  emit('submit', { payload, initialDocuments })
+  if (initialContract.base_salary !== undefined) {
+    initialContract.base_salary = String(initialContract.base_salary)
+  }
+
+  emit('submit', { payload, initialDocuments, initialContract })
 }
 </script>
 
