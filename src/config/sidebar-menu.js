@@ -17,28 +17,40 @@ export const sidebarMenu = [
   { label: 'Dashboard', icon: 'ki-element-11', to: '/' },
 
   // ────────────────────────────────────────────────────────────────────────
+  // Organizado pelo ciclo de vida do colaborador. Itens marcados como "🔜"
+  // ainda não têm página própria — caem na PlaceholderPage via catch-all.
   { type: 'heading', label: 'Recursos Humanos' },
-  {
-    label: 'Colaboradores',
-    icon: 'ki-people',
-    children: [
-      { label: 'Lista', to: '/employees' },
-      { label: 'Aprovações pendentes', to: '/employees/approvals' },
-    ],
-  },
+  { label: 'Colaboradores', icon: 'ki-people', to: '/employees' },
+  { label: 'Aprovações pendentes', icon: 'ki-check-circle', to: '/employees/approvals' },
   { label: 'Contratos de trabalho', icon: 'ki-document', to: '/employment-contracts' },
-  { label: 'Férias e ausências', icon: 'ki-calendar-tick', to: '/leaves' },
-  { label: 'Formação e certificações', icon: 'ki-information-2', to: '/training' },
-  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
   {
-    label: 'Escalas',
+    label: 'Escalas e assiduidade',
     icon: 'ki-calendar',
     children: [
-      { label: 'Calendário', to: '/schedules' },
-      { label: 'Por posto', to: '/schedules/by-post' },
-      { label: 'Por colaborador', to: '/schedules/by-employee' },
+      { label: 'Escalas', to: '/schedules' },
+      { label: 'Mapa de assiduidade', to: '/attendance-map' },
     ],
   },
+  {
+    label: 'Férias, faltas e baixas',
+    icon: 'ki-calendar-tick',
+    children: [
+      { label: 'Pedidos de férias', to: '/leaves' },
+      { label: 'Faltas e substituições', to: '/absences' },
+      { label: 'Baixas médicas', to: '/sick-leaves' },
+    ],
+  },
+  {
+    label: 'Processamento salarial',
+    icon: 'ki-cheque',
+    children: [
+      { label: 'Folha de pagamento', to: '/payroll' },
+      { label: 'Categorias salariais', to: '/payroll/categories' },
+    ],
+  },
+  { label: 'Formação e certificações', icon: 'ki-information-2', to: '/training' },
+  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
+  { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
 
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Conta' },

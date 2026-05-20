@@ -51,28 +51,6 @@
           <FullCalendar :options="calendarOptions" />
         </article>
 
-        <article class="pluse-demo-panel">
-          <div class="pluse-demo-section-head">
-            <div>
-              <span>Publicação</span>
-              <strong>Pendências antes de fechar</strong>
-            </div>
-            <button type="button" class="kt-btn kt-btn-outline kt-btn-sm">Resolver</button>
-          </div>
-
-          <div class="pluse-demo-alert-stack">
-            <div v-for="item in conflicts" :key="item.title" class="pluse-demo-alert" :class="item.tone">
-              <span class="pluse-demo-card-icon" :class="item.tone">
-                <AppIcon :name="item.icon" :size="17" />
-              </span>
-              <div>
-                <strong>{{ item.title }}</strong>
-                <p>{{ item.copy }}</p>
-              </div>
-              <AppBadge :variant="item.variant">{{ item.badge }}</AppBadge>
-            </div>
-          </div>
-        </article>
       </section>
     </div>
   </AdminPageTemplate>
@@ -124,9 +102,9 @@ const calendarOptions = {
   ],
 }
 
-const conflicts = [
-  { title: 'Posto sem vigilante', copy: 'Porto Gate 4 não tem cobertura completa para o turno noturno.', badge: 'Crítico', variant: 'danger', icon: 'ki-warning-2', tone: 'is-red' },
-  { title: 'Sobreposição de colaborador', copy: 'Rui Cossa aparece em dois turnos consecutivos.', badge: '1', variant: 'warning', icon: 'ki-time', tone: 'is-amber' },
-  { title: 'Supervisor por confirmar', copy: 'Três postos críticos aguardam responsável de ronda.', badge: '3', variant: 'info', icon: 'ki-shield-tick', tone: 'is-blue' },
-]
+// const conflicts = [
+//   { title: 'Posto sem vigilante', copy: 'Porto Gate 4 não tem cobertura completa para o turno noturno.', badge: 'Crítico', variant: 'danger', icon: 'ki-warning-2', tone: 'is-red' },
+//   { title: 'Sobreposição de colaborador', copy: 'Rui Cossa aparece em dois turnos consecutivos.', badge: '1', variant: 'warning', icon: 'ki-time', tone: 'is-amber' },
+//   { title: 'Supervisor por confirmar', copy: 'Três postos críticos aguardam responsável de ronda.', badge: '3', variant: 'info', icon: 'ki-shield-tick', tone: 'is-blue' },
+// ]
 </script>
