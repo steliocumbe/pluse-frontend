@@ -54,9 +54,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-input v-model="form.phone" label="Telefone *" outlined dense inputmode="tel"
                    hint="9 dígitos, com ou sem +258" :rules="[req]" />
-          <q-input v-model="form.email" label="E-mail" type="email" outlined dense
+          <q-input v-model="form.email"
+                   :label="form.create_account ? 'E-mail *' : 'E-mail'"
+                   type="email" outlined dense
                    inputmode="email" autocomplete="off"
-                   :hint="form.create_account ? 'Será o utilizador da conta de acesso' : ''"
+                   :hint="form.create_account
+                     ? 'Será o utilizador da conta de acesso — obrigatório'
+                     : 'Opcional. Necessário apenas para criar conta de acesso.'"
                    :rules="[(v) => !form.create_account || !!v || 'Obrigatório para criar conta']" />
         </div>
 

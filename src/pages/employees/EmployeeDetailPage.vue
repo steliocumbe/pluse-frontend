@@ -358,118 +358,97 @@
 
       <!-- Documentos -->
       <q-tab-panel name="documents" class="p-0">
-        <!-- Upload bar -->
-        <q-card flat bordered class="pluse-card q-mb-md">
-          <q-card-section>
-            <AppHeading :level="3" class="text-sm font-semibold text-mono mb-3">
-              Adicionar documento
-            </AppHeading>
-            <div class="flex flex-wrap items-end gap-3">
-              <q-select
-                v-model="newDoc.type"
-                :options="docTypeOptions"
-                label="Tipo *"
-                outlined
-                dense
-                emit-value
-                map-options
-                style="min-width: 220px"
-              />
-              <q-input
-                v-model="newDoc.issue_date"
-                label="Data de emissão"
-                type="date"
-                outlined
-                dense
-                stack-label
-              />
-              <q-input
-                v-model="newDoc.expiry_date"
-                label="Validade"
-                type="date"
-                outlined
-                dense
-                stack-label
-              />
-              <q-file
-                v-model="newDoc.file"
-                label="Ficheiro *"
-                outlined
-                dense
-                class="grow"
-                max-file-size="10485760"
-                accept=".pdf,.jpg,.jpeg,.png"
-              >
-                <template #prepend>
-                  <q-icon name="attach_file" />
-                </template>
-              </q-file>
-              <q-btn
-                color="primary"
-                unelevated
-                no-caps
-                icon="cloud_upload"
-                label="Adicionar"
-                :loading="uploading"
-                :disable="!newDoc.type || !newDoc.file"
-                @click="uploadDocument"
-              />
-            </div>
-          </q-card-section>
-        </q-card>
+        <!-- Header: summary + add button -->
+        <div class="docs-head">
+          <div class="docs-head__info">
+            <AppHeading :level="3" class="docs-head__title">Documentos do colaborador</AppHeading>
+            <span class="docs-head__summary">
+              {{ documents.length }} anexado{{ documents.length === 1 ? '' : 's' }}
+              <template v-if="expiringCount">
+                · <span class="docs-head__alert">{{ expiringCount }} a renovar</span>
+              </template>
+            </span>
+          </div>
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            icon="add"
+            label="Adicionar documentos"
+            @click="openDocModal"
+          />
+        </div>
 
-        <!-- Grid -->
-        <div v-if="documents.length" class="documents-grid">
-          <div v-for="doc in documents" :key="doc.id" class="doc-card">
-            <div class="doc-card__head">
-              <span class="doc-card__icon" :style="{ background: docPalette(doc.type).bg, color: docPalette(doc.type).fg }">
-                <AppIcon :name="docPalette(doc.type).icon" :size="20" />
-              </span>
-              <q-btn flat round dense icon="more_vert" size="sm">
-                <q-menu>
-                  <q-list dense style="min-width: 160px">
-                    <q-item
-                      clickable
-                      v-close-popup
-                      :href="absoluteFileUrl(doc.file)"
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      <q-item-section avatar><q-icon name="open_in_new" /></q-item-section>
-                      <q-item-section>Abrir</q-item-section>
-                    </q-item>
-                    <q-item clickable v-close-popup @click="deleteDocument(doc)">
-                      <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
-                      <q-item-section>Eliminar</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-            </div>
-            <div class="doc-card__body">
-              <div class="doc-card__title">{{ doc.type_display }}</div>
-              <div v-if="doc.issue_date || doc.expiry_date" class="doc-card__meta">
-                <span v-if="doc.issue_date">
-                  Emitido {{ formatDate(doc.issue_date) }}
-                </span>
-                <span v-if="doc.expiry_date" :class="isExpired(doc.expiry_date) ? 'text-destructive' : ''">
-                  · Válido até {{ formatDate(doc.expiry_date) }}
-                  <span v-if="isExpired(doc.expiry_date)">(expirado)</span>
-                </span>
+        <!-- Categorised list -->
+        <div v-if="categoriesWithDocs.length" class="docs-categories">
+          <section
+            v-for="cat in categoriesWithDocs"
+            :key="cat.key"
+            class="doc-category"
+          >
+            <header class="doc-category__head">
+              <span class="doc-category__icon"><AppIcon :name="cat.icon" :size="16" /></span>
+              <span class="doc-category__title">{{ cat.label }}</span>
+              <span class="doc-category__count">{{ cat.docs.length }} / {{ cat.types.length }}</span>
+            </header>
+            <div class="documents-grid">
+              <div v-for="doc in cat.docs" :key="doc.id" class="doc-card">
+                <div class="doc-card__head">
+                  <span class="doc-card__icon">
+                    <AppIcon :name="cat.icon" :size="18" />
+                  </span>
+                  <q-btn flat round dense icon="more_vert" size="sm">
+                    <q-menu>
+                      <q-list dense style="min-width: 160px">
+                        <q-item
+                          clickable
+                          v-close-popup
+                          :href="absoluteFileUrl(doc.file)"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          <q-item-section avatar><q-icon name="open_in_new" /></q-item-section>
+                          <q-item-section>Abrir</q-item-section>
+                        </q-item>
+                        <q-item clickable v-close-popup @click="deleteDocument(doc)">
+                          <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
+                          <q-item-section>Eliminar</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
+                <div class="doc-card__body">
+                  <div class="doc-card__title">{{ documentTypeLabel(doc.type) }}</div>
+                  <div v-if="doc.title" class="doc-card__subtitle">{{ doc.title }}</div>
+                  <div v-if="doc.issue_date || doc.expiry_date" class="doc-card__meta">
+                    <span v-if="doc.issue_date">Emitido {{ formatDate(doc.issue_date) }}</span>
+                    <span v-if="doc.expiry_date">
+                      {{ doc.issue_date ? ' · ' : '' }}Validade {{ formatDate(doc.expiry_date) }}
+                    </span>
+                  </div>
+                  <span
+                    class="doc-badge"
+                    :class="`doc-badge--${expiryStatus(doc).tone}`"
+                  >
+                    <q-icon :name="expiryStatus(doc).icon" size="12px" />
+                    {{ expiryStatus(doc).label }}
+                  </span>
+                </div>
+                <div class="doc-card__footer">
+                  <a
+                    :href="absoluteFileUrl(doc.file)"
+                    target="_blank"
+                    rel="noopener"
+                    class="doc-card__link"
+                  >
+                    <AppIcon name="ki-document" :size="14" />
+                    Ver ficheiro
+                  </a>
+                </div>
               </div>
             </div>
-            <div class="doc-card__footer">
-              <a
-                :href="absoluteFileUrl(doc.file)"
-                target="_blank"
-                rel="noopener"
-                class="doc-card__link"
-              >
-                <AppIcon name="ki-document" :size="14" />
-                Ver ficheiro
-              </a>
-            </div>
-          </div>
+          </section>
         </div>
 
         <AppEmptyState
@@ -537,11 +516,42 @@
         </q-card>
       </q-tab-panel>
     </q-tab-panels>
+
+    <!-- Batch document upload modal -->
+    <AppModal v-model="showDocModal" size="xl" persistent>
+      <div class="p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="doc-modal__icon"><AppIcon name="ki-document" :size="20" /></span>
+          <div>
+            <AppHeading :level="3" class="text-base font-semibold text-mono">
+              Adicionar documentos
+            </AppHeading>
+            <p class="text-xs text-muted-foreground m-0">
+              Anexe vários documentos de uma só vez — todos serão carregados em conjunto.
+            </p>
+          </div>
+        </div>
+        <EmployeeFormDocuments v-model="pendingDocs" />
+        <div class="flex justify-end gap-2 mt-5">
+          <q-btn flat no-caps label="Cancelar" :disable="uploading" @click="showDocModal = false" />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            icon="cloud_upload"
+            label="Carregar todos"
+            :loading="uploading"
+            :disable="!pendingDocs.length"
+            @click="uploadAll"
+          />
+        </div>
+      </div>
+    </AppModal>
   </AdminPageTemplate>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useEmployeesStore } from 'src/stores/employees'
@@ -551,7 +561,10 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
+import AppModal from 'src/components/ui/AppModal.vue'
+import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
 import { absoluteFileUrl } from 'src/utils/file-url'
+import { documentCategories, documentTypeMap, documentTypeLabel } from 'src/config/document-types'
 
 const route = useRoute()
 const router = useRouter()
@@ -565,33 +578,41 @@ const tab = ref('general')
 const documents = ref([])
 const loadingDocs = ref(false)
 const uploading = ref(false)
-const newDoc = reactive({ type: '', issue_date: '', expiry_date: '', file: null })
+const showDocModal = ref(false)
+const pendingDocs = ref([])
 
-const docTypeOptions = [
-  { label: 'Bilhete de Identidade', value: 'id_card' },
-  { label: 'Passaporte', value: 'passport' },
-  { label: 'DIRE', value: 'dire' },
-  { label: 'NUIT', value: 'nuit' },
-  { label: 'Registo Criminal', value: 'criminal_record' },
-  { label: 'Certificado', value: 'certificate' },
-  { label: 'Contrato de trabalho', value: 'employment_contract' },
-  { label: 'Atestado médico', value: 'medical' },
-  { label: 'Outro', value: 'other' },
-]
+/* Documents grouped by their config category — empty categories are hidden. */
+const categoriesWithDocs = computed(() =>
+  documentCategories
+    .map((cat) => ({
+      ...cat,
+      docs: documents.value.filter(
+        (d) => (documentTypeMap[d.type]?.categoryKey || 'other') === cat.key,
+      ),
+    }))
+    .filter((cat) => cat.docs.length),
+)
 
-function docPalette(type) {
-  return ({
-    id_card: { icon: 'ki-shield-tick', bg: 'color-mix(in oklab, var(--primary) 14%, transparent)', fg: 'var(--primary)' },
-    passport: { icon: 'ki-route', bg: 'color-mix(in oklab, var(--pluse-cyan-500, #06b6d4) 14%, transparent)', fg: 'var(--pluse-cyan-500, #06b6d4)' },
-    dire: { icon: 'ki-document', bg: 'color-mix(in oklab, var(--pluse-cyan-500, #06b6d4) 14%, transparent)', fg: 'var(--pluse-cyan-500, #06b6d4)' },
-    nuit: { icon: 'ki-cheque', bg: 'color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 16%, transparent)', fg: 'var(--pluse-amber-500, #f59e0b)' },
-    criminal_record: { icon: 'ki-shield', bg: 'color-mix(in oklab, var(--destructive) 12%, transparent)', fg: 'var(--destructive)' },
-    certificate: { icon: 'ki-medal-star', bg: 'color-mix(in oklab, var(--pluse-emerald-500, #10b981) 14%, transparent)', fg: 'var(--pluse-emerald-500, #10b981)' },
-    employment_contract: { icon: 'ki-document', bg: 'color-mix(in oklab, var(--primary) 14%, transparent)', fg: 'var(--primary)' },
-    medical: { icon: 'ki-information-2', bg: 'color-mix(in oklab, var(--pluse-emerald-500, #10b981) 14%, transparent)', fg: 'var(--pluse-emerald-500, #10b981)' },
-    other: { icon: 'ki-document', bg: 'var(--muted)', fg: 'var(--muted-foreground)' },
-  })[type] || { icon: 'ki-document', bg: 'var(--muted)', fg: 'var(--muted-foreground)' }
+/* Validity badge for a document. */
+function expiryStatus(doc) {
+  if (!doc.expiry_date) {
+    return { tone: 'neutral', icon: 'remove', label: 'Sem validade' }
+  }
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const days = Math.round((new Date(doc.expiry_date) - today) / 86400000)
+  if (days < 0) return { tone: 'negative', icon: 'error', label: 'Expirado' }
+  if (days === 0) return { tone: 'warning', icon: 'schedule', label: 'Expira hoje' }
+  if (days <= 30) {
+    return { tone: 'warning', icon: 'schedule', label: `Expira em ${days} dia${days === 1 ? '' : 's'}` }
+  }
+  return { tone: 'positive', icon: 'check_circle', label: 'Válido' }
 }
+
+/* Count of documents that are expired or expiring within 30 days. */
+const expiringCount = computed(
+  () => documents.value.filter((d) => ['warning', 'negative'].includes(expiryStatus(d).tone)).length,
+)
 
 function statusIcon(status) {
   return {
@@ -613,17 +634,10 @@ function formatDateTime(s) {
 function genderLabel(g) {
   return { male: 'Masculino', female: 'Feminino', other: 'Outro' }[g] || '—'
 }
-function documentTypeLabel(t) {
-  return { id_card: 'BI', passport: 'Passaporte', dire: 'DIRE' }[t] || t
-}
 /* Joins a name + phone pair into "Nome · +258..." — "—" when both empty. */
 function pairOf(name, phone) {
   const parts = [name, phone].filter(Boolean)
   return parts.length ? parts.join(' · ') : '—'
-}
-function isExpired(date) {
-  if (!date) return false
-  return new Date(date) < new Date()
 }
 function humanDuration(dateStr) {
   if (!dateStr) return ''
@@ -688,21 +702,41 @@ async function fetchDocuments() {
   }
 }
 
-async function uploadDocument() {
-  if (!newDoc.type || !newDoc.file) return
+function openDocModal() {
+  pendingDocs.value = []
+  showDocModal.value = true
+}
+
+/* Uploads every complete row in the modal, one request per document. */
+async function uploadAll() {
+  const rows = pendingDocs.value.filter((d) => d.type && d.file)
+  if (!rows.length) {
+    toast.error('Adicione pelo menos um documento com tipo e ficheiro.')
+    return
+  }
   uploading.value = true
+  let done = 0
   try {
-    const fd = new FormData()
-    fd.append('type', newDoc.type)
-    fd.append('file', newDoc.file)
-    if (newDoc.issue_date) fd.append('issue_date', newDoc.issue_date)
-    if (newDoc.expiry_date) fd.append('expiry_date', newDoc.expiry_date)
-    await employeeService.uploadDocument(employee.value.id, fd)
-    toast.success('Documento adicionado.')
-    Object.assign(newDoc, { type: '', issue_date: '', expiry_date: '', file: null })
+    for (const d of rows) {
+      const fd = new FormData()
+      fd.append('type', d.type)
+      fd.append('file', d.file)
+      if (d.title) fd.append('title', d.title)
+      if (d.issue_date) fd.append('issue_date', d.issue_date)
+      if (d.expiry_date) fd.append('expiry_date', d.expiry_date)
+      await employeeService.uploadDocument(employee.value.id, fd)
+      done++
+    }
+    toast.success(`${done} documento${done === 1 ? '' : 's'} adicionado${done === 1 ? '' : 's'}.`)
+    showDocModal.value = false
+    pendingDocs.value = []
     await fetchDocuments()
   } catch (err) {
-    toast.error('Não foi possível enviar.', { caption: err?.response?.data?.detail })
+    toast.error(
+      done ? `${done} enviado(s), mas houve uma falha.` : 'Não foi possível enviar.',
+      { caption: err?.response?.data?.detail },
+    )
+    if (done) await fetchDocuments()
   } finally {
     uploading.value = false
   }
@@ -899,6 +933,70 @@ onMounted(async () => {
   word-break: break-word;
 }
 
+/* ── Documents — header ────────────────────────────────────────────────── */
+.docs-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.docs-head__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.docs-head__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mono);
+}
+.docs-head__summary {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.docs-head__alert {
+  font-weight: 700;
+  color: var(--pluse-amber-500, #f59e0b);
+}
+
+/* ── Documents — categories ────────────────────────────────────────────── */
+.docs-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.doc-category__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.doc-category__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.doc-category__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--mono);
+}
+.doc-category__count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
 /* ── Documents grid ────────────────────────────────────────────────────── */
 .documents-grid {
   display: grid;
@@ -931,6 +1029,13 @@ onMounted(async () => {
   width: 40px;
   height: 40px;
   border-radius: 10px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.doc-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .doc-card__title {
   font-size: 0.94rem;
@@ -938,9 +1043,54 @@ onMounted(async () => {
   color: var(--mono);
   line-height: 1.3;
 }
+.doc-card__subtitle {
+  font-size: 0.8rem;
+  color: var(--foreground);
+}
 .doc-card__meta {
   font-size: 0.76rem;
   color: var(--muted-foreground);
+}
+
+/* ── Validity badge ────────────────────────────────────────────────────── */
+.doc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.doc-badge--positive {
+  background: color-mix(in oklab, var(--pluse-emerald-500, #10b981) 16%, transparent);
+  color: var(--pluse-emerald-600, #059669);
+}
+.doc-badge--warning {
+  background: color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 20%, transparent);
+  color: var(--pluse-amber-600, #d97706);
+}
+.doc-badge--negative {
+  background: color-mix(in oklab, var(--destructive) 16%, transparent);
+  color: var(--destructive);
+}
+.doc-badge--neutral {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+/* ── Document upload modal ─────────────────────────────────────────────── */
+.doc-modal__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
 }
 .doc-card__footer {
   margin-top: 4px;

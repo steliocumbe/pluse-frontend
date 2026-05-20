@@ -41,6 +41,7 @@ export const employeeService = {
 
     const meta = initialDocuments.map((d) => ({
       type: d.type,
+      title: d.title || '',
       issue_date: d.issue_date || null,
       expiry_date: d.expiry_date || null,
       notes: d.notes || '',
