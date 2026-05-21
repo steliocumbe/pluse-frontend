@@ -38,9 +38,11 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <q-select v-model="form.service_type" :options="serviceTypeOptions"
                       label="Tipo de serviço *" outlined dense emit-value map-options
-                      :rules="[req]" />
+                      :rules="[req]"
+                      hint="O serviço vendido ao cliente (entra na faturação)." />
             <q-select v-model="form.shift_hours" :options="shiftHoursOptions"
-                      label="Duração do turno" outlined dense emit-value map-options clearable />
+                      label="Regime de turno" outlined dense emit-value map-options clearable
+                      hint="Define como a escala é montada (12h = Diurno + Noturno)." />
             <q-input v-model.number="form.max_guards" label="Capacidade (máx. vigilantes)"
                      type="number" outlined dense min="1"
                      hint="Vazio = sem limite definido" />

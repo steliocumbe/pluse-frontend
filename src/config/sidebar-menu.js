@@ -1,15 +1,15 @@
 /**
  * PLUSE sidebar menu.
  *
- * CURRENT PHASE: Módulo RH (Recursos Humanos).
- * Only RH-related entries are active. The rest of the product modules are
- * kept in `parkedModules` below — uncomment / move them back into
- * `sidebarMenu` as each module is built.
+ * `sidebarMenu` lista APENAS o que já está construído e funcional. Tudo o
+ * que ainda está por construir vive em `parkedModules`, organizado pelo
+ * roteiro de fases — à medida que cada área é implementada, move-se a
+ * respectiva entrada de `parkedModules` para `sidebarMenu`.
  *
- * Conventions:
- *   - Group with children only when there are 2+ meaningful entries.
- *   - "Novo X" actions live as buttons on list pages, NOT in the menu.
- *   - Headings stay even with a single leaf below (visual scaffolding).
+ * Convenções:
+ *   - Grupo com `children` só quando há 2+ entradas úteis.
+ *   - Acções "Novo X" são botões nas páginas de lista, NÃO no menu.
+ *   - Headings ficam mesmo com uma só folha abaixo (estrutura visual).
  */
 export const sidebarMenu = [
   // ────────────────────────────────────────────────────────────────────────
@@ -17,8 +17,6 @@ export const sidebarMenu = [
   { label: 'Dashboard', icon: 'ki-element-11', to: '/' },
 
   // ────────────────────────────────────────────────────────────────────────
-  // Organizado pelo ciclo de vida do colaborador. Itens marcados como "🔜"
-  // ainda não têm página própria — caem na PlaceholderPage via catch-all.
   { type: 'heading', label: 'Recursos Humanos' },
   { label: 'Colaboradores', icon: 'ki-people', to: '/employees' },
   { label: 'Aprovações pendentes', icon: 'ki-check-circle', to: '/employees/approvals' },
@@ -28,9 +26,30 @@ export const sidebarMenu = [
     icon: 'ki-calendar',
     children: [
       { label: 'Escalas', to: '/schedules' },
-      { label: 'Mapa de assiduidade', to: '/attendance-map' },
+      { label: 'Marcação de presenças', to: '/attendance' },
     ],
   },
+
+  // ────────────────────────────────────────────────────────────────────────
+  { type: 'heading', label: 'Cadastros' },
+  { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
+  { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },
+
+  // ────────────────────────────────────────────────────────────────────────
+  { type: 'heading', label: 'Conta' },
+  { label: 'Meu perfil', icon: 'ki-profile-circle', to: '/profile' },
+  { label: 'Ajuda e suporte', icon: 'ki-information-3', to: '/support' },
+]
+
+/**
+ * Áreas ainda por construir — escondidas do menu até a fase respectiva.
+ * Re-activar = copiar a entrada para `sidebarMenu`. Mantidas aqui para não
+ * re-derivar rotas/ícones e para servir de mapa do roteiro.
+ */
+export const parkedModules = [
+  // ── RH — próximas fases ─────────────────────────────────────────────────
+  { type: 'heading', label: 'Recursos Humanos — próximas fases' },
+  { label: 'Mapa de assiduidade', icon: 'ki-calendar', to: '/attendance-map' },
   {
     label: 'Férias, faltas e baixas',
     icon: 'ki-calendar-tick',
@@ -52,43 +71,7 @@ export const sidebarMenu = [
   { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
   { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
 
-  // ────────────────────────────────────────────────────────────────────────
-  { type: 'heading', label: 'Cadastros' },
-  { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
-  { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },
-
-  // ────────────────────────────────────────────────────────────────────────
-  { type: 'heading', label: 'Conta' },
-  { label: 'Meu perfil', icon: 'ki-profile-circle', to: '/profile' },
-  { label: 'Ajuda e suporte', icon: 'ki-information-3', to: '/support' },
-]
-
-/**
- * Modules parked until their phase arrives. Keeping the definitions here
- * (instead of deleting) means re-enabling a module is a copy-paste back
- * into `sidebarMenu` — no need to re-derive routes/icons.
- */
-export const parkedModules = [
-  { type: 'heading', label: 'Cadastros' },
-  { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
-  {
-    label: 'Contratos',
-    icon: 'ki-document',
-    children: [
-      { label: 'Ativos', to: '/contracts/active' },
-      { label: 'Pendentes', to: '/contracts/pending' },
-      { label: 'A expirar (30 dias)', to: '/contracts/expiring' },
-    ],
-  },
-  {
-    label: 'Postos',
-    icon: 'ki-geolocation',
-    children: [
-      { label: 'Lista', to: '/posts' },
-      { label: 'Mapa', to: '/posts/map' },
-    ],
-  },
-
+  // ── Operações (Fase 4) ──────────────────────────────────────────────────
   { type: 'heading', label: 'Operações' },
   {
     label: 'Presenças e Check-ins',
@@ -123,17 +106,20 @@ export const parkedModules = [
     ],
   },
 
-  { type: 'heading', label: 'Faturação' },
+  // ── Financeiro (Fase 5) ─────────────────────────────────────────────────
+  { type: 'heading', label: 'Financeiro' },
   { label: 'Relatórios por período', icon: 'ki-cheque', to: '/billing/periods' },
   { label: 'Por cliente', icon: 'ki-profile-user', to: '/billing/by-client' },
   { label: 'Por contrato', icon: 'ki-document', to: '/billing/by-contract' },
   { label: 'Exportações', icon: 'ki-cloud-download', to: '/billing/exports' },
 
+  // ── Ativos e equipamento ────────────────────────────────────────────────
   { type: 'heading', label: 'Ativos e equipamento' },
   { label: 'Lista', icon: 'ki-setting-2', to: '/assets' },
   { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
   { label: 'Movimentação', icon: 'ki-route', to: '/assets/transfers' },
 
+  // ── Administração ───────────────────────────────────────────────────────
   { type: 'heading', label: 'Administração' },
   { label: 'Utilizadores', icon: 'ki-user', to: '/admin/users' },
   { label: 'Perfis e permissões', icon: 'ki-shield', to: '/admin/roles' },

@@ -165,7 +165,12 @@ const routes = [
       {
         path: 'schedules',
         name: 'schedules-calendar',
-        component: () => import('pages/operations/SchedulesCalendarPage.vue'),
+        component: () => import('pages/scheduling/SchedulesPage.vue'),
+      },
+      {
+        path: 'attendance',
+        name: 'attendance-marking',
+        component: () => import('pages/scheduling/AttendanceMarkingPage.vue'),
       },
       {
         path: 'schedules/by-post',

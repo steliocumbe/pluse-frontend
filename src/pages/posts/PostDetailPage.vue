@@ -72,9 +72,9 @@
               <span class="field-row__value">{{ post.service_type_display }}</span>
             </div>
             <div class="field-row">
-              <span class="field-row__label">Duração do turno</span>
+              <span class="field-row__label">Regime de turno</span>
               <span class="field-row__value">
-                {{ post.shift_hours ? `${post.shift_hours}h` : '—' }}
+                {{ post.shift_hours ? `${post.shift_hours}h` : '— (por definir)' }}
               </span>
             </div>
             <div class="field-row">
