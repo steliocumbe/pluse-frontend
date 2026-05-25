@@ -195,6 +195,22 @@ const routes = [
         name: 'absences',
         component: () => import('pages/leaves/AbsencesPage.vue'),
       },
+
+      {
+        path: 'payroll/categories',
+        name: 'salary-categories',
+        component: () => import('pages/payroll/SalaryCategoriesPage.vue'),
+      },
+      {
+        path: 'payroll',
+        name: 'payroll-runs-list',
+        component: () => import('pages/payroll/PayrollRunsListPage.vue'),
+      },
+      {
+        path: 'payroll/:id',
+        name: 'payroll-run-detail',
+        component: () => import('pages/payroll/PayrollRunDetailPage.vue'),
+      },
       {
         path: 'schedules/by-post',
         name: 'schedules-by-post',

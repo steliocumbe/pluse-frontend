@@ -39,6 +39,14 @@ export const sidebarMenu = [
       { label: 'Baixas médicas', to: '/sick-leaves' },
     ],
   },
+  {
+    label: 'Processamento salarial',
+    icon: 'ki-cheque',
+    children: [
+      { label: 'Folha de pagamento', to: '/payroll' },
+      { label: 'Categorias salariais', to: '/payroll/categories' },
+    ],
+  },
 
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Cadastros' },
@@ -59,14 +67,6 @@ export const sidebarMenu = [
 export const parkedModules = [
   // ── RH — próximas fases ─────────────────────────────────────────────────
   { type: 'heading', label: 'Recursos Humanos — próximas fases' },
-  {
-    label: 'Processamento salarial',
-    icon: 'ki-cheque',
-    children: [
-      { label: 'Folha de pagamento', to: '/payroll' },
-      { label: 'Categorias salariais', to: '/payroll/categories' },
-    ],
-  },
   { label: 'Formação e certificações', icon: 'ki-information-2', to: '/training' },
   { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
   { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
