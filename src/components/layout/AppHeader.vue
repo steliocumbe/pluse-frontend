@@ -29,6 +29,7 @@
       -->
       <div class="header-mobile-cluster flex gap-2.5 lg:hidden items-center -ms-1">
         <router-link to="/" class="shrink-0 flex items-center gap-2">
+          <img src="/icons/android-chrome-192x192.png" alt="" class="header-mobile-logo" />
           <span class="text-lg font-bold text-mono leading-none">PLUSE</span>
         </router-link>
         <button
@@ -127,5 +128,15 @@ function onNotifications() {
   background: color-mix(in oklab, var(--primary) 10%, transparent);
   color: var(--primary);
   transform: translateY(-1px);
+}
+
+.header-mobile-logo {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid var(--border);
 }
 </style>

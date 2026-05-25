@@ -223,6 +223,11 @@ const routes = [
         component: () => import('pages/training/CertificationsPage.vue'),
       },
       {
+        path: 'performance',
+        name: 'performance-reviews',
+        component: () => import('pages/performance/PerformanceReviewsPage.vue'),
+      },
+      {
         path: 'schedules/by-post',
         name: 'schedules-by-post',
         component: () => import('pages/operations/SchedulesByPostPage.vue'),

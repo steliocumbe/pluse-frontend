@@ -19,7 +19,7 @@
     >
       <router-link to="/" class="kt-sidebar-logo min-w-0 flex items-center">
         <span class="default-logo min-w-0 flex items-center gap-3">
-          <span class="sidebar-logo-mark">P</span>
+          <img src="/icons/android-chrome-192x192.png" alt="" class="sidebar-logo-mark" />
           <span class="min-w-0 flex flex-col leading-none">
             <span class="text-base font-bold text-white whitespace-nowrap">PLUSE</span>
             <span class="mt-1 text-[12px] font-medium text-white/58 whitespace-nowrap">Admin Console</span>
@@ -88,17 +88,13 @@ onBeforeUnmount(clearCollapseState)
 }
 
 .sidebar-logo-mark {
-  display: grid;
   width: 40px;
   height: 40px;
-  place-items: center;
   flex: none;
+  object-fit: cover;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary), var(--pluse-cyan-500));
-  color: white;
-  font-size: 1rem;
-  font-weight: 800;
+  background: white;
   box-shadow: 0 12px 30px color-mix(in oklab, var(--primary) 32%, transparent);
 }
 

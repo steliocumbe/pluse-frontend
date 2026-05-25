@@ -55,6 +55,7 @@ export const sidebarMenu = [
       { label: 'Certificações', to: '/certifications' },
     ],
   },
+  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
 
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Cadastros' },
@@ -75,7 +76,6 @@ export const sidebarMenu = [
 export const parkedModules = [
   // ── RH — próximas fases ─────────────────────────────────────────────────
   { type: 'heading', label: 'Recursos Humanos — próximas fases' },
-  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
   { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
 
   // ── Operações (Fase 4) ──────────────────────────────────────────────────

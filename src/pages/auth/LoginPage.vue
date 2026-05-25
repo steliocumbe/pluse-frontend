@@ -5,7 +5,7 @@
         <aside class="login-intro hidden lg:flex flex-col justify-between gap-8 p-12">
           <div class="login-intro-content">
             <div class="brand-mark mb-8">
-              <span>PL</span>
+              <img src="/icons/android-chrome-192x192.png" alt="PLUSE" />
             </div>
 
             <p class="login-kicker">
@@ -44,7 +44,7 @@
           <div class="login-form-inner">
             <div class="lg:hidden">
               <div class="brand-mark mb-5">
-                <span>PL</span>
+                <img src="/icons/android-chrome-192x192.png" alt="PLUSE" />
               </div>
               <p class="login-kicker mb-2">PLUSE</p>
             </div>
@@ -301,12 +301,19 @@ async function onSubmit() {
   height: 48px;
   place-items: center;
   border-radius: 12px;
-  background: var(--primary);
+  background: white;
   color: var(--primary-foreground);
   font-weight: 700;
   letter-spacing: 0;
+  overflow: hidden;
   box-shadow: 0 12px 28px color-mix(in oklab, var(--primary) 28%, transparent);
   animation: brand-float 5.5s ease-in-out infinite;
+}
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .feature-icon {
