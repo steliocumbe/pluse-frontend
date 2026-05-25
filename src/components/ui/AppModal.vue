@@ -46,21 +46,23 @@
             ref="panelRef"
             role="dialog"
             aria-modal="true"
-            class="relative bg-popover text-popover-foreground rounded-2xl shadow-2xl border border-border w-full"
+            class="relative bg-popover text-popover-foreground rounded-2xl shadow-2xl border border-border w-full flex flex-col max-h-[90vh]"
             :class="sizeClass"
             :tabindex="-1"
           >
             <button
               v-if="closable"
               type="button"
-              class="absolute top-3 end-3 size-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              class="absolute top-3 end-3 size-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors z-10 bg-popover/80 backdrop-blur-sm"
               aria-label="Fechar"
               @click="close"
             >
               <AppIcon name="ki-cross" :size="16" />
             </button>
 
-            <slot :close="close" />
+            <div class="overflow-y-auto min-h-0 flex-1">
+              <slot :close="close" />
+            </div>
           </div>
         </transition>
       </div>

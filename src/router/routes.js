@@ -211,6 +211,17 @@ const routes = [
         name: 'payroll-run-detail',
         component: () => import('pages/payroll/PayrollRunDetailPage.vue'),
       },
+
+      {
+        path: 'training',
+        name: 'training-records',
+        component: () => import('pages/training/TrainingRecordsPage.vue'),
+      },
+      {
+        path: 'certifications',
+        name: 'certifications',
+        component: () => import('pages/training/CertificationsPage.vue'),
+      },
       {
         path: 'schedules/by-post',
         name: 'schedules-by-post',
