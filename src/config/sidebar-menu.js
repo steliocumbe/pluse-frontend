@@ -59,6 +59,12 @@ export const sidebarMenu = [
   { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
 
   // ────────────────────────────────────────────────────────────────────────
+  { type: 'heading', label: 'Operações' },
+  { label: 'Centro de Controlo', icon: 'ki-chart-line', to: '/cco' },
+  { label: 'Ocorrências', icon: 'ki-warning-2', to: '/incidents' },
+  { label: 'Participações', icon: 'ki-information-2', to: '/participations' },
+
+  // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Cadastros' },
   { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
   { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },

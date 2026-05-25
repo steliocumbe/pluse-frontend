@@ -232,6 +232,18 @@ const routes = [
         name: 'hr-alerts',
         component: () => import('pages/hr/HrAlertsPage.vue'),
       },
+
+      {
+        path: 'incidents',
+        name: 'incidents',
+        component: () => import('pages/operations/IncidentsPage.vue'),
+      },
+      {
+        path: 'participations',
+        name: 'participations',
+        component: () => import('pages/operations/ParticipationsPage.vue'),
+      },
+
       {
         path: 'schedules/by-post',
         name: 'schedules-by-post',
@@ -267,7 +279,7 @@ const routes = [
       {
         path: 'cco',
         name: 'cco',
-        component: () => import('pages/operations/CcoPage.vue'),
+        component: () => import('pages/operations/CcoLivePage.vue'),
       },
       {
         path: 'cco/presences',
