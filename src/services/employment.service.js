@@ -134,3 +134,10 @@ export const hrAlertsService = {
     return api.get('/alerts/', { params: { days } }).then((r) => r.data)
   },
 }
+
+// ── Cargos (lista gerida) ───────────────────────────────────────────────
+export const jobTitleService = {
+  list() {
+    return api.get('/job-titles/').then((r) => r.data)
+  },
+}

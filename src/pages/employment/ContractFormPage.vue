@@ -42,7 +42,13 @@
               label="Tipo de contrato *"
               outlined dense emit-value map-options :rules="[req]"
             />
-            <q-input v-model="form.job_title" label="Cargo *" outlined dense :rules="[req]" />
+            <q-select
+              v-model="form.job_title" :options="jobTitleFiltered"
+              label="Cargo *" outlined dense use-input fill-input hide-selected
+              new-value-mode="add-unique" input-debounce="200"
+              @filter="filterJobTitles" :rules="[req]"
+              hint="Escolha da lista ou escreva um cargo novo"
+            />
             <q-input
               v-model="form.workplace" label="Local de trabalho" outlined dense
               class="md:col-span-2"
@@ -122,7 +128,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { contractService } from 'src/services/employment.service'
+import { contractService, jobTitleService } from 'src/services/employment.service'
 import { employeeService } from 'src/services/employee.service'
 import { salaryCategoryService } from 'src/services/salary-category.service'
 import { contractTypeOptions, termedContractTypes } from 'src/config/employment'
@@ -183,6 +189,18 @@ function filterEmployees(needle, update) {
 const salaryCategoryOptions = ref([])
 const loadingSalary = ref(false)
 
+// ── Cargos (lista gerida + texto livre) ─────────────────────────────────
+const allJobTitles = ref([])
+const jobTitleFiltered = ref([])
+function filterJobTitles(needle, update) {
+  update(() => {
+    const n = (needle || '').toLowerCase()
+    jobTitleFiltered.value = n
+      ? allJobTitles.value.filter((t) => t.toLowerCase().includes(n))
+      : allJobTitles.value
+  })
+}
+
 onMounted(async () => {
   loadingEmployees.value = true
   try {
@@ -209,6 +227,12 @@ onMounted(async () => {
   } catch { /* ignore */ } finally {
     loadingSalary.value = false
   }
+
+  try {
+    const titles = await jobTitleService.list()
+    allJobTitles.value = titles.map((t) => t.name)
+    jobTitleFiltered.value = allJobTitles.value
+  } catch { /* ignore */ }
 
   if (isEdit.value) {
     try {

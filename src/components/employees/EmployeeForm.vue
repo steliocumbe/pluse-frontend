@@ -165,8 +165,11 @@
           <q-select v-model="contract.contract_type" :options="contractTypeOptions"
                     label="Tipo de contrato *" outlined dense emit-value map-options
                     :rules="[req]" />
-          <q-input v-model="contract.job_title" label="Cargo *" outlined dense :rules="[req]"
-                   hint="Ex: Vigilante, Supervisor de Zona" />
+          <q-select v-model="contract.job_title" :options="jobTitleFiltered"
+                    label="Cargo *" outlined dense use-input fill-input hide-selected
+                    new-value-mode="add-unique" input-debounce="200"
+                    @filter="filterJobTitles" :rules="[req]"
+                    hint="Escolha da lista ou escreva um cargo novo" />
           <q-input v-model="contract.start_date" label="Início do contrato *" type="date"
                    outlined dense stack-label :rules="[req]" />
           <q-input v-if="contractNeedsEnd" v-model="contract.end_date"
@@ -234,6 +237,7 @@ import { groupService } from 'src/services/group.service'
 import { clientService } from 'src/services/client.service'
 import { postService } from 'src/services/post.service'
 import { salaryCategoryService } from 'src/services/salary-category.service'
+import { jobTitleService } from 'src/services/employment.service'
 import { contractTypeOptions, termedContractTypes } from 'src/config/employment'
 
 const props = defineProps({
@@ -389,6 +393,18 @@ const loadingClients = ref(false)
 const loadingPosts = ref(false)
 const loadingSalary = ref(false)
 
+// Cargos — lista gerida com texto livre permitido.
+const allJobTitles = ref([])
+const jobTitleFiltered = ref([])
+function filterJobTitles(needle, update) {
+  update(() => {
+    const n = (needle || '').toLowerCase()
+    jobTitleFiltered.value = n
+      ? allJobTitles.value.filter((t) => t.toLowerCase().includes(n))
+      : allJobTitles.value
+  })
+}
+
 onMounted(async () => {
   try {
     const groups = await groupService.list()
@@ -436,6 +452,14 @@ onMounted(async () => {
     /* ignore */
   } finally {
     loadingSalary.value = false
+  }
+
+  try {
+    const titles = await jobTitleService.list()
+    allJobTitles.value = titles.map((t) => t.name)
+    jobTitleFiltered.value = allJobTitles.value
+  } catch {
+    /* ignore */
   }
 })
 

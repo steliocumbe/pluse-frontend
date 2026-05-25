@@ -27,6 +27,7 @@ export const sidebarMenu = [
     children: [
       { label: 'Escalas', to: '/schedules' },
       { label: 'Marcação de presenças', to: '/attendance' },
+      { label: 'Mapa de assiduidade', to: '/attendance-map' },
     ],
   },
 
@@ -49,7 +50,6 @@ export const sidebarMenu = [
 export const parkedModules = [
   // ── RH — próximas fases ─────────────────────────────────────────────────
   { type: 'heading', label: 'Recursos Humanos — próximas fases' },
-  { label: 'Mapa de assiduidade', icon: 'ki-calendar', to: '/attendance-map' },
   {
     label: 'Férias, faltas e baixas',
     icon: 'ki-calendar-tick',

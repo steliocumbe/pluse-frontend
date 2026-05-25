@@ -25,4 +25,7 @@ export const shiftService = {
   markAttendance(id, payload) {
     return api.post(`/shifts/${id}/mark-attendance/`, payload).then((r) => r.data)
   },
+  attendanceSummary(params = {}) {
+    return api.get('/attendance-summary/', { params }).then((r) => r.data)
+  },
 }

@@ -173,6 +173,11 @@ const routes = [
         component: () => import('pages/scheduling/AttendanceMarkingPage.vue'),
       },
       {
+        path: 'attendance-map',
+        name: 'attendance-map',
+        component: () => import('pages/scheduling/AttendanceMapPage.vue'),
+      },
+      {
         path: 'schedules/by-post',
         name: 'schedules-by-post',
         component: () => import('pages/operations/SchedulesByPostPage.vue'),
