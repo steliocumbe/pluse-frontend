@@ -245,6 +245,22 @@ const routes = [
       },
 
       {
+        path: 'assets/vehicles',
+        name: 'assets-vehicles',
+        component: () => import('pages/assets/VehiclesPage.vue'),
+      },
+      {
+        path: 'assets/equipment',
+        name: 'assets-equipment',
+        component: () => import('pages/assets/EquipmentPage.vue'),
+      },
+      {
+        path: 'assets/assignments',
+        name: 'assets-assignments',
+        component: () => import('pages/assets/AssignmentsPage.vue'),
+      },
+
+      {
         path: 'schedules/by-post',
         name: 'schedules-by-post',
         component: () => import('pages/operations/SchedulesByPostPage.vue'),

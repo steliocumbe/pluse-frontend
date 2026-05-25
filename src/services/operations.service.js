@@ -62,6 +62,33 @@ export const ccoService = {
   },
 }
 
+export const patrolService = {
+  list(params = {}) {
+    return api.get('/patrols/', { params }).then((r) => r.data)
+  },
+  get(id) {
+    return api.get(`/patrols/${id}/`).then((r) => r.data)
+  },
+  create(payload) {
+    return send('post', '/patrols/', payload)
+  },
+  update(id, payload) {
+    return send('patch', `/patrols/${id}/`, payload)
+  },
+  remove(id) {
+    return api.delete(`/patrols/${id}/`).then((r) => r.data)
+  },
+  start(id) {
+    return api.post(`/patrols/${id}/start/`).then((r) => r.data)
+  },
+  complete(id, payload = {}) {
+    return send('post', `/patrols/${id}/complete/`, payload)
+  },
+  markMissed(id, reason = '') {
+    return api.post(`/patrols/${id}/mark-missed/`, { reason }).then((r) => r.data)
+  },
+}
+
 export const participationService = {
   list(params = {}) {
     return api.get('/participations/', { params }).then((r) => r.data)

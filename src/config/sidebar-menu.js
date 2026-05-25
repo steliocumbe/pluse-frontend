@@ -61,8 +61,15 @@ export const sidebarMenu = [
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Operações' },
   { label: 'Centro de Controlo', icon: 'ki-chart-line', to: '/cco' },
+  { label: 'Rondas e supervisões', icon: 'ki-route', to: '/supervisor/patrols' },
   { label: 'Ocorrências', icon: 'ki-warning-2', to: '/incidents' },
   { label: 'Participações', icon: 'ki-information-2', to: '/participations' },
+
+  // ────────────────────────────────────────────────────────────────────────
+  { type: 'heading', label: 'Ativos e equipamento' },
+  { label: 'Viaturas', icon: 'ki-setting-2', to: '/assets/vehicles' },
+  { label: 'Equipamentos', icon: 'ki-shield-tick', to: '/assets/equipment' },
+  { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
 
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Cadastros' },
@@ -122,12 +129,6 @@ export const parkedModules = [
   { label: 'Por cliente', icon: 'ki-profile-user', to: '/billing/by-client' },
   { label: 'Por contrato', icon: 'ki-document', to: '/billing/by-contract' },
   { label: 'Exportações', icon: 'ki-cloud-download', to: '/billing/exports' },
-
-  // ── Ativos e equipamento ────────────────────────────────────────────────
-  { type: 'heading', label: 'Ativos e equipamento' },
-  { label: 'Lista', icon: 'ki-setting-2', to: '/assets' },
-  { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
-  { label: 'Movimentação', icon: 'ki-route', to: '/assets/transfers' },
 
   // ── Administração ───────────────────────────────────────────────────────
   { type: 'heading', label: 'Administração' },

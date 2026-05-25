@@ -82,3 +82,30 @@ export function participationStateVariant(value) {
     dismissed: 'neutral',
   }[value] || 'neutral'
 }
+
+export const patrolKindOptions = [
+  { value: 'patrol', label: 'Ronda' },
+  { value: 'supervision', label: 'Supervisão' },
+]
+
+export const patrolStateOptions = [
+  { value: 'planned', label: 'Planeada' },
+  { value: 'in_progress', label: 'Em curso' },
+  { value: 'completed', label: 'Concluída' },
+  { value: 'missed', label: 'Não realizada' },
+]
+
+export const patrolPeriodOptions = [
+  { value: 'day', label: 'Diurno' },
+  { value: 'night', label: 'Noturno' },
+  { value: 'full', label: 'Dia inteiro' },
+]
+
+export function patrolStateVariant(value) {
+  return {
+    planned: 'warning',
+    in_progress: 'info',
+    completed: 'success',
+    missed: 'danger',
+  }[value] || 'neutral'
+}
