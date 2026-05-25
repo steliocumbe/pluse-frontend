@@ -56,6 +56,7 @@ export const sidebarMenu = [
     ],
   },
   { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
+  { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
 
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Cadastros' },
@@ -74,10 +75,6 @@ export const sidebarMenu = [
  * re-derivar rotas/ícones e para servir de mapa do roteiro.
  */
 export const parkedModules = [
-  // ── RH — próximas fases ─────────────────────────────────────────────────
-  { type: 'heading', label: 'Recursos Humanos — próximas fases' },
-  { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
-
   // ── Operações (Fase 4) ──────────────────────────────────────────────────
   { type: 'heading', label: 'Operações' },
   {

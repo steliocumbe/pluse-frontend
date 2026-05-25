@@ -228,6 +228,11 @@ const routes = [
         component: () => import('pages/performance/PerformanceReviewsPage.vue'),
       },
       {
+        path: 'hr-alerts',
+        name: 'hr-alerts',
+        component: () => import('pages/hr/HrAlertsPage.vue'),
+      },
+      {
         path: 'schedules/by-post',
         name: 'schedules-by-post',
         component: () => import('pages/operations/SchedulesByPostPage.vue'),
