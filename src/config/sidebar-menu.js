@@ -30,6 +30,15 @@ export const sidebarMenu = [
       { label: 'Mapa de assiduidade', to: '/attendance-map' },
     ],
   },
+  {
+    label: 'Férias, faltas e baixas',
+    icon: 'ki-calendar-tick',
+    children: [
+      { label: 'Pedidos de férias', to: '/leaves' },
+      { label: 'Faltas e substituições', to: '/absences' },
+      { label: 'Baixas médicas', to: '/sick-leaves' },
+    ],
+  },
 
   // ────────────────────────────────────────────────────────────────────────
   { type: 'heading', label: 'Cadastros' },
@@ -50,15 +59,6 @@ export const sidebarMenu = [
 export const parkedModules = [
   // ── RH — próximas fases ─────────────────────────────────────────────────
   { type: 'heading', label: 'Recursos Humanos — próximas fases' },
-  {
-    label: 'Férias, faltas e baixas',
-    icon: 'ki-calendar-tick',
-    children: [
-      { label: 'Pedidos de férias', to: '/leaves' },
-      { label: 'Faltas e substituições', to: '/absences' },
-      { label: 'Baixas médicas', to: '/sick-leaves' },
-    ],
-  },
   {
     label: 'Processamento salarial',
     icon: 'ki-cheque',

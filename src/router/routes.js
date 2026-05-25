@@ -177,6 +177,24 @@ const routes = [
         name: 'attendance-map',
         component: () => import('pages/scheduling/AttendanceMapPage.vue'),
       },
+
+      {
+        path: 'leaves',
+        name: 'leave-requests',
+        component: () => import('pages/leaves/LeaveRequestsPage.vue'),
+        props: { defaultType: 'vacation' },
+      },
+      {
+        path: 'sick-leaves',
+        name: 'sick-leaves',
+        component: () => import('pages/leaves/LeaveRequestsPage.vue'),
+        props: { defaultType: 'sick_leave' },
+      },
+      {
+        path: 'absences',
+        name: 'absences',
+        component: () => import('pages/leaves/AbsencesPage.vue'),
+      },
       {
         path: 'schedules/by-post',
         name: 'schedules-by-post',

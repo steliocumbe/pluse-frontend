@@ -89,6 +89,10 @@ import {
   terminationService,
   transferService,
 } from 'src/services/employment.service'
+import {
+  leaveRequestService,
+  absenceJustificationService,
+} from 'src/services/leaves.service'
 import { useToast } from 'src/composables/useToast'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
@@ -102,6 +106,8 @@ const employees = ref([])
 const contracts = ref([])
 const terminations = ref([])
 const transfers = ref([])
+const leaves = ref([])
+const justifications = ref([])
 
 function rows(data) {
   return data?.results ?? data ?? []
@@ -164,6 +170,32 @@ const groups = computed(() => [
       to: `/employees/${t.employee}`,
     })),
   },
+  {
+    key: 'leaves',
+    title: 'Pedidos de ausência (férias / baixas)',
+    icon: 'ki-calendar-tick',
+    tone: 'primary',
+    service: leaveRequestService,
+    items: leaves.value.map((l) => ({
+      id: l.id,
+      title: `${l.leave_type_display} — ${l.employee_name}`,
+      subtitle: `${formatDate(l.start_date)} → ${formatDate(l.end_date)} · ${l.days} dia(s)`,
+      to: l.leave_type === 'sick_leave' ? '/sick-leaves' : '/leaves',
+    })),
+  },
+  {
+    key: 'justifications',
+    title: 'Justificações de falta',
+    icon: 'ki-warning-2',
+    tone: 'danger',
+    service: absenceJustificationService,
+    items: justifications.value.map((j) => ({
+      id: j.id,
+      title: `Falta — ${j.employee_name}`,
+      subtitle: `${j.justification_type_display} · ${formatDate(j.shift_date)} (${j.shift_period_display}) · ${j.post_name}`,
+      to: '/absences',
+    })),
+  },
 ])
 
 const totalPending = computed(
@@ -173,16 +205,20 @@ const totalPending = computed(
 async function loadAll() {
   loading.value = true
   try {
-    const [emp, con, ter, tra] = await Promise.all([
+    const [emp, con, ter, tra, lvs, jst] = await Promise.all([
       employeeService.list({ status: 'pending', page_size: 100 }),
       contractService.list({ status: 'pending', page_size: 100 }),
       terminationService.list({ status: 'pending', page_size: 100 }),
       transferService.list({ status: 'pending', page_size: 100 }),
+      leaveRequestService.list({ status: 'pending', page_size: 100 }),
+      absenceJustificationService.list({ status: 'pending', page_size: 100 }),
     ])
     employees.value = rows(emp)
     contracts.value = rows(con)
     terminations.value = rows(ter)
     transfers.value = rows(tra)
+    leaves.value = rows(lvs)
+    justifications.value = rows(jst)
   } catch {
     /* axios interceptor toasts */
   } finally {
