@@ -52,6 +52,33 @@
         <HrAlertsPanel :days="30" :limit="5" />
       </section>
 
+      <section class="pluse-dashboard-panel pluse-dashboard-flow">
+        <div class="pluse-dashboard-panel-head compact">
+          <div>
+            <span>Fluxo do negócio</span>
+            <strong>Do contrato à presença validada</strong>
+          </div>
+          <span class="pluse-dashboard-chip neutral">Guiado</span>
+        </div>
+
+        <div class="pluse-dashboard-flow-steps">
+          <router-link
+            v-for="step in businessFlow"
+            :key="step.title"
+            :to="step.to"
+            class="pluse-dashboard-flow-step"
+          >
+            <span :class="step.tone">
+              <AppIcon :name="step.icon" :size="17" />
+            </span>
+            <div>
+              <strong>{{ step.title }}</strong>
+              <p>{{ step.copy }}</p>
+            </div>
+          </router-link>
+        </div>
+      </section>
+
       <section class="pluse-dashboard-main-grid">
         <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
           <div class="pluse-dashboard-panel-head">
@@ -239,6 +266,44 @@ const kpiCards = [
     trend: 'Prioridade',
     icon: 'ki-warning-2',
     tone: 'is-red',
+  },
+]
+
+const businessFlow = [
+  {
+    title: 'Cliente',
+    copy: 'Criar ou rever dados comerciais antes de avançar.',
+    icon: 'ki-profile-user',
+    tone: 'is-blue',
+    to: '/clients',
+  },
+  {
+    title: 'Contrato',
+    copy: 'Definir serviço, preço e regras de faturação.',
+    icon: 'ki-document',
+    tone: 'is-green',
+    to: '/contracts',
+  },
+  {
+    title: 'Postos',
+    copy: 'Configurar localização, raio, QR e requisitos.',
+    icon: 'ki-geolocation',
+    tone: 'is-amber',
+    to: '/posts',
+  },
+  {
+    title: 'Escala',
+    copy: 'Publicar turnos e resolver conflitos antes do dia.',
+    icon: 'ki-calendar',
+    tone: 'is-blue',
+    to: '/schedules',
+  },
+  {
+    title: 'Presença',
+    copy: 'Validar check-ins e alimentar operação e faturação.',
+    icon: 'ki-check-circle',
+    tone: 'is-green',
+    to: '/attendances/today',
   },
 ]
 
@@ -608,6 +673,64 @@ const timeline = [
   gap: 11px;
 }
 
+.pluse-dashboard-flow {
+  padding: 18px;
+}
+
+.pluse-dashboard-flow-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pluse-dashboard-flow-step {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  gap: 12px;
+  border: 1px solid #e4ebf5;
+  border-radius: 14px;
+  background: #fbfdff;
+  color: inherit;
+  padding: 13px;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.pluse-dashboard-flow-step:hover {
+  border-color: color-mix(in oklab, var(--pluse-tone) 32%, #dce5f1);
+  box-shadow: 0 14px 30px rgba(15, 37, 68, 0.08);
+  transform: translateY(-1px);
+}
+
+.pluse-dashboard-flow-step > span {
+  display: grid;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--pluse-soft);
+  color: var(--pluse-tone);
+  place-items: center;
+}
+
+.pluse-dashboard-flow-step strong {
+  display: block;
+  color: #07111f;
+  font-size: 0.95rem;
+  font-weight: 850;
+}
+
+.pluse-dashboard-flow-step p {
+  margin: 4px 0 0;
+  color: #60758f;
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+
 .pluse-dashboard-insight,
 .pluse-dashboard-task,
 .pluse-dashboard-billing-row,
@@ -725,6 +848,10 @@ const timeline = [
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .pluse-dashboard-flow-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .pluse-dashboard-main-grid {
     grid-template-columns: 1fr;
   }
@@ -733,6 +860,7 @@ const timeline = [
 @media (max-width: 768px) {
   .pluse-dashboard-hero-grid,
   .pluse-dashboard-kpis,
+  .pluse-dashboard-flow-steps,
   .pluse-dashboard-secondary-grid,
   .pluse-dashboard-timeline {
     grid-template-columns: 1fr;

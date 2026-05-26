@@ -4,9 +4,9 @@
 -->
 <template>
   <AdminPageTemplate
-    eyebrow="Operações · CCO"
-    title="Centro de Controlo"
-    description="Painel ao vivo — cobertura dos postos do dia, marcação de presenças e ocorrências em aberto."
+    eyebrow="Operações · Centro de Controlo Operacional"
+    title="Centro de Controlo Operacional"
+    description="Painel ao vivo para decidir rapidamente sobre cobertura, presenças, atrasos, check-ins fora do raio e ocorrências em aberto."
   >
     <template #meta>
       <span class="admin-meta-chip">
@@ -91,6 +91,21 @@
           <strong class="stat-card__value">{{ data.stats.open_incidents }}</strong>
         </div>
       </div>
+
+      <section class="cco-command-strip">
+        <article v-for="action in commandActions" :key="action.title" class="cco-command-card" :class="action.tone">
+          <span class="cco-command-card__icon">
+            <AppIcon :name="action.icon" :size="18" />
+          </span>
+          <div>
+            <strong>{{ action.title }}</strong>
+            <p>{{ action.copy }}</p>
+          </div>
+          <button type="button" class="cco-command-card__button" @click="action.run">
+            {{ action.label }}
+          </button>
+        </article>
+      </section>
 
       <!-- Filtros -->
       <div class="cco-filters">
@@ -261,12 +276,79 @@ const filteredPosts = computed(() => {
   })
 })
 
+const uncoveredPosts = computed(() => (
+  data.value?.posts?.filter((post) => post.coverage === 'uncovered') ?? []
+))
+
 const filterConfig = [
   { key: 'search', label: 'Pesquisa', emptyValue: '' },
   { key: 'client', label: 'Cliente', emptyValue: null },
   { key: 'coverage', label: 'Cobertura', emptyValue: '', options: coverageOptions },
   { key: 'armedOnly', label: 'Armados', emptyValue: false },
 ]
+
+const commandActions = computed(() => [
+  {
+    title: 'Alocar posto descoberto',
+    copy: `${uncoveredPosts.value.length} posto(s) sem cobertura podem receber substituto agora.`,
+    label: 'Alocar',
+    icon: 'ki-warning-2',
+    tone: 'is-red',
+    run: openQuickAllocation,
+  },
+  {
+    title: 'Filtrar sem cobertura',
+    copy: 'Mostrar apenas postos sem vigilante confirmado no turno.',
+    label: 'Filtrar',
+    icon: 'ki-check-circle',
+    tone: 'is-amber',
+    run: () => { filter.coverage = 'uncovered' },
+  },
+  {
+    title: 'Actualizar operação',
+    copy: 'Recarregar cobertura, presenças e ocorrências sem sair do painel.',
+    label: 'Actualizar',
+    icon: 'ki-refresh',
+    tone: 'is-blue',
+    run: fetch,
+  },
+])
+
+function openQuickAllocation() {
+  const post = uncoveredPosts.value[0]
+
+  if (!post) {
+    $q.notify({
+      type: 'positive',
+      icon: 'check_circle',
+      message: 'Todos os postos estão cobertos.',
+      caption: 'Não há alocação urgente neste momento.',
+    })
+    return
+  }
+
+  $q.dialog({
+    title: 'Alocação rápida',
+    message: `Posto: ${post.name} · Cliente: ${post.client_name}. Indique o vigilante ou equipa de substituição.`,
+    prompt: {
+      model: '',
+      type: 'text',
+      label: 'Vigilante ou equipa',
+      isValid: (value) => String(value || '').trim().length >= 2,
+    },
+    cancel: { label: 'Cancelar', flat: true, noCaps: true },
+    ok: { label: 'Preparar alocação', color: 'primary', unelevated: true, noCaps: true },
+    persistent: true,
+  }).onOk((value) => {
+    filter.coverage = 'uncovered'
+    $q.notify({
+      type: 'positive',
+      icon: 'person_add',
+      message: 'Alocação preparada.',
+      caption: `${value} foi associado ao pedido de cobertura de ${post.name}.`,
+    })
+  })
+}
 
 function onClearFilter(key, emptyValue) { filter[key] = emptyValue }
 function onClearAllFilters() {
@@ -459,6 +541,65 @@ function coverageLabel(c) {
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent);
 }
 
+.cco-command-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cco-command-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid color-mix(in oklab, var(--pluse-tone) 22%, var(--border));
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--pluse-tone) 9%, #ffffff), #ffffff 58%);
+  padding: 14px;
+  box-shadow: 0 14px 32px rgba(15, 37, 68, 0.06);
+}
+
+.cco-command-card__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: color-mix(in oklab, var(--pluse-tone) 15%, transparent);
+  color: var(--pluse-tone);
+  place-items: center;
+}
+
+.cco-command-card strong {
+  display: block;
+  color: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 850;
+}
+
+.cco-command-card p {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.cco-command-card__button {
+  border: 1px solid color-mix(in oklab, var(--pluse-tone) 30%, transparent);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--pluse-tone);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 7px 10px;
+}
+
+.cco-command-card.is-blue { --pluse-tone: var(--primary); }
+.cco-command-card.is-amber { --pluse-tone: var(--pluse-amber-500, #f59e0b); }
+.cco-command-card.is-red { --pluse-tone: var(--destructive); }
+
 /* ── Filtros do CCO ──────────────────────────────────────────────────── */
 .cco-filters {
   display: flex;
@@ -645,5 +786,22 @@ function coverageLabel(c) {
 .incident-row__meta {
   font-size: 0.74rem;
   color: var(--muted-foreground);
+}
+
+@media (max-width: 1180px) {
+  .cco-command-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .cco-command-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .cco-command-card__button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
 }
 </style>

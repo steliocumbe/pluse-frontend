@@ -18,11 +18,12 @@
     flat
     animated
     alternative-labels
+    header-nav
     color="primary"
     class="employee-stepper"
   >
     <!-- ─────────────── Step 1 — Dados pessoais ─────────────── -->
-    <q-step :name="1" title="Dados pessoais" icon="person" :done="step > 1">
+    <q-step :name="1" title="Dados pessoais" icon="person" :done="maxStepReached > 1">
       <q-form ref="form1" greedy class="flex flex-col gap-5">
         <!-- Erros globais do servidor -->
         <div v-if="globalErrors.length"
@@ -130,7 +131,13 @@
     </q-step>
 
     <!-- ─────────────── Step 2 — Função e posto ─────────────── -->
-    <q-step :name="2" title="Função e posto" icon="badge" :done="step > 2">
+    <q-step
+      :name="2"
+      title="Função e posto"
+      icon="badge"
+      :done="maxStepReached > 2"
+      :disable="isStepDisabled(2)"
+    >
       <q-form ref="form2" greedy class="flex flex-col gap-5">
         <div class="form-group-label">Departamento e posto</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,7 +187,13 @@
     </q-step>
 
     <!-- ─────────────── Step 3 — Pagamento e acesso ─────────────── -->
-    <q-step :name="3" title="Pagamento e acesso" icon="payments" :done="step > 3">
+    <q-step
+      :name="3"
+      title="Pagamento e acesso"
+      icon="payments"
+      :done="maxStepReached > 3"
+      :disable="isStepDisabled(3)"
+    >
       <q-form ref="form3" greedy class="flex flex-col gap-5">
         <div class="form-group-label">Banca e M-pesa</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,7 +238,14 @@
     </q-step>
 
     <!-- ─────────────── Step 4 — Documentos (create only) ─────────────── -->
-    <q-step v-if="mode === 'create'" :name="4" title="Documentos" icon="folder">
+    <q-step
+      v-if="mode === 'create'"
+      :name="4"
+      title="Documentos"
+      icon="folder"
+      :done="maxStepReached > 4"
+      :disable="isStepDisabled(4)"
+    >
       <div class="form-group-label">Documentos iniciais</div>
       <p class="text-sm text-muted-foreground mb-3">
         Anexe já BI, NUIT, registo criminal, termos ou outros documentos.
@@ -235,7 +255,13 @@
     </q-step>
 
     <!-- ─────────────── Step 5 — Contrato inicial (create only) ─────────────── -->
-    <q-step v-if="mode === 'create'" :name="5" title="Contrato inicial" icon="description">
+    <q-step
+      v-if="mode === 'create'"
+      :name="5"
+      title="Contrato inicial"
+      icon="description"
+      :disable="isStepDisabled(5)"
+    >
       <q-form ref="form5" greedy class="flex flex-col gap-5">
         <div class="form-group-label">Contrato de trabalho</div>
         <p class="text-sm text-muted-foreground">
@@ -244,6 +270,20 @@
           do Diretor Financeiro.
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <q-select v-model="contract.client" :options="clientOptions"
+                    label="Cliente do contrato" outlined dense emit-value map-options
+                    clearable :loading="loadingClients"
+                    hint="Herda o cliente operacional, mas pode ser ajustado antes de guardar."
+                    :error="!!fieldErrors['initial_contract.client']"
+                    :error-message="fieldErrors['initial_contract.client']"
+                    @update:model-value="() => clearField('initial_contract.client')" />
+          <q-select v-model="contract.post" :options="contractPostOptions"
+                    label="Posto associado" outlined dense emit-value map-options
+                    clearable :loading="loadingPosts"
+                    hint="Ajuda a ligar contrato, posto, escala e faturação."
+                    :error="!!fieldErrors['initial_contract.post']"
+                    :error-message="fieldErrors['initial_contract.post']"
+                    @update:model-value="() => clearField('initial_contract.post')" />
           <q-select v-model="contract.contract_type" :options="contractTypeOptions"
                     label="Tipo de contrato *" outlined dense emit-value map-options
                     :rules="[req]"
@@ -370,6 +410,7 @@ const req = (v) => !!v || 'Obrigatório'
 const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors, clearField } = useFormErrors()
 
 const step = ref(1)
+const maxStepReached = ref(1)
 const stepperRef = ref(null)
 const form1 = ref(null)
 const form2 = ref(null)
@@ -424,6 +465,8 @@ const form = reactive({ ...blank })
 // Step 5 — the initial work contract. Kept separate from `form` because it
 // is a distinct entity; emitted to the parent as `initialContract`.
 const blankContract = {
+  client: null,
+  post: null,
   contract_type: 'fixed_term',
   job_title: '',
   start_date: '',
@@ -439,6 +482,10 @@ const contract = reactive({ ...blankContract })
 const contractNeedsEnd = computed(
   () => termedContractTypes.includes(contract.contract_type),
 )
+const contractPostOptions = computed(() => {
+  if (!contract.client) return postOptions.value
+  return postOptions.value.filter((post) => post.clientId === contract.client)
+})
 
 watch(
   () => props.initial,
@@ -463,6 +510,30 @@ watch(
   () => form.hire_date,
   (date) => {
     if (date && !contract.start_date) contract.start_date = date
+  },
+)
+watch(
+  () => form.client,
+  (clientId) => {
+    if (!contract.client) contract.client = clientId
+  },
+)
+watch(
+  () => form.post,
+  (postId) => {
+    if (!contract.post) contract.post = postId
+  },
+)
+watch(
+  () => contract.client,
+  (clientId) => {
+    if (contract.post && !contractPostOptions.value.some((post) => post.value === contract.post)) {
+      contract.post = null
+    }
+    if (clientId && !contract.workplace) {
+      const client = clientOptions.value.find((item) => item.value === clientId)
+      contract.workplace = client?.label || ''
+    }
   },
 )
 watch(
@@ -551,7 +622,12 @@ onMounted(async () => {
       const cap = p.max_guards != null
         ? ` (${p.current_guards}/${p.max_guards}${p.has_capacity ? '' : ' · cheio'})`
         : ''
-      return { label: base + cap, value: p.id, disable: p.has_capacity === false }
+      return {
+        label: base + cap,
+        value: p.id,
+        clientId: p.client,
+        disable: p.has_capacity === false,
+      }
     })
   } catch {
     /* ignore */
@@ -594,6 +670,10 @@ async function validateStep(n) {
 
 async function next() {
   if (await validateStep(step.value)) {
+    maxStepReached.value = Math.min(
+      lastStep.value,
+      Math.max(maxStepReached.value, step.value + 1),
+    )
     stepperRef.value?.next()
   } else {
     toast.warning('Há campos por preencher neste passo.')
@@ -602,6 +682,10 @@ async function next() {
 
 function back() {
   stepperRef.value?.previous()
+}
+
+function isStepDisabled(n) {
+  return n > maxStepReached.value
 }
 
 async function onSubmit() {

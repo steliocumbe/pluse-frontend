@@ -1,38 +1,43 @@
 <template>
   <div class="error-page">
-    <div class="error-card">
-      <div class="error-illustration">
+    <div class="error-shell">
+      <div class="error-visual" aria-hidden="true">
         <span class="error-code">404</span>
-        <AppIcon name="ki-questionnaire-tablet" :size="64" class="error-icon" />
+        <span class="error-radar">
+          <AppIcon name="ki-geolocation" :size="34" />
+        </span>
       </div>
 
-      <h1 class="error-title">Página não encontrada</h1>
-      <p class="error-sub">
-        O endereço que tentou abrir não existe ou foi movido. Verifique o URL
-        ou volte ao início.
-      </p>
+      <div class="error-copy">
+        <p class="error-eyebrow">Rota fora do posto</p>
+        <div class="error-title">Esta página saiu para uma ronda e ainda não voltou.</div>
+        <p class="error-sub">
+          O endereço pode ter mudado, estar incompleto ou pertencer a uma funcionalidade que ainda não foi publicada.
+          Vamos levar-te para um lugar seguro.
+        </p>
+      </div>
 
       <div class="error-actions">
         <q-btn
           unelevated
-          color="primary"
-          icon="home"
-          label="Voltar ao início"
           no-caps
+          icon="home"
+          label="Ir para o início"
+          class="error-primary"
           :to="homeRoute"
         />
         <q-btn
           flat
-          color="primary"
-          icon="arrow_back"
-          label="Página anterior"
           no-caps
+          icon="arrow_back"
+          label="Voltar"
+          class="error-secondary"
           @click="$router.back()"
         />
       </div>
 
       <p v-if="path" class="error-path">
-        Tentou aceder a: <code>{{ path }}</code>
+        Tentativa registada em <code>{{ path }}</code>
       </p>
     </div>
   </div>
@@ -53,90 +58,126 @@ const homeRoute = computed(() => (auth.isAuthenticated ? '/' : '/auth/login'))
 
 <style scoped>
 .error-page {
+  display: grid;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, .12), transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(14, 165, 233, .10), transparent 55%),
-    #f8fafc;
+    linear-gradient(135deg, rgba(15, 37, 68, 0.04), rgba(63, 109, 246, 0.08)),
+    #f5f8fc;
 }
 
-.error-card {
-  max-width: 480px;
-  width: 100%;
-  text-align: center;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 40px 32px;
-  box-shadow: 0 20px 50px -20px rgba(15, 23, 42, .15);
-}
-
-.error-illustration {
+.error-shell {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
+  width: min(100%, 620px);
+  overflow: hidden;
+  border: 1px solid #d9e3f0;
+  border-radius: 24px;
+  background: #ffffff;
+  padding: clamp(28px, 5vw, 48px);
+  text-align: center;
+  box-shadow: 0 26px 80px rgba(15, 37, 68, 0.14);
 }
-.error-code {
-  font-size: 96px;
-  font-weight: 900;
-  line-height: 1;
-  background: linear-gradient(135deg, #4f46e5, #0ea5e9);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  letter-spacing: -.04em;
-}
-.error-icon {
+
+.error-shell::before {
   position: absolute;
-  right: -36px;
-  bottom: 4px;
-  color: #cbd5e1;
+  inset: 0;
+  content: '';
+  background:
+    radial-gradient(circle at 20% 0%, rgba(63, 109, 246, 0.12), transparent 32%),
+    radial-gradient(circle at 90% 20%, rgba(14, 165, 233, 0.12), transparent 34%);
+  pointer-events: none;
+}
+
+.error-visual,
+.error-copy,
+.error-actions,
+.error-path {
+  position: relative;
+  z-index: 1;
+}
+
+.error-visual {
+  display: inline-grid;
+  margin-bottom: 22px;
+  place-items: center;
+}
+
+.error-code {
+  color: #0f2544;
+  font-size: clamp(5rem, 18vw, 9rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.88;
+}
+
+.error-radar {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin-top: -18px;
+  border: 1px solid #cfe0f6;
+  border-radius: 18px;
+  background: #eef5ff;
+  color: #3f6df6;
+  place-items: center;
+  box-shadow: 0 12px 28px rgba(63, 109, 246, 0.18);
+}
+
+.error-eyebrow {
+  margin: 0 0 8px;
+  color: #3f6df6;
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .error-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 8px;
+  margin: 0 auto;
+  max-width: 520px;
+  color: #07111f;
+  font-size: clamp(1.55rem, 4vw, 2.15rem);
+  font-weight: 850;
+  line-height: 1.1;
 }
+
 .error-sub {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0 0 24px;
-  line-height: 1.5;
+  max-width: 500px;
+  margin: 14px auto 0;
+  color: #58708e;
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 .error-actions {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 26px;
 }
-@media (min-width: 480px) {
-  .error-actions {
-    flex-direction: row;
-    justify-content: center;
-  }
+
+.error-primary {
+  background: #3f6df6;
+  color: #ffffff;
+}
+
+.error-secondary {
+  color: #3152b8;
 }
 
 .error-path {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 16px 0 0;
+  margin: 22px 0 0;
+  border-top: 1px solid #edf2f8;
   padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  color: #7890aa;
+  font-size: 0.82rem;
 }
+
 .error-path code {
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  color: #475569;
+  border-radius: 8px;
+  background: #eef4ff;
+  color: #3152b8;
+  padding: 3px 7px;
 }
 </style>

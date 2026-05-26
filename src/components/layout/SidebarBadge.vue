@@ -1,5 +1,5 @@
 <template>
-  <span class="rounded-full text-[10px] font-medium px-1.5 py-0.5 leading-none" :class="variantClasses">
+  <span class="sidebar-badge" :class="variantClasses">
     {{ value }}
   </span>
 </template>
@@ -16,17 +16,58 @@ const props = defineProps({
 const variantClasses = computed(() => {
   const v = String(props.value).toLowerCase()
   if (/^\d+$/.test(v)) {
-    return 'bg-primary/15 text-primary'
+    return 'sidebar-badge--primary'
   }
   if (v.includes('alerta') || v.includes('atraso') || v.includes('falha')) {
-    return 'bg-destructive/15 text-destructive'
+    return 'sidebar-badge--danger'
   }
   if (v.includes('breve') || v.includes('soon') || v.includes('beta')) {
-    return 'bg-muted text-muted-foreground'
+    return 'sidebar-badge--muted'
   }
   if (v.includes('rh') || v.includes('admin') || v.includes('cco')) {
-    return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+    return 'sidebar-badge--warning'
   }
-  return 'bg-muted text-muted-foreground'
+  return 'sidebar-badge--muted'
 })
 </script>
+
+<style scoped>
+.sidebar-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  max-width: 4.8rem;
+  min-height: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 0 0.42rem;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  font-size: 0.68rem;
+  font-weight: 850;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-badge--primary {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.sidebar-badge--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.sidebar-badge--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sidebar-badge--muted {
+  background: rgba(255, 255, 255, 0.92);
+  color: #334155;
+}
+</style>

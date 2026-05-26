@@ -5,6 +5,27 @@ export const supervisorStats = [
   { label: 'Presenças por confirmar', value: '9', copy: 'fora do raio ou sem evidência completa', icon: 'ki-check-circle', tone: 'is-amber' },
 ]
 
+export const supervisorCommand = [
+  {
+    title: 'Confirmar presença duvidosa',
+    copy: 'Resolver entradas fora do raio, offline ou sem evidência suficiente.',
+    icon: 'ki-check-circle',
+    tone: 'is-amber',
+  },
+  {
+    title: 'Acompanhar ronda',
+    copy: 'Ver quem está no terreno e que postos precisam de visita.',
+    icon: 'ki-route',
+    tone: 'is-blue',
+  },
+  {
+    title: 'Escalar ao Centro de Controlo',
+    copy: 'Enviar apenas casos bloqueantes ou críticos para decisão central.',
+    icon: 'ki-chart-line',
+    tone: 'is-red',
+  },
+]
+
 export const fieldTeam = [
   { name: 'João Mucavele', post: 'MozMall Entrada Norte', status: 'Em serviço', last: 'Check-in 05:52', variant: 'success' },
   { name: 'Lúcia Cossa', post: 'Banco Central Cofre', status: 'Em ronda', last: 'Última evidência 09:18', variant: 'primary' },

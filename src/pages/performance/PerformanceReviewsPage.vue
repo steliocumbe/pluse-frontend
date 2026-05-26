@@ -42,7 +42,7 @@
         v-model:pagination="pagination"
         :rows="rows" :columns="columns" :loading="loading"
         row-key="id" flat bordered binary-state-sort
-        :rows-per-page-options="[10, 20, 50]"
+        :rows-per-page-options="[10, 15, 25, 50]"
         class="pluse-table" no-data-label="Sem avaliações registadas."
         @request="onTableRequest"
       >
@@ -168,7 +168,7 @@ const saving = ref(false)
 const filters = reactive({ search: '', outcome: '' })
 const pagination = ref({
   sortBy: 'review_date', descending: true,
-  page: 1, rowsPerPage: 20, rowsNumber: 0,
+  page: 1, rowsPerPage: 10, rowsNumber: 0,
 })
 
 const columns = [

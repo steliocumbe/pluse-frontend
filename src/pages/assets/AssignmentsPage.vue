@@ -37,7 +37,7 @@
       <q-table v-model:pagination="pagination"
                :rows="rows" :columns="columns" :loading="loading"
                row-key="id" flat bordered binary-state-sort
-               :rows-per-page-options="[10, 20, 50]"
+               :rows-per-page-options="[10, 15, 25, 50]"
                class="pluse-table" no-data-label="Sem atribuições registadas."
                @request="onTableRequest">
         <template #body-cell-employee="props">
@@ -144,7 +144,7 @@ const count = ref(0)
 const loading = ref(false)
 const saving = ref(false)
 const filters = reactive({ search: '', openOnly: false })
-const pagination = ref({ sortBy: 'assigned_at', descending: true, page: 1, rowsPerPage: 20, rowsNumber: 0 })
+const pagination = ref({ sortBy: 'assigned_at', descending: true, page: 1, rowsPerPage: 10, rowsNumber: 0 })
 
 const columns = [
   { name: 'employee', label: 'Colaborador', field: 'employee_name', align: 'left' },

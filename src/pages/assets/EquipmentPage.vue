@@ -45,7 +45,7 @@
       <q-table v-model:pagination="pagination"
                :rows="rows" :columns="columns" :loading="loading"
                row-key="id" flat bordered binary-state-sort
-               :rows-per-page-options="[10, 20, 50]"
+               :rows-per-page-options="[10, 15, 25, 50]"
                class="pluse-table" no-data-label="Sem equipamentos registados."
                @request="onTableRequest">
         <template #body-cell-equipment="props">
@@ -159,7 +159,7 @@ const count = ref(0)
 const loading = ref(false)
 const saving = ref(false)
 const filters = reactive({ search: '', equipment_type: '', availability: '', only_overdue: false })
-const pagination = ref({ sortBy: 'name', descending: false, page: 1, rowsPerPage: 20, rowsNumber: 0 })
+const pagination = ref({ sortBy: 'name', descending: false, page: 1, rowsPerPage: 10, rowsNumber: 0 })
 
 const columns = [
   { name: 'equipment', label: 'Equipamento', field: 'name', align: 'left', sortable: true },

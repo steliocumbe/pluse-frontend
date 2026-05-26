@@ -50,6 +50,115 @@
   --pluse-page-hero: linear-gradient(135deg, #0b1728 0%, #123766 55%, #155e75 100%);
 }
 
+/* Shared admin table polish for Quasar tables used by data-heavy screens. */
+.pluse-table.q-table__container {
+  border: 1px solid #dbe5f1;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 37, 68, 0.06);
+  overflow: hidden;
+}
+
+.pluse-table .q-table {
+  color: #07111f;
+  font-size: 0.92rem;
+}
+
+.pluse-table thead tr {
+  background: linear-gradient(180deg, #f8fbff, #eef4fb);
+}
+
+.pluse-table thead th {
+  border-bottom: 1px solid #dbe5f1;
+  color: #58708e;
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.pluse-table tbody td {
+  border-bottom: 1px solid #edf2f8;
+  color: #23344d;
+  font-size: 0.9rem;
+}
+
+.pluse-table tbody tr {
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.pluse-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.pluse-table .q-table__bottom {
+  border-top: 1px solid #edf2f8;
+  background: #fbfdff;
+  color: #58708e;
+  font-size: 0.86rem;
+}
+
+.pluse-table .q-table__control,
+.pluse-table .q-table__bottom-item {
+  color: #58708e;
+}
+
+.supervisor-command-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.supervisor-command-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  border: 1px solid color-mix(in oklab, var(--pluse-tone) 20%, #dbe5f1);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--pluse-tone) 9%, #ffffff), #ffffff 60%);
+  padding: 16px;
+  box-shadow: 0 14px 34px rgba(15, 37, 68, 0.06);
+}
+
+.supervisor-command-card > span {
+  display: grid;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: color-mix(in oklab, var(--pluse-tone) 14%, transparent);
+  color: var(--pluse-tone);
+  place-items: center;
+}
+
+.supervisor-command-card strong {
+  display: block;
+  color: #07111f;
+  font-size: 0.98rem;
+  font-weight: 850;
+}
+
+.supervisor-command-card p {
+  margin: 4px 0 0;
+  color: #60758f;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.supervisor-command-card.is-blue { --pluse-tone: #3f6df6; }
+.supervisor-command-card.is-green { --pluse-tone: #10b981; }
+.supervisor-command-card.is-amber { --pluse-tone: #f59e0b; }
+.supervisor-command-card.is-red { --pluse-tone: #ef4444; }
+
+@media (max-width: 1100px) {
+  .supervisor-command-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dark {
   --background: #07111f;
   --foreground: #e5edf7;

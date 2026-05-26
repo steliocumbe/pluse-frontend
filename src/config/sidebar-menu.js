@@ -1,74 +1,28 @@
 /**
  * PLUSE sidebar menu.
  *
- * The menu is organised by operational workspaces instead of mirroring every
- * available route. This keeps the admin experience focused on what each team
- * needs to decide or execute next.
+ * Keep the sidebar honest: only screens with real operational behaviour or
+ * backend-backed data should be visible here. Presentation/demo routes can
+ * remain accessible directly, but should not compete with daily work.
  */
 export const sidebarMenu = [
   { type: 'heading', label: 'Visão geral' },
   { label: 'Dashboard', icon: 'ki-element-11', to: '/' },
 
   { type: 'heading', label: 'Centro de Controlo' },
-  {
-    label: 'Centro de comando',
-    icon: 'ki-chart-line',
-    children: [
-      { label: 'Painel ao vivo', to: '/cco' },
-      { label: 'Presenças', to: '/cco/presences' },
-      { label: 'Postos cobertos', to: '/cco/coverage' },
-      { label: 'Atrasos', to: '/cco/delays' },
-      { label: 'Check-ins fora do raio', to: '/cco/out-of-radius' },
-      { label: 'Ocorrências abertas', to: '/cco/incidents' },
-    ],
-  },
-  {
-    label: 'Presenças e check-ins',
-    icon: 'ki-check-circle',
-    children: [
-      { label: 'Em curso', to: '/attendances/ongoing' },
-      { label: 'Hoje', to: '/attendances/today' },
-      { label: 'Atrasos', to: '/attendances/late' },
-      { label: 'Sem check-out', to: '/attendances/missing-checkout' },
-    ],
-  },
+  { label: 'Centro de comando', icon: 'ki-chart-line', to: '/cco' },
   { label: 'Ocorrências', icon: 'ki-warning-2', to: '/incidents' },
   { label: 'Participações', icon: 'ki-information-2', to: '/participations' },
 
   { type: 'heading', label: 'Supervisão' },
-  {
-    label: 'Supervisor',
-    icon: 'ki-route',
-    children: [
-      { label: 'Equipa em campo', to: '/supervisor/team' },
-      { label: 'Rondas', to: '/supervisor/patrols' },
-      { label: 'Validar ocorrência', to: '/supervisor/incidents/validation' },
-      { label: 'Confirmar presença', to: '/supervisor/attendance-confirmation' },
-    ],
-  },
+  { label: 'Rondas e supervisões', icon: 'ki-route', to: '/supervisor/patrols' },
 
-  { type: 'heading', label: 'Clientes e contratos' },
+  { type: 'heading', label: 'Clientes e operação' },
   { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
-  { label: 'Contratos comerciais', icon: 'ki-document', to: '/contracts' },
-  {
-    label: 'Postos',
-    icon: 'ki-geolocation',
-    children: [
-      { label: 'Lista de postos', to: '/posts' },
-      { label: 'Mapa operacional', to: '/posts/map' },
-    ],
-  },
+  { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },
 
-  { type: 'heading', label: 'Escalas' },
-  {
-    label: 'Planeamento',
-    icon: 'ki-calendar',
-    children: [
-      { label: 'Calendário de escalas', to: '/schedules' },
-      { label: 'Por posto', to: '/schedules/by-post' },
-      { label: 'Por colaborador', to: '/schedules/by-employee' },
-    ],
-  },
+  { type: 'heading', label: 'Escalas e assiduidade' },
+  { label: 'Escalas', icon: 'ki-calendar', to: '/schedules' },
   { label: 'Marcação de presenças', icon: 'ki-user-tick', to: '/attendance' },
   { label: 'Mapa de assiduidade', icon: 'ki-map', to: '/attendance-map' },
 
@@ -76,52 +30,48 @@ export const sidebarMenu = [
   { label: 'Colaboradores', icon: 'ki-people', to: '/employees' },
   { label: 'Aprovações pendentes', icon: 'ki-check-circle', to: '/employees/approvals' },
   { label: 'Contratos de trabalho', icon: 'ki-document', to: '/employment-contracts' },
-  {
-    label: 'Férias, faltas e baixas',
-    icon: 'ki-calendar-tick',
-    children: [
-      { label: 'Pedidos de férias', to: '/leaves' },
-      { label: 'Faltas e substituições', to: '/absences' },
-      { label: 'Baixas médicas', to: '/sick-leaves' },
-    ],
-  },
-  {
-    label: 'Processamento salarial',
-    icon: 'ki-cheque',
-    children: [
-      { label: 'Folha de pagamento', to: '/payroll' },
-      { label: 'Categorias salariais', to: '/payroll/categories' },
-    ],
-  },
-  {
-    label: 'Formação e certificações',
-    icon: 'ki-information-2',
-    children: [
-      { label: 'Formações', to: '/training' },
-      { label: 'Certificações', to: '/certifications' },
-    ],
-  },
-  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
-  { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
+  { label: 'Pedidos de férias', icon: 'ki-calendar-tick', to: '/leaves' },
+  { label: 'Faltas e substituições', icon: 'ki-user-cross', to: '/absences' },
+  { label: 'Baixas médicas', icon: 'ki-notepad', to: '/sick-leaves' },
+  { label: 'Folha de pagamento', icon: 'ki-cheque', to: '/payroll' },
 
   { type: 'heading', label: 'Ativos e equipamento' },
   { label: 'Viaturas', icon: 'ki-setting-2', to: '/assets/vehicles' },
   { label: 'Equipamentos', icon: 'ki-shield-tick', to: '/assets/equipment' },
   { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
-
-  { type: 'heading', label: 'Conta' },
-  { label: 'Meu perfil', icon: 'ki-profile-circle', to: '/profile' },
-  { label: 'Ajuda e suporte', icon: 'ki-information-3', to: '/support' },
 ]
 
 export const parkedModules = [
-  { type: 'heading', label: 'Financeiro' },
+  { type: 'heading', label: 'Demonstração e fluxos em desenho' },
+  { label: 'Contratos comerciais', icon: 'ki-document', to: '/contracts' },
+  { label: 'Mapa operacional de postos', icon: 'ki-geolocation', to: '/posts/map' },
+  { label: 'Painel de presenças CCO', icon: 'ki-check-circle', to: '/cco/presences' },
+  { label: 'Postos cobertos CCO', icon: 'ki-shield-tick', to: '/cco/coverage' },
+  { label: 'Atrasos CCO', icon: 'ki-time', to: '/cco/delays' },
+  { label: 'Check-ins fora do raio CCO', icon: 'ki-geolocation', to: '/cco/out-of-radius' },
+  { label: 'Ocorrências abertas CCO', icon: 'ki-warning-2', to: '/cco/incidents' },
+  { label: 'Equipa em campo', icon: 'ki-people', to: '/supervisor/team' },
+  { label: 'Validação de ocorrência', icon: 'ki-search-list', to: '/supervisor/incidents/validation' },
+  { label: 'Confirmação de presença', icon: 'ki-check-circle', to: '/supervisor/attendance-confirmation' },
+  { label: 'Presenças em curso', icon: 'ki-check-circle', to: '/attendances/ongoing' },
+  { label: 'Presenças de hoje', icon: 'ki-user-tick', to: '/attendances/today' },
+  { label: 'Atrasos de presença', icon: 'ki-time', to: '/attendances/late' },
+  { label: 'Sem check-out', icon: 'ki-exit-right', to: '/attendances/missing-checkout' },
+
+  { type: 'heading', label: 'Recursos Humanos futuros' },
+  { label: 'Formações', icon: 'ki-information-2', to: '/training' },
+  { label: 'Certificações', icon: 'ki-medal-star', to: '/certifications' },
+  { label: 'Avaliação de desempenho', icon: 'ki-chart-simple', to: '/performance' },
+  { label: 'Alertas de RH', icon: 'ki-warning-2', to: '/hr-alerts' },
+
+  { type: 'heading', label: 'Financeiro futuro' },
+  { label: 'Categorias salariais', icon: 'ki-dollar', to: '/payroll/categories' },
   { label: 'Relatórios por período', icon: 'ki-cheque', to: '/billing/periods' },
   { label: 'Por cliente', icon: 'ki-profile-user', to: '/billing/by-client' },
   { label: 'Por contrato', icon: 'ki-document', to: '/billing/by-contract' },
   { label: 'Exportações', icon: 'ki-cloud-download', to: '/billing/exports' },
 
-  { type: 'heading', label: 'Administração' },
+  { type: 'heading', label: 'Administração futura' },
   { label: 'Utilizadores', icon: 'ki-user', to: '/admin/users' },
   { label: 'Perfis e permissões', icon: 'ki-shield', to: '/admin/roles' },
   { label: 'Auditoria', icon: 'ki-information-2', to: '/admin/audit' },

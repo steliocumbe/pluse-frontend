@@ -12,6 +12,18 @@
     </template>
 
     <div class="pluse-demo-page">
+      <section class="supervisor-command-strip">
+        <article v-for="item in supervisorCommand" :key="item.title" class="supervisor-command-card" :class="item.tone">
+          <span>
+            <AppIcon :name="item.icon" :size="18" />
+          </span>
+          <div>
+            <strong>{{ item.title }}</strong>
+            <p>{{ item.copy }}</p>
+          </div>
+        </article>
+      </section>
+
       <section class="pluse-demo-stats">
         <article v-for="item in supervisorStats" :key="item.label" class="pluse-demo-stat" :class="item.tone">
           <span class="pluse-demo-stat-icon">
@@ -31,7 +43,7 @@
 <script setup>
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
-import { supervisorStats } from 'src/data/supervisorDemoData'
+import { supervisorCommand, supervisorStats } from 'src/data/supervisorDemoData'
 
 defineProps({
   eyebrow: { type: String, default: 'Supervisor' },

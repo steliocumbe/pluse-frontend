@@ -82,7 +82,7 @@
         :loading="store.loading"
         row-key="id"
         flat bordered binary-state-sort
-        :rows-per-page-options="[10, 20, 50]"
+        :rows-per-page-options="[10, 15, 25, 50]"
         class="pluse-table"
         no-data-label="Sem contratos nesta vista."
         @request="onTableRequest"
@@ -202,7 +202,7 @@ const pagination = ref({
   sortBy: 'start_date',
   descending: true,
   page: 1,
-  rowsPerPage: 20,
+  rowsPerPage: 10,
   rowsNumber: 0,
 })
 

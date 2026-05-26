@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
 const props = defineProps({
@@ -122,8 +122,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['sort-change', 'row-click'])
+const slots = useSlots()
 
-const totalColumns = computed(() => props.columns.length + (props.$slots?.actions ? 1 : 0))
+const totalColumns = computed(() => props.columns.length + (slots.actions ? 1 : 0))
 
 function toggleSort(key) {
   if (props.sort === key) {
@@ -144,27 +145,28 @@ function onRowClick(row) {
 .app-table-wrap {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border: 1px solid #dbe5f1;
+  border-radius: 1rem;
   background: var(--card);
+  box-shadow: 0 14px 34px rgba(15, 37, 68, 0.06);
 }
 .app-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.875rem;
+  font-size: 0.92rem;
   color: var(--foreground);
 }
 .app-table__th {
   padding: 0.75rem 1rem;
   text-align: start;
-  font-weight: 600;
+  font-weight: 850;
   font-size: 0.75rem;
-  color: var(--muted-foreground);
+  color: #58708e;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklab, var(--muted) 40%, var(--background));
+  letter-spacing: 0;
+  border-bottom: 1px solid #dbe5f1;
+  background: linear-gradient(180deg, #f8fbff, #eef4fb);
   white-space: nowrap;
 }
 .app-table__th--sortable {
@@ -193,7 +195,8 @@ function onRowClick(row) {
 }
 .app-table__td {
   padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #edf2f8;
+  color: #23344d;
   vertical-align: middle;
 }
 .app-table__td--actions {
@@ -208,7 +211,7 @@ function onRowClick(row) {
   transition: background-color 100ms ease;
 }
 .app-table__row--clickable:hover {
-  background: color-mix(in oklab, var(--primary) 5%, transparent);
+  background: #f8fbff;
 }
 .app-table__loading,
 .app-table__empty {

@@ -68,7 +68,7 @@
         :loading="loading"
         row-key="id"
         flat bordered binary-state-sort
-        :rows-per-page-options="[10, 20, 50]"
+        :rows-per-page-options="[10, 15, 25, 50]"
         class="pluse-table"
         no-data-label="Sem clientes registados."
         @request="onTableRequest"
@@ -134,7 +134,7 @@ const count = ref(0)
 const loading = ref(false)
 const filters = reactive({ search: '', stage: '', client_type: '' })
 const pagination = ref({
-  sortBy: 'name', descending: false, page: 1, rowsPerPage: 20, rowsNumber: 0,
+  sortBy: 'name', descending: false, page: 1, rowsPerPage: 10, rowsNumber: 0,
 })
 
 const columns = [

@@ -88,7 +88,7 @@
         flat
         bordered
         binary-state-sort
-        :rows-per-page-options="[10, 20, 50]"
+        :rows-per-page-options="[10, 15, 25, 50]"
         @request="onTableRequest"
         @row-click="onRowClick"
         class="pluse-table"
@@ -207,7 +207,7 @@ const pagination = ref({
   sortBy: 'created_at',
   descending: true,
   page: 1,
-  rowsPerPage: 20,
+  rowsPerPage: 10,
   rowsNumber: 0,
 })
 
