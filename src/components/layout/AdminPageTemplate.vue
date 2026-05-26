@@ -3,6 +3,13 @@
     <div class="admin-page-hero">
       <div class="admin-page-hero-content">
         <div>
+          <!-- Breadcrumb + back: aceita slot ou props -->
+          <div v-if="breadcrumb?.length || backTo || $slots.breadcrumb" class="admin-page-nav">
+            <AdminBackButton v-if="backTo !== null" :to="backTo" :label="backLabel" />
+            <AdminBreadcrumb v-if="breadcrumb?.length" :items="breadcrumb" />
+            <slot name="breadcrumb" />
+          </div>
+
           <p v-if="eyebrow" class="admin-page-eyebrow">{{ eyebrow }}</p>
           <div class="admin-page-title">{{ title }}</div>
           <p v-if="description" class="admin-page-description">{{ description }}</p>
@@ -32,10 +39,26 @@
 </template>
 
 <script setup>
+import AdminBackButton from './AdminBackButton.vue'
+import AdminBreadcrumb from './AdminBreadcrumb.vue'
+
 defineProps({
   eyebrow: { type: String, default: '' },
   title: { type: String, required: true },
   description: { type: String, default: '' },
+  /**
+   * Lista do breadcrumb. Cada item: `{ label, to? }`.
+   * Se omitido (ou vazio), o breadcrumb não é renderizado.
+   */
+  breadcrumb: { type: Array, default: () => [] },
+  /**
+   * `to` do botão "voltar". Aceita string, RouteLocationRaw ou:
+   *   - `null` (default) → botão escondido
+   *   - `'back'`         → router.back() (fallback para '/')
+   *   - rota             → navega para essa rota
+   */
+  backTo: { type: [String, Object, null], default: null },
+  backLabel: { type: String, default: 'Voltar' },
 })
 </script>
 
@@ -90,6 +113,14 @@ defineProps({
   justify-content: space-between;
   gap: 32px;
   padding: 32px;
+}
+
+.admin-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .admin-page-eyebrow {

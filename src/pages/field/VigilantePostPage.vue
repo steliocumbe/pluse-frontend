@@ -133,20 +133,24 @@ function statusClass(s) {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  background: linear-gradient(135deg, #f0fdfa, #ecfeff);
-  border-color: #99f6e4;
+  border-color: rgba(63, 109, 246, 0.22);
+  background:
+    linear-gradient(135deg, rgba(15, 37, 68, 0.94), rgba(23, 107, 135, 0.86)),
+    repeating-linear-gradient(45deg, transparent 0 18px, rgba(255, 255, 255, 0.12) 18px 19px);
+  color: #ffffff;
 }
-.vig-map.has-gps { background: linear-gradient(135deg, #eff6ff, #e0e7ff); border-color: #c7d2fe; }
+.vig-map.has-gps { border-color: rgba(16, 185, 129, 0.28); }
 .vig-map-icon {
   width: 44px; height: 44px;
-  border-radius: 12px;
+  flex: none;
+  border-radius: 14px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: #fff;
-  color: #4f46e5;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
 }
 .vig-map-body { flex: 1; min-width: 0; }
-.vig-map-body h2 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 4px; }
-.vig-map-body p { font-size: 13px; color: #475569; margin: 0; }
+.vig-map-body h2 { font-size: 1.06rem; font-weight: 850; color: #ffffff; margin: 0 0 5px; line-height: 1.16; }
+.vig-map-body p { font-size: 0.86rem; color: rgba(255, 255, 255, 0.76); margin: 0; }
 .vig-map-btn { padding: 8px 12px; font-size: 12px; min-height: 36px; }
 
 .vig-info-grid {
@@ -155,24 +159,24 @@ function statusClass(s) {
   gap: 10px;
 }
 .vig-info {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
+  border: 1px solid #dce5f1;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 12px 26px rgba(15, 37, 68, 0.06);
+  padding: 14px;
 }
 .vig-info span {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 850;
   text-transform: uppercase;
-  letter-spacing: .08em;
   color: #64748b;
 }
 .vig-info strong {
   display: block;
   margin-top: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
+  font-size: 0.96rem;
+  font-weight: 850;
+  color: #0f2544;
 }
 .vig-info .text-danger { color: #b91c1c; }
 
@@ -182,13 +186,13 @@ function statusClass(s) {
   align-items: center;
   gap: 12px;
 }
-.vig-shift-label { font-size: 14px; font-weight: 600; color: #0f172a; margin: 0; }
-.vig-shift-meta { font-size: 12px; color: #64748b; margin: 4px 0 0; }
+.vig-shift-label { font-size: 0.96rem; font-weight: 850; color: #0f2544; margin: 0; }
+.vig-shift-meta { font-size: 0.84rem; color: #64748b; margin: 4px 0 0; }
 
 .vig-notes {
-  font-size: 13px;
+  font-size: 0.9rem;
   color: #334155;
   white-space: pre-wrap;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 </style>

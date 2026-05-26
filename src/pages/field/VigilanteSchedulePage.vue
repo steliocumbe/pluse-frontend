@@ -150,8 +150,11 @@ function statusClass(s) {
 <style scoped>
 @import './vigilante-shared.css';
 .vig-hero {
-  background: linear-gradient(135deg, #ede9fe 0%, #dbeafe 100%);
-  border: 1px solid #c7d2fe;
+  border-color: rgba(63, 109, 246, 0.24);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(16, 185, 129, 0.2), transparent 32%),
+    linear-gradient(135deg, #0f2544 0%, #17446a 62%, #176b87 100%);
+  color: #ffffff;
 }
 .vig-hero-head {
   display: flex;
@@ -159,15 +162,17 @@ function statusClass(s) {
   align-items: flex-start;
   gap: 12px;
 }
-.vig-hero-title { font-size: 20px; font-weight: 700; color: #312e81; margin: 4px 0 2px; }
-.vig-hero-sub { font-size: 13px; color: #4338ca; }
+.vig-hero .vig-eyebrow { color: rgba(255, 255, 255, 0.7); }
+.vig-hero-title { font-size: 1.34rem; font-weight: 850; color: #ffffff; margin: 6px 0 4px; line-height: 1.12; }
+.vig-hero-sub { font-size: 0.9rem; color: rgba(255, 255, 255, 0.72); }
 .vig-hero-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  font-size: 12px;
-  color: #4338ca;
-  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  font-weight: 750;
+  margin-top: 14px;
 }
 .vig-hero-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .vig-actions {
@@ -185,18 +190,25 @@ function statusClass(s) {
   display: flex;
   align-items: center;
   gap: 12px;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+.vig-shift:hover {
+  border-color: #cbd7eb;
+  transform: translateY(-1px);
 }
 .vig-shift-date {
-  width: 48px;
+  width: 52px;
   text-align: center;
   display: flex; flex-direction: column;
-  background: #f1f5f9;
-  border-radius: 10px;
-  padding: 6px 0;
+  background: #e4ebff;
+  border-radius: 14px;
+  padding: 8px 0;
 }
-.vig-shift-date strong { font-size: 18px; color: #1e293b; line-height: 1; }
-.vig-shift-date span { font-size: 11px; color: #64748b; text-transform: uppercase; margin-top: 2px; }
+.vig-shift-date strong { font-size: 1.12rem; color: #0f2544; line-height: 1; }
+.vig-shift-date span { font-size: 0.68rem; color: #3f6df6; text-transform: uppercase; margin-top: 3px; font-weight: 900; }
 .vig-shift-body { flex: 1; min-width: 0; }
-.vig-shift-post { font-size: 14px; font-weight: 600; color: #0f172a; margin: 0; }
-.vig-shift-sub { font-size: 12px; color: #64748b; margin: 2px 0 0; }
+.vig-shift-post { font-size: 0.98rem; font-weight: 820; color: #0f2544; margin: 0; }
+.vig-shift-sub { font-size: 0.84rem; color: #64748b; margin: 3px 0 0; }
 </style>

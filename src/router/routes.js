@@ -371,9 +371,9 @@ const routes = [
         component: () => import('pages/supervisor/SupervisorAttendanceConfirmationPage.vue'),
       },
       {
-        path: ':section(.*)*',
-        name: 'placeholder',
-        component: () => import('pages/PlaceholderPage.vue'),
+        path: ':catchAll(.*)*',
+        name: 'not-found',
+        component: () => import('pages/ErrorNotFound.vue'),
       },
     ],
   },

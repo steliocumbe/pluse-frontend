@@ -9,6 +9,11 @@
     eyebrow="Colaboradores · Novo registo"
     title="Novo colaborador"
     description="Vigilantes, supervisores ou funcionários internos. O registo entra como pendente — um administrador aprova depois."
+    :breadcrumb="[
+      { label: 'Colaboradores', to: { name: 'employees-list' } },
+      { label: 'Novo' },
+    ]"
+    :back-to="{ name: 'employees-list' }"
   >
     <template #actions>
       <q-btn

@@ -16,6 +16,11 @@
     :eyebrow="`Colaboradores · ${employee?.employee_number || '…'}`"
     :title="employee?.full_name || 'Colaborador'"
     :description="employee?.current_job_title || 'Detalhes do colaborador'"
+    :breadcrumb="[
+      { label: 'Colaboradores', to: { name: 'employees-list' } },
+      { label: employee?.full_name || 'Detalhe' },
+    ]"
+    :back-to="{ name: 'employees-list' }"
   >
     <template #meta>
       <span v-if="employee" class="admin-meta-chip admin-meta-chip--accent">

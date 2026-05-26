@@ -1,19 +1,15 @@
 <template>
-  <!--
-    Layout PWA do vigilante.
-    - Mobile-first: ocupa 100vh com header fixo + main scrollável + bottom nav.
-    - Em tablets/desktop, centra o conteúdo num cartão de até 480 px para não
-      esticar widgets desenhados para mão.
-    - safe-area-inset honra o notch nos ecrãs com recorte.
-  -->
   <div class="vig-shell">
     <div class="vig-frame">
-      <!-- Header -->
       <header class="vig-header">
-        <div class="vig-header-info">
-          <p class="vig-eyebrow">{{ pageEyebrow }}</p>
-          <h1 class="vig-title">{{ pageTitle }}</h1>
+        <div class="vig-brand">
+          <span class="vig-brand-mark">P</span>
+          <div class="vig-header-info">
+            <span class="vig-eyebrow">{{ pageEyebrow }}</span>
+            <div class="vig-title">{{ pageTitle }}</div>
+          </div>
         </div>
+
         <div class="vig-header-side">
           <div class="vig-online" :class="online ? 'is-online' : 'is-offline'">
             <span class="vig-online-dot" />
@@ -25,19 +21,16 @@
         </div>
       </header>
 
-      <!-- Aviso modo offline -->
       <div v-if="!online" class="vig-banner vig-banner--offline">
         <AppIcon name="ki-cloud" :size="16" />
-        <span>Sem ligação. Acções serão sincronizadas mais tarde.</span>
+        <span>Sem ligação. As ações serão sincronizadas mais tarde.</span>
       </div>
 
-      <!-- Conteúdo da página -->
       <main class="vig-main">
         <router-view />
       </main>
 
-      <!-- Bottom nav -->
-      <nav class="vig-nav" role="navigation" aria-label="Navegação principal">
+      <nav class="vig-nav" role="navigation" aria-label="Navegação principal do vigilante">
         <router-link
           v-for="item in nav"
           :key="item.to"
@@ -45,7 +38,9 @@
           class="vig-nav-item"
           active-class="is-active"
         >
-          <AppIcon :name="item.icon" :size="22" />
+          <span class="vig-nav-icon">
+            <AppIcon :name="item.icon" :size="21" />
+          </span>
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
@@ -65,8 +60,12 @@ const auth = useAuthStore()
 
 const online = ref(navigator.onLine)
 
-function setOnline() { online.value = true }
-function setOffline() { online.value = false }
+function setOnline() {
+  online.value = true
+}
+function setOffline() {
+  online.value = false
+}
 
 onMounted(() => {
   window.addEventListener('online', setOnline)
@@ -111,158 +110,270 @@ const nav = [
 <style scoped>
 .vig-shell {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(99,102,241,.18), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(14,165,233,.14), transparent 45%),
-    #0f172a;
   display: flex;
-  justify-content: center;
   align-items: stretch;
+  justify-content: center;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(63, 109, 246, 0.2), transparent 34%),
+    radial-gradient(circle at 94% 8%, rgba(16, 185, 129, 0.18), transparent 30%),
+    linear-gradient(145deg, #07162b 0%, #0f2544 48%, #123d56 100%);
 }
 
 .vig-frame {
-  width: 100%;
-  max-width: 480px;
-  background: #fff;
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   min-height: 100vh;
-  box-shadow: 0 30px 60px -20px rgba(15, 23, 42, .35);
+  overflow: hidden;
+  background: #eef4fb;
+  box-shadow: 0 30px 80px rgba(4, 18, 38, 0.34);
 }
 
-@media (min-width: 768px) {
-  .vig-shell { padding: 24px 16px; }
-  .vig-frame {
-    min-height: calc(100vh - 48px);
-    border-radius: 20px;
-    overflow: hidden;
-  }
+.vig-frame::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 220px;
+  pointer-events: none;
+  content: '';
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent),
+    radial-gradient(circle at 78% 10%, rgba(16, 185, 129, 0.22), transparent 34%);
 }
 
 .vig-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  background: linear-gradient(135deg, #0f2544 0%, #17446a 58%, #176b87 100%);
+  color: #ffffff;
+}
+
+.vig-brand {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  padding: 16px 18px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #0ea5e9 100%);
-  color: #fff;
+  min-width: 0;
 }
-.vig-header-info { display: flex; flex-direction: column; min-width: 0; }
+
+.vig-brand-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3f6df6, #10b8d4);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+  box-shadow: 0 14px 28px rgba(63, 109, 246, 0.28);
+}
+
+.vig-header-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .vig-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  opacity: .8;
   margin: 0;
-}
-.vig-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
   line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.vig-title {
+  margin-top: 3px;
+  color: #ffffff;
+  font-size: 1.28rem;
+  font-weight: 820;
+  letter-spacing: 0;
+  line-height: 1.08;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vig-header-side {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: none;
 }
 
 .vig-online {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.74rem;
+  font-weight: 800;
 }
+
 .vig-online-dot {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
   background: #94a3b8;
 }
-.vig-online.is-online .vig-online-dot { background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.25); }
-.vig-online.is-offline .vig-online-dot { background: #f87171; }
+
+.vig-online.is-online .vig-online-dot {
+  background: #34d399;
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.22);
+}
+
+.vig-online.is-offline .vig-online-dot {
+  background: #f87171;
+  box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.18);
+}
 
 .vig-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .18);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .04em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, .25);
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 900;
 }
 
 .vig-banner {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 10px 18px;
+  font-size: 0.82rem;
+  font-weight: 750;
 }
+
 .vig-banner--offline {
+  border-bottom: 1px solid #fed7aa;
   background: #fff7ed;
   color: #c2410c;
-  border-bottom: 1px solid #fed7aa;
 }
 
 .vig-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow-y: auto;
-  padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
-  background: #f8fafc;
+  padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
+    #eef4fb;
 }
 
 .vig-nav {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  background: #ffffff;
-  border-top: 1px solid #e2e8f0;
-  padding-bottom: env(safe-area-inset-bottom);
+  right: 12px;
+  bottom: 10px;
+  left: 12px;
   z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 8px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  border: 1px solid rgba(220, 229, 241, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 42px rgba(15, 37, 68, 0.18);
+  backdrop-filter: blur(16px);
 }
+
+.vig-nav-item {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  min-height: 54px;
+  gap: 4px;
+  border-radius: 16px;
+  color: #60758f;
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.vig-nav-item:active {
+  transform: scale(0.98);
+}
+
+.vig-nav-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+}
+
+.vig-nav-item.is-active {
+  background: #e4ebff;
+  color: #3f6df6;
+}
+
+@media (max-width: 390px) {
+  .vig-online span:last-child {
+    display: none;
+  }
+}
+
 @media (min-width: 768px) {
+  .vig-shell {
+    padding: 26px;
+  }
+
+  .vig-frame {
+    width: min(100%, 900px);
+    min-height: calc(100vh - 52px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+  }
+
+  .vig-header {
+    padding: 24px 28px 22px;
+  }
+
+  .vig-title {
+    font-size: 1.72rem;
+  }
+
+  .vig-main {
+    padding: 24px 28px 28px;
+  }
+
   .vig-nav {
     position: sticky;
-    bottom: 0;
-    margin-top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    margin: auto 28px 24px;
+    padding: 8px;
+    border-radius: 20px;
   }
-  .vig-main { padding-bottom: 16px; }
 }
-.vig-nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 10px 6px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-  text-decoration: none;
-  min-height: 56px;
-  transition: color .15s;
-}
-.vig-nav-item.is-active {
-  color: #4f46e5;
-  background: linear-gradient(180deg, rgba(99,102,241,.08), transparent);
-  border-top: 2px solid #4f46e5;
-  padding-top: 8px;
-}
-.vig-nav-item:active { background: rgba(99,102,241,.06); }
 </style>

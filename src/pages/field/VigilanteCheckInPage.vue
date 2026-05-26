@@ -262,53 +262,53 @@ function saveOffline() {
 }
 .vig-target-icon {
   width: 44px; height: 44px;
-  border-radius: 50%;
-  background: #ede9fe;
-  color: #4f46e5;
+  flex: none;
+  border-radius: 14px;
+  background: #e4ebff;
+  color: #3f6df6;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .vig-target-body { min-width: 0; }
-.vig-target-body h2 { font-size: 17px; font-weight: 700; color: #0f172a; margin: 2px 0; }
-.vig-target-body p { font-size: 12px; color: #64748b; margin: 0; }
+.vig-target-body h2 { font-size: 1.05rem; font-weight: 850; color: #0f2544; margin: 2px 0; line-height: 1.16; }
+.vig-target-body p { font-size: 0.84rem; color: #64748b; margin: 0; }
 
 .vig-gps-card { display: flex; flex-direction: column; gap: 16px; }
 .vig-gps-card.is-success { background: linear-gradient(135deg, #dcfce7, #ecfdf5); border-color: #86efac; color: #14532d; }
 .vig-gps-card.is-error { background: linear-gradient(135deg, #fee2e2, #fff1f2); border-color: #fca5a5; color: #7f1d1d; }
-.vig-gps-card.is-loading { background: #f1f5f9; border-color: #e2e8f0; }
+.vig-gps-card.is-loading { background: #f8fbff; border-color: #dce5f1; }
 
 .vig-gps-head {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.vig-gps-title { font-size: 16px; font-weight: 700; margin: 0; }
-.vig-gps-sub { font-size: 13px; opacity: .85; margin: 4px 0 0; line-height: 1.4; }
+.vig-gps-title { font-size: 1.08rem; font-weight: 850; margin: 0; }
+.vig-gps-sub { font-size: 0.9rem; opacity: .85; margin: 5px 0 0; line-height: 1.5; }
 
 .vig-gps-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 10px;
   background: rgba(255,255,255,.6);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 12px;
 }
 .vig-gps-stats span {
-  font-size: 10px;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: .08em;
+  font-weight: 850;
   opacity: .75;
 }
-.vig-gps-stats strong { display: block; font-size: 15px; margin-top: 2px; }
+.vig-gps-stats strong { display: block; font-size: 1rem; margin-top: 3px; }
 
 .vig-link-row { display: flex; justify-content: center; }
 .vig-link-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 8px 12px;
   border-radius: 999px;
   background: #f1f5f9;
   color: #475569;

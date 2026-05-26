@@ -6,6 +6,11 @@
     eyebrow="Cadastros · Cliente"
     :title="client?.name || 'Cliente'"
     :description="client?.client_type_display || ''"
+    :breadcrumb="[
+      { label: 'Clientes', to: { name: 'clients-list' } },
+      { label: client?.name || 'Detalhe' },
+    ]"
+    :back-to="{ name: 'clients-list' }"
   >
     <template #meta>
       <span v-if="client" class="admin-meta-chip admin-meta-chip--accent">

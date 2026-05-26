@@ -83,7 +83,7 @@ function formatDateTime(s) {
 }
 .vig-result-icon {
   width: 80px; height: 80px;
-  border-radius: 50%;
+  border-radius: 26px;
   background: #fff;
   margin: 0 auto 16px;
   display: inline-flex;
@@ -99,10 +99,14 @@ function formatDateTime(s) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 0.9rem;
 }
-.vig-summary-row span { color: #64748b; font-weight: 500; }
-.vig-summary-row strong { color: #0f172a; font-weight: 600; }
+.vig-summary-row:last-child { border-bottom: 0; }
+.vig-summary-row span { color: #64748b; font-weight: 750; }
+.vig-summary-row strong { color: #0f2544; font-weight: 850; text-align: right; }
 
 .vig-bottom-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 </style>

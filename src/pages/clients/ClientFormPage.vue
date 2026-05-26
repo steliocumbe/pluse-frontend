@@ -5,7 +5,18 @@
 <template>
   <AdminPageTemplate eyebrow="Cadastros" :title="isEdit ? 'Editar cliente' : 'Novo cliente'" :description="isEdit
     ? 'Actualize os dados do cliente e a análise de risco.'
-    : 'Registe um cliente. Entra em Prospeção — depois submete-se a análise de risco para aprovação.'">
+    : 'Registe um cliente. Entra em Prospeção — depois submete-se a análise de risco para aprovação.'"
+    :breadcrumb="isEdit
+      ? [
+          { label: 'Clientes', to: { name: 'clients-list' } },
+          { label: clientName || 'Cliente', to: route.params.id ? { name: 'clients-detail', params: { id: route.params.id } } : null },
+          { label: 'Editar' },
+        ]
+      : [
+          { label: 'Clientes', to: { name: 'clients-list' } },
+          { label: 'Novo' },
+        ]"
+    :back-to="isEdit && route.params.id ? { name: 'clients-detail', params: { id: route.params.id } } : { name: 'clients-list' }">
     <template #actions>
       <q-btn outline no-caps class="admin-hero-button" icon="arrow_back" label="Voltar"
         :to="{ name: 'clients-list' }" />
@@ -77,6 +88,7 @@ const toast = useToast()
 const isEdit = computed(() => !!route.params.id)
 const formRef = ref(null)
 const submitting = ref(false)
+const clientName = ref('')
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
 
 const form = reactive({
@@ -97,6 +109,7 @@ onMounted(async () => {
   if (isEdit.value) {
     try {
       const c = await clientService.get(route.params.id)
+      clientName.value = c.name || ''
       Object.assign(form, {
         name: c.name,
         short_name: c.short_name || '',

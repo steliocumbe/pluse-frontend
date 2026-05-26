@@ -124,12 +124,12 @@ function ago(ts) {
 .vig-result { text-align: center; padding: 28px 24px; }
 .vig-result-icon {
   width: 72px; height: 72px;
-  border-radius: 50%;
+  border-radius: 24px;
   background: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   margin-bottom: 12px;
 }
-.vig-result--info { background: linear-gradient(135deg, #eff6ff, #e0f2fe); border-color: #93c5fd; color: #1e40af; }
+.vig-result--info { background: linear-gradient(135deg, #e4ebff, #ecfeff); border-color: #b8c7ff; color: #17446a; }
 .vig-result--warn { background: linear-gradient(135deg, #fff7ed, #fef3c7); border-color: #fcd34d; color: #92400e; }
 .vig-result h2 { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
 .vig-result p { font-size: 13px; opacity: .85; margin: 0; line-height: 1.5; }
@@ -139,18 +139,25 @@ function ago(ts) {
   align-items: center;
   gap: 12px;
   padding: 12px;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+.vig-queue-item:hover {
+  border-color: #cbd7eb;
+  transform: translateY(-1px);
 }
 .vig-queue-icon {
   width: 36px; height: 36px;
-  border-radius: 10px;
+  border-radius: 13px;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.vig-queue-icon.is-primary { background: #e0e7ff; color: #4f46e5; }
+.vig-queue-icon.is-primary { background: #e4ebff; color: #3f6df6; }
 .vig-queue-icon.is-warning { background: #fef3c7; color: #b45309; }
 .vig-queue-icon.is-danger { background: #fee2e2; color: #b91c1c; }
 .vig-queue-body { flex: 1; min-width: 0; }
-.vig-queue-title { font-size: 13px; font-weight: 600; color: #0f172a; margin: 0; }
-.vig-queue-sub { font-size: 12px; color: #64748b; margin: 2px 0 0; }
+.vig-queue-title { font-size: 0.9rem; font-weight: 850; color: #0f2544; margin: 0; }
+.vig-queue-sub { font-size: 0.82rem; color: #64748b; margin: 3px 0 0; }
 .vig-queue-remove {
   background: transparent;
   border: none;

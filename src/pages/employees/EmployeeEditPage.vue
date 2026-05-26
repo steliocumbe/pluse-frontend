@@ -7,6 +7,12 @@
     :eyebrow="`Colaboradores · ${store.current?.employee_number || '…'}`"
     :title="pageTitle"
     description="Actualizar dados pessoais, função, contactos ou acesso à plataforma."
+    :breadcrumb="[
+      { label: 'Colaboradores', to: { name: 'employees-list' } },
+      { label: store.current?.full_name || 'Colaborador', to: store.current ? { name: 'employees-detail', params: { id: store.current.id } } : null },
+      { label: 'Editar' },
+    ]"
+    :back-to="store.current ? { name: 'employees-detail', params: { id: store.current.id } } : { name: 'employees-list' }"
   >
     <template #actions>
       <q-btn
