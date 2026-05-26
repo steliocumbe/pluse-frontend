@@ -29,6 +29,7 @@
     <q-card flat bordered class="pluse-card">
       <q-card-section>
         <EmployeeForm
+          ref="formRef"
           mode="create"
           :submitting="store.submitting"
           @submit="onSubmit"
@@ -100,11 +101,13 @@ const router = useRouter()
 const store = useEmployeesStore()
 const toast = useToast()
 
+const formRef = ref(null)
 const showTempPassword = ref(false)
 const tempPassword = ref('')
 const createdId = ref(null)
 
 async function onSubmit({ payload, initialDocuments = [], initialContract = null }) {
+  formRef.value?.clearErrors?.()
   try {
     const created = await store.create(payload, initialDocuments, initialContract)
     createdId.value = created.id
@@ -120,14 +123,8 @@ async function onSubmit({ payload, initialDocuments = [], initialContract = null
       router.push(`/employees/${created.id}`)
     }
   } catch (err) {
-    const data = err?.response?.data
-    if (data && typeof data === 'object') {
-      const firstErr = Object.entries(data)[0]
-      const message = Array.isArray(firstErr?.[1]) ? firstErr[1][0] : firstErr?.[1]
-      toast.error('Não foi possível criar.', { caption: `${firstErr?.[0]}: ${message}` })
-    } else {
-      toast.error('Não foi possível criar.')
-    }
+    formRef.value?.setFromResponse?.(err.response)
+    toast.error('Verifique os campos assinalados.')
   }
 }
 

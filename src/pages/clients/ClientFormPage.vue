@@ -25,25 +25,49 @@
     <q-card flat bordered class="pluse-card">
       <q-card-section>
         <q-form ref="formRef" greedy class="flex flex-col gap-5" @submit="onSubmit">
+          <!-- Erros globais do servidor -->
+          <div v-if="globalErrors.length"
+            class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            <p v-for="(e, i) in globalErrors" :key="i" class="m-0">{{ e }}</p>
+          </div>
+
           <div class="form-group-label">Identificação</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <q-input v-model="form.name" label="Nome *" outlined dense :rules="[req]" class="md:col-span-2" />
-            <q-input v-model="form.short_name" label="Nome curto" outlined dense />
+            <q-input v-model="form.name" label="Nome *" outlined dense :rules="[req]" class="md:col-span-2"
+              :error="!!fieldErrors.name" :error-message="fieldErrors.name"
+              @update:model-value="() => clearField('name')" />
+            <q-input v-model="form.short_name" label="Nome curto" outlined dense
+              :error="!!fieldErrors.short_name" :error-message="fieldErrors.short_name"
+              @update:model-value="() => clearField('short_name')" />
             <q-select v-model="form.client_type" :options="clientTypeOptions" label="Tipo de cliente *" outlined dense
-              emit-value map-options :rules="[req]" />
+              emit-value map-options :rules="[req]"
+              :error="!!fieldErrors.client_type" :error-message="fieldErrors.client_type"
+              @update:model-value="() => clearField('client_type')" />
             <q-input v-model="form.nuit" label="NUIT" outlined dense hint="9 dígitos (opcional)"
-              :rules="[(v) => !v || /^\d{9}$/.test(v) || 'NUIT deve ter 9 dígitos']" />
+              :rules="[nuit()]"
+              :error="!!fieldErrors.nuit" :error-message="fieldErrors.nuit"
+              @update:model-value="() => clearField('nuit')" />
             <q-input v-model="form.address" label="Morada" type="textarea" outlined dense autogrow
-              class="md:col-span-2" />
+              class="md:col-span-2"
+              :error="!!fieldErrors.address" :error-message="fieldErrors.address"
+              @update:model-value="() => clearField('address')" />
           </div>
 
           <div class="form-group-label">Contacto</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <q-input v-model="form.contact_name" label="Nome do contacto" outlined dense />
+            <q-input v-model="form.contact_name" label="Nome do contacto" outlined dense
+              :error="!!fieldErrors.contact_name" :error-message="fieldErrors.contact_name"
+              @update:model-value="() => clearField('contact_name')" />
             <q-input v-model="form.contact_phone" label="Telefone do contacto" outlined dense inputmode="tel"
-              hint="9 dígitos, com ou sem +258" />
+              hint="9 dígitos, com ou sem +258"
+              :rules="[mozambicanPhone()]"
+              :error="!!fieldErrors.contact_phone" :error-message="fieldErrors.contact_phone"
+              @update:model-value="() => clearField('contact_phone')" />
             <q-input v-model="form.contact_email" label="Email do contacto" type="email" outlined dense
-              class="md:col-span-2" />
+              class="md:col-span-2"
+              :rules="[email()]"
+              :error="!!fieldErrors.contact_email" :error-message="fieldErrors.contact_email"
+              @update:model-value="() => clearField('contact_email')" />
           </div>
 
           <div class="form-group-label">Análise de risco</div>
@@ -53,13 +77,19 @@
           </p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <q-select v-model="form.risk_level" :options="riskLevelOptions" label="Nível de risco" outlined dense
-              emit-value map-options clearable />
+              emit-value map-options clearable
+              :error="!!fieldErrors.risk_level" :error-message="fieldErrors.risk_level"
+              @update:model-value="() => clearField('risk_level')" />
             <q-file v-model="form.risk_analysis_file" label="Relatório de análise de risco" outlined dense clearable
-              max-file-size="10485760" accept=".pdf,.jpg,.jpeg,.png">
+              max-file-size="10485760" accept=".pdf,.jpg,.jpeg,.png"
+              :error="!!fieldErrors.risk_analysis_file" :error-message="fieldErrors.risk_analysis_file"
+              @update:model-value="() => clearField('risk_analysis_file')">
               <template #prepend><q-icon name="attach_file" /></template>
             </q-file>
             <q-input v-model="form.risk_notes" label="Notas da análise" type="textarea" outlined dense autogrow
-              class="md:col-span-2" />
+              class="md:col-span-2"
+              :error="!!fieldErrors.risk_notes" :error-message="fieldErrors.risk_notes"
+              @update:model-value="() => clearField('risk_notes')" />
           </div>
 
           <div class="flex justify-end gap-2 pt-2">
@@ -79,6 +109,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { clientService } from 'src/services/client.service'
 import { clientTypeOptions, riskLevelOptions } from 'src/config/clients'
 import { useToast } from 'src/composables/useToast'
+import { useFormErrors } from 'src/composables/useFormErrors'
+import { nuit, mozambicanPhone, email } from 'src/utils/validators'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 
 const route = useRoute()
@@ -90,6 +122,9 @@ const formRef = ref(null)
 const submitting = ref(false)
 const clientName = ref('')
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
+
+// Erros do backend mapeados por campo
+const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors, clearField } = useFormErrors()
 
 const form = reactive({
   name: '',
@@ -130,6 +165,7 @@ onMounted(async () => {
 })
 
 async function onSubmit() {
+  clearErrors()
   const ok = await formRef.value?.validate()
   if (!ok) return
   submitting.value = true
@@ -142,10 +178,8 @@ async function onSubmit() {
     toast.success(isEdit.value ? 'Cliente actualizado.' : 'Cliente registado.')
     router.push({ name: 'clients-detail', params: { id: saved.id } })
   } catch (err) {
-    toast.error('Não foi possível guardar.', {
-      caption: err?.response?.data?.detail
-        || Object.values(err?.response?.data || {})?.[0],
-    })
+    setFromResponse(err.response)
+    toast.error('Verifique os campos assinalados.')
   } finally {
     submitting.value = false
   }

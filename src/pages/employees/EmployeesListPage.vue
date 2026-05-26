@@ -70,6 +70,15 @@
         />
       </q-card-section>
 
+      <q-card-section class="pt-0">
+        <ActiveFiltersBar
+          :filters="filters"
+          :config="filterConfig"
+          @clear="onClearFilter"
+          @clear-all="onClearAllFilters"
+        />
+      </q-card-section>
+
       <q-table
         v-model:pagination="pagination"
         :rows="store.items"
@@ -186,6 +195,7 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
+import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -218,6 +228,23 @@ const statusOptions = [
 ]
 
 const pendingCount = computed(() => store.items.filter((e) => e.status === 'pending').length)
+
+// Config para a barra de filtros activos
+const filterConfig = [
+  { key: 'search', label: 'Pesquisa', emptyValue: '' },
+  { key: 'status', label: 'Estado', emptyValue: '', options: statusOptions },
+]
+
+function onClearFilter(key, emptyValue) {
+  filters[key] = emptyValue
+  onFiltersChanged()
+}
+
+function onClearAllFilters() {
+  filters.search = ''
+  filters.status = ''
+  onFiltersChanged()
+}
 
 function statusVariant(status) {
   return {

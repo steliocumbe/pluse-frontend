@@ -3,6 +3,11 @@
     eyebrow="Postos"
     title="Registar posto"
     description="Transforme o contrato aprovado num local operacional com GPS, QR Code, lotacao e regras de check-in."
+    :breadcrumb="[
+      { label: 'Postos', to: { name: 'posts-list' } },
+      { label: 'Novo' },
+    ]"
+    :back-to="{ name: 'posts-list' }"
   >
     <template #actions>
       <router-link :to="{ name: 'posts-list' }" class="kt-btn kt-btn-outline pluse-demo-hero-action">

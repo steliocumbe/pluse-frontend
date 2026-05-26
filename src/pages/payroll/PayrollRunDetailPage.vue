@@ -8,6 +8,11 @@
     :eyebrow="`Folha de pagamento · ${run?.reference || '…'}`"
     :title="run ? monthLabel(run.month) + ' ' + run.year : 'Folha'"
     description="Bruto e líquido por colaborador. Bloqueada após aprovação."
+    :breadcrumb="[
+      { label: 'Folhas de pagamento', to: { name: 'payroll-runs-list' } },
+      { label: run ? `${monthLabel(run.month)} ${run.year}` : 'Detalhe' },
+    ]"
+    :back-to="{ name: 'payroll-runs-list' }"
   >
     <template #meta>
       <span v-if="run" class="admin-meta-chip admin-meta-chip--accent">

@@ -320,37 +320,6 @@ const routes = [
       },
 
       {
-        path: 'field/schedule',
-        name: 'field-schedule',
-        component: () => import('pages/field/FieldSchedulePage.vue'),
-      },
-      {
-        path: 'field/post',
-        name: 'field-post',
-        component: () => import('pages/field/FieldPostDetailPage.vue'),
-      },
-      {
-        path: 'field/check-in',
-        name: 'field-check-in',
-        component: () => import('pages/field/FieldCheckInPage.vue'),
-      },
-      {
-        path: 'field/check-in/result',
-        name: 'field-check-in-result',
-        component: () => import('pages/field/FieldCheckInResultPage.vue'),
-      },
-      {
-        path: 'field/offline',
-        name: 'field-offline',
-        component: () => import('pages/field/FieldOfflinePage.vue'),
-      },
-      {
-        path: 'field/incidents/new',
-        name: 'field-incident-new',
-        component: () => import('pages/field/FieldIncidentNewPage.vue'),
-      },
-
-      {
         path: 'supervisor/team',
         name: 'supervisor-team',
         component: () => import('pages/supervisor/SupervisorTeamPage.vue'),

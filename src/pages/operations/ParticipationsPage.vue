@@ -48,6 +48,15 @@
         />
       </q-card-section>
 
+      <q-card-section class="pt-0">
+        <ActiveFiltersBar
+          :filters="filters"
+          :config="filterConfig"
+          @clear="onClearFilter"
+          @clear-all="onClearAllFilters"
+        />
+      </q-card-section>
+
       <q-table
         v-model:pagination="pagination"
         :rows="rows" :columns="columns" :loading="loading"
@@ -194,6 +203,7 @@ import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
+import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
 const $q = useQuasar()
 const toast = useToast()
@@ -219,6 +229,25 @@ const columns = [
 const openCount = computed(
   () => rows.value.filter((r) => ['registered', 'in_review'].includes(r.state)).length,
 )
+
+// Config para a barra de filtros activos
+const filterConfig = [
+  { key: 'search', label: 'Pesquisa', emptyValue: '' },
+  { key: 'source', label: 'Origem', emptyValue: '', options: participationSourceOptions },
+  { key: 'state', label: 'Estado', emptyValue: '', options: participationStateOptions },
+]
+
+function onClearFilter(key, emptyValue) {
+  filters[key] = emptyValue
+  onFiltersChanged()
+}
+
+function onClearAllFilters() {
+  filters.search = ''
+  filters.source = ''
+  filters.state = ''
+  onFiltersChanged()
+}
 
 function canAct(row) {
   return ['registered', 'in_review'].includes(row.state)

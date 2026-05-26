@@ -3,6 +3,11 @@
     eyebrow="Contratos"
     title="Registar contrato"
     description="Defina o acordo comercial que vai gerar postos, escalas e a base de faturação em meticais."
+    :breadcrumb="[
+      { label: 'Contratos', to: { name: 'contracts-list' } },
+      { label: 'Novo' },
+    ]"
+    :back-to="{ name: 'contracts-list' }"
   >
     <template #actions>
       <router-link :to="{ name: 'contracts-list' }" class="kt-btn kt-btn-outline pluse-demo-hero-action">

@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, uploadConfig } from './api'
 
 /**
  * Clientes — cadastro + workflow de onboarding (Fase 1).
@@ -10,6 +10,7 @@ import { api } from './api'
 function toFormData(payload) {
   const fd = new FormData()
   for (const [k, v] of Object.entries(payload)) {
+    if (k.startsWith('_')) continue
     if (v === null || v === undefined || v === '') continue
     if (typeof v === 'boolean') fd.append(k, v ? 'true' : 'false')
     else fd.append(k, v)
@@ -23,9 +24,8 @@ function hasFile(payload) {
 
 function send(method, url, payload) {
   if (hasFile(payload)) {
-    return api[method](url, toFormData(payload), {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data)
+    return api[method](url, toFormData(payload), uploadConfig(payload._onProgress))
+      .then((r) => r.data)
   }
   return api[method](url, payload).then((r) => r.data)
 }

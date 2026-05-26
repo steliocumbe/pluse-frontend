@@ -3,6 +3,11 @@
     eyebrow="Clientes"
     title="Registar cliente"
     description="Valide os dados mínimos para transformar uma oportunidade comercial num contrato operacional."
+    :breadcrumb="[
+      { label: 'Clientes', to: { name: 'clients-list' } },
+      { label: 'Novo' },
+    ]"
+    :back-to="{ name: 'clients-list' }"
   >
     <template #actions>
       <router-link :to="{ name: 'clients-list' }" class="kt-btn kt-btn-outline pluse-demo-hero-action">

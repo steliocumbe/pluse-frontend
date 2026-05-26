@@ -33,6 +33,7 @@
     <q-card v-else flat bordered class="pluse-card">
       <q-card-section>
         <EmployeeForm
+          ref="formRef"
           mode="edit"
           :initial="store.current || {}"
           :submitting="store.submitting"
@@ -45,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEmployeesStore } from 'src/stores/employees'
 import { useToast } from 'src/composables/useToast'
@@ -59,22 +60,18 @@ const toast = useToast()
 
 const employeeId = computed(() => route.params.id)
 const pageTitle = computed(() => store.current?.full_name || 'Editar colaborador')
+const formRef = ref(null)
 
 async function onSubmit({ payload }) {
   // initialDocuments is ignored in edit mode (form hides that section anyway).
+  formRef.value?.clearErrors?.()
   try {
     await store.update(employeeId.value, payload)
     toast.success('Dados actualizados.')
     router.push(`/employees/${employeeId.value}`)
   } catch (err) {
-    const data = err?.response?.data
-    if (data && typeof data === 'object') {
-      const first = Object.entries(data)[0]
-      const message = Array.isArray(first?.[1]) ? first[1][0] : first?.[1]
-      toast.error('Não foi possível guardar.', { caption: `${first?.[0]}: ${message}` })
-    } else {
-      toast.error('Não foi possível guardar.')
-    }
+    formRef.value?.setFromResponse?.(err.response)
+    toast.error('Verifique os campos assinalados.')
   }
 }
 

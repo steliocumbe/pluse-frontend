@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, uploadConfig } from './api'
 
 /**
  * PWA do vigilante — endpoints `me/...` (Fase 4.5).
@@ -33,12 +33,10 @@ export const vigilanteService = {
   checkOut(payload = {}) {
     return api.post('/me/check-out/', payload).then((r) => r.data)
   },
-  createIncident(payload) {
+  createIncident(payload, onProgress) {
     if (hasFile(payload)) {
       return api
-        .post('/me/incidents/', toFormData(payload), {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        .post('/me/incidents/', toFormData(payload), uploadConfig(onProgress))
         .then((r) => r.data)
     }
     return api.post('/me/incidents/', payload).then((r) => r.data)

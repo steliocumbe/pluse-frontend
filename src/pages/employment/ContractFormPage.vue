@@ -9,6 +9,17 @@
     :description="isEdit
       ? 'Actualize os dados do contrato. Alterações não voltam a passar por aprovação automaticamente.'
       : 'Registe um contrato de trabalho. Fica pendente até aprovação do Diretor Financeiro.'"
+    :breadcrumb="isEdit
+      ? [
+          { label: 'Contratos', to: { name: 'employment-contracts-list' } },
+          { label: contractLabel || 'Contrato', to: route.params.id ? { name: 'employment-contracts-detail', params: { id: route.params.id } } : null },
+          { label: 'Editar' },
+        ]
+      : [
+          { label: 'Contratos', to: { name: 'employment-contracts-list' } },
+          { label: 'Novo' },
+        ]"
+    :back-to="isEdit && route.params.id ? { name: 'employment-contracts-detail', params: { id: route.params.id } } : { name: 'employment-contracts-list' }"
   >
     <template #actions>
       <q-btn
@@ -21,6 +32,12 @@
     <q-card flat bordered class="pluse-card">
       <q-card-section>
         <q-form ref="formRef" greedy class="flex flex-col gap-5" @submit="onSubmit">
+          <!-- Erros globais do servidor -->
+          <div v-if="globalErrors.length"
+            class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            <p v-for="(e, i) in globalErrors" :key="i" class="m-0">{{ e }}</p>
+          </div>
+
           <div class="form-group-label">Colaborador e função</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <q-select
@@ -35,12 +52,16 @@
               :rules="[req]"
               class="md:col-span-2"
               :hint="lockedEmployee ? 'Pré-seleccionado a partir do colaborador.' : ''"
+              :error="!!fieldErrors.employee" :error-message="fieldErrors.employee"
+              @update:model-value="() => clearField('employee')"
             />
             <q-select
               v-model="form.contract_type"
               :options="contractTypeOptions"
               label="Tipo de contrato *"
               outlined dense emit-value map-options :rules="[req]"
+              :error="!!fieldErrors.contract_type" :error-message="fieldErrors.contract_type"
+              @update:model-value="() => clearField('contract_type')"
             />
             <q-select
               v-model="form.job_title" :options="jobTitleFiltered"
@@ -48,11 +69,15 @@
               new-value-mode="add-unique" input-debounce="200"
               @filter="filterJobTitles" :rules="[req]"
               hint="Escolha da lista ou escreva um cargo novo"
+              :error="!!fieldErrors.job_title" :error-message="fieldErrors.job_title"
+              @update:model-value="() => clearField('job_title')"
             />
             <q-input
               v-model="form.workplace" label="Local de trabalho" outlined dense
               class="md:col-span-2"
               hint="Posto, cliente ou unidade onde exerce funções"
+              :error="!!fieldErrors.workplace" :error-message="fieldErrors.workplace"
+              @update:model-value="() => clearField('workplace')"
             />
           </div>
 
@@ -61,20 +86,28 @@
             <q-input
               v-model="form.start_date" label="Data de início *" type="date"
               outlined dense stack-label :rules="[req]"
+              :error="!!fieldErrors.start_date" :error-message="fieldErrors.start_date"
+              @update:model-value="() => clearField('start_date')"
             />
             <q-input
               v-if="needsEndDate"
               v-model="form.end_date" label="Data de fim *" type="date"
               outlined dense stack-label
-              :rules="[req, afterStart]"
+              :rules="[req, dateAfter(form.start_date)]"
+              :error="!!fieldErrors.end_date" :error-message="fieldErrors.end_date"
+              @update:model-value="() => clearField('end_date')"
             />
             <q-input
               v-model="form.probation_end_date" label="Fim do período probatório"
               type="date" outlined dense stack-label
+              :error="!!fieldErrors.probation_end_date" :error-message="fieldErrors.probation_end_date"
+              @update:model-value="() => clearField('probation_end_date')"
             />
             <q-input
               v-model.number="form.weekly_hours" label="Horas semanais"
               type="number" outlined dense min="0" max="80"
+              :error="!!fieldErrors.weekly_hours" :error-message="fieldErrors.weekly_hours"
+              @update:model-value="() => clearField('weekly_hours')"
             />
           </div>
 
@@ -86,10 +119,15 @@
               label="Categoria salarial" outlined dense
               emit-value map-options clearable :loading="loadingSalary"
               hint="Aplicável a vigilantes"
+              :error="!!fieldErrors.salary_category" :error-message="fieldErrors.salary_category"
+              @update:model-value="() => clearField('salary_category')"
             />
             <q-input
               v-model="form.base_salary" label="Salário do contrato (MZN) *"
-              type="number" outlined dense step="0.01" :rules="[req]"
+              type="number" outlined dense step="0.01"
+              :rules="[req, positiveNumber(), decimalAmount()]"
+              :error="!!fieldErrors.base_salary" :error-message="fieldErrors.base_salary"
+              @update:model-value="() => clearField('base_salary')"
             />
           </div>
 
@@ -99,12 +137,16 @@
               v-model="form.file" label="Contrato assinado (PDF)"
               outlined dense clearable
               max-file-size="10485760" accept=".pdf,.jpg,.jpeg,.png"
+              :error="!!fieldErrors.file" :error-message="fieldErrors.file"
+              @update:model-value="() => clearField('file')"
             >
               <template #prepend><q-icon name="attach_file" /></template>
             </q-file>
             <q-input
               v-model="form.notes" label="Notas" type="textarea"
               outlined dense autogrow
+              :error="!!fieldErrors.notes" :error-message="fieldErrors.notes"
+              @update:model-value="() => clearField('notes')"
             />
           </div>
 
@@ -133,6 +175,8 @@ import { employeeService } from 'src/services/employee.service'
 import { salaryCategoryService } from 'src/services/salary-category.service'
 import { contractTypeOptions, termedContractTypes } from 'src/config/employment'
 import { useToast } from 'src/composables/useToast'
+import { useFormErrors } from 'src/composables/useFormErrors'
+import { dateAfter, positiveNumber, decimalAmount } from 'src/utils/validators'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 
 const route = useRoute()
@@ -145,7 +189,11 @@ const isEdit = computed(() => !!route.params.id)
 const lockedEmployee = computed(() => !isEdit.value && !!route.query.employee)
 const formRef = ref(null)
 const submitting = ref(false)
+const contractLabel = ref('')
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
+
+// Erros do backend mapeados por campo
+const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors, clearField } = useFormErrors()
 
 const form = reactive({
   employee: null,
@@ -163,10 +211,6 @@ const form = reactive({
 })
 
 const needsEndDate = computed(() => termedContractTypes.includes(form.contract_type))
-function afterStart(v) {
-  if (!v || !form.start_date) return true
-  return new Date(v) > new Date(form.start_date) || 'Deve ser posterior ao início'
-}
 
 // ── Employee selector (searchable) ──────────────────────────────────────
 const allEmployees = ref([])
@@ -237,6 +281,7 @@ onMounted(async () => {
   if (isEdit.value) {
     try {
       const c = await contractService.get(route.params.id)
+      contractLabel.value = c.reference || c.job_title || ''
       Object.assign(form, {
         employee: c.employee,
         contract_type: c.contract_type,
@@ -258,6 +303,7 @@ onMounted(async () => {
 })
 
 async function onSubmit() {
+  clearErrors()
   const ok = await formRef.value?.validate()
   if (!ok) return
   submitting.value = true
@@ -276,10 +322,8 @@ async function onSubmit() {
     }
     router.push({ name: 'employment-contracts-detail', params: { id: saved.id } })
   } catch (err) {
-    toast.error('Não foi possível guardar.', {
-      caption: err?.response?.data?.detail
-        || Object.values(err?.response?.data || {})?.[0],
-    })
+    setFromResponse(err.response)
+    toast.error('Verifique os campos assinalados.')
   } finally {
     submitting.value = false
   }

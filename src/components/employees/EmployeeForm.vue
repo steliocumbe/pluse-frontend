@@ -24,36 +24,65 @@
     <!-- ─────────────── Step 1 — Dados pessoais ─────────────── -->
     <q-step :name="1" title="Dados pessoais" icon="person" :done="step > 1">
       <q-form ref="form1" greedy class="flex flex-col gap-5">
+        <!-- Erros globais do servidor -->
+        <div v-if="globalErrors.length"
+          class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+          <p v-for="(e, i) in globalErrors" :key="i" class="m-0">{{ e }}</p>
+        </div>
+
         <div class="form-group-label">Identificação</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-input v-model="form.full_name" label="Nome completo *" outlined dense
-                   :rules="[req]" class="md:col-span-2" />
+                   :rules="[req]" class="md:col-span-2"
+                   :error="!!fieldErrors.full_name" :error-message="fieldErrors.full_name"
+                   @update:model-value="() => clearField('full_name')" />
           <q-input v-model="form.birth_date" label="Data de nascimento *" type="date"
-                   outlined dense stack-label :rules="[req]" />
+                   outlined dense stack-label :rules="[req, dateNotFuture()]"
+                   :error="!!fieldErrors.birth_date" :error-message="fieldErrors.birth_date"
+                   @update:model-value="() => clearField('birth_date')" />
           <q-select v-model="form.gender" :options="genderOptions" label="Género *"
-                    outlined dense emit-value map-options :rules="[req]" />
+                    outlined dense emit-value map-options :rules="[req]"
+                    :error="!!fieldErrors.gender" :error-message="fieldErrors.gender"
+                    @update:model-value="() => clearField('gender')" />
           <q-select v-model="form.document_type" :options="documentTypeOptions"
                     label="Tipo de documento *" outlined dense emit-value map-options
-                    :rules="[req]" />
+                    :rules="[req]"
+                    :error="!!fieldErrors.document_type" :error-message="fieldErrors.document_type"
+                    @update:model-value="() => clearField('document_type')" />
           <q-input v-model="form.document_number" label="Número do documento *"
-                   outlined dense :rules="[req]" />
+                   outlined dense
+                   :rules="[req, form.document_type === 'id_card' ? bilheteIdentidade() : () => true]"
+                   :error="!!fieldErrors.document_number" :error-message="fieldErrors.document_number"
+                   @update:model-value="() => clearField('document_number')" />
           <q-input v-model="form.document_expiry" label="Validade do documento"
-                   type="date" outlined dense stack-label />
+                   type="date" outlined dense stack-label
+                   :error="!!fieldErrors.document_expiry" :error-message="fieldErrors.document_expiry"
+                   @update:model-value="() => clearField('document_expiry')" />
           <q-input v-model="form.nuit" label="NUIT" outlined dense
                    hint="9 dígitos (opcional)"
-                   :rules="[(v) => !v || /^\d{9}$/.test(v) || 'NUIT deve ter 9 dígitos']" />
-          <q-input v-model="form.nationality" label="Nacionalidade" outlined dense />
+                   :rules="[nuit()]"
+                   :error="!!fieldErrors.nuit" :error-message="fieldErrors.nuit"
+                   @update:model-value="() => clearField('nuit')" />
+          <q-input v-model="form.nationality" label="Nacionalidade" outlined dense
+                   :error="!!fieldErrors.nationality" :error-message="fieldErrors.nationality"
+                   @update:model-value="() => clearField('nationality')" />
           <q-select v-model="form.military_status" :options="militaryOptions"
                     label="Situação militar" outlined dense emit-value map-options
-                    hint="Relevante para colaboradores entre 18 e 35 anos" />
+                    hint="Relevante para colaboradores entre 18 e 35 anos"
+                    :error="!!fieldErrors.military_status" :error-message="fieldErrors.military_status"
+                    @update:model-value="() => clearField('military_status')" />
           <q-input v-model="form.address" label="Morada" type="textarea" outlined dense
-                   autogrow class="md:col-span-2" />
+                   autogrow class="md:col-span-2"
+                   :error="!!fieldErrors.address" :error-message="fieldErrors.address"
+                   @update:model-value="() => clearField('address')" />
         </div>
 
         <div class="form-group-label">Contactos</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-input v-model="form.phone" label="Telefone *" outlined dense inputmode="tel"
-                   hint="9 dígitos, com ou sem +258" :rules="[req]" />
+                   hint="9 dígitos, com ou sem +258" :rules="[req, mozambicanPhone()]"
+                   :error="!!fieldErrors.phone" :error-message="fieldErrors.phone"
+                   @update:model-value="() => clearField('phone')" />
           <q-input v-model="form.email"
                    :label="form.create_account ? 'E-mail *' : 'E-mail'"
                    type="email" outlined dense
@@ -61,19 +90,41 @@
                    :hint="form.create_account
                      ? 'Será o utilizador da conta de acesso — obrigatório'
                      : 'Opcional. Necessário apenas para criar conta de acesso.'"
-                   :rules="[(v) => !form.create_account || !!v || 'Obrigatório para criar conta']" />
+                   :rules="[(v) => !form.create_account || !!v || 'Obrigatório para criar conta', email()]"
+                   :error="!!fieldErrors.email" :error-message="fieldErrors.email"
+                   @update:model-value="() => clearField('email')" />
         </div>
 
         <div class="form-group-label">Família</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <q-input v-model="form.father_name" label="Nome do pai" outlined dense />
-          <q-input v-model="form.father_phone" label="Contacto do pai" outlined dense inputmode="tel" />
-          <q-input v-model="form.mother_name" label="Nome da mãe" outlined dense />
-          <q-input v-model="form.mother_phone" label="Contacto da mãe" outlined dense inputmode="tel" />
-          <q-input v-model="form.spouse_name" label="Nome do/a cônjuge" outlined dense />
-          <q-input v-model="form.spouse_phone" label="Contacto do/a cônjuge" outlined dense inputmode="tel" />
-          <q-input v-model="form.emergency_contact_name" label="Nome do contacto de emergência" outlined dense />
-          <q-input v-model="form.emergency_contact_phone" label="Telefone de emergência" outlined dense inputmode="tel" />
+          <q-input v-model="form.father_name" label="Nome do pai" outlined dense
+                   :error="!!fieldErrors.father_name" :error-message="fieldErrors.father_name"
+                   @update:model-value="() => clearField('father_name')" />
+          <q-input v-model="form.father_phone" label="Contacto do pai" outlined dense inputmode="tel"
+                   :rules="[mozambicanPhone()]"
+                   :error="!!fieldErrors.father_phone" :error-message="fieldErrors.father_phone"
+                   @update:model-value="() => clearField('father_phone')" />
+          <q-input v-model="form.mother_name" label="Nome da mãe" outlined dense
+                   :error="!!fieldErrors.mother_name" :error-message="fieldErrors.mother_name"
+                   @update:model-value="() => clearField('mother_name')" />
+          <q-input v-model="form.mother_phone" label="Contacto da mãe" outlined dense inputmode="tel"
+                   :rules="[mozambicanPhone()]"
+                   :error="!!fieldErrors.mother_phone" :error-message="fieldErrors.mother_phone"
+                   @update:model-value="() => clearField('mother_phone')" />
+          <q-input v-model="form.spouse_name" label="Nome do/a cônjuge" outlined dense
+                   :error="!!fieldErrors.spouse_name" :error-message="fieldErrors.spouse_name"
+                   @update:model-value="() => clearField('spouse_name')" />
+          <q-input v-model="form.spouse_phone" label="Contacto do/a cônjuge" outlined dense inputmode="tel"
+                   :rules="[mozambicanPhone()]"
+                   :error="!!fieldErrors.spouse_phone" :error-message="fieldErrors.spouse_phone"
+                   @update:model-value="() => clearField('spouse_phone')" />
+          <q-input v-model="form.emergency_contact_name" label="Nome do contacto de emergência" outlined dense
+                   :error="!!fieldErrors.emergency_contact_name" :error-message="fieldErrors.emergency_contact_name"
+                   @update:model-value="() => clearField('emergency_contact_name')" />
+          <q-input v-model="form.emergency_contact_phone" label="Telefone de emergência" outlined dense inputmode="tel"
+                   :rules="[mozambicanPhone()]"
+                   :error="!!fieldErrors.emergency_contact_phone" :error-message="fieldErrors.emergency_contact_phone"
+                   @update:model-value="() => clearField('emergency_contact_phone')" />
         </div>
       </q-form>
     </q-step>
@@ -85,19 +136,29 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-select v-model="form.department" :options="departmentOptions"
                     label="Departamento *" outlined dense emit-value map-options
-                    :rules="[req]" />
+                    :rules="[req]"
+                    :error="!!fieldErrors.department" :error-message="fieldErrors.department"
+                    @update:model-value="() => clearField('department')" />
           <q-select v-if="form.department === 'operations'" v-model="form.client"
                     :options="clientOptions" label="Cliente *" outlined dense
                     emit-value map-options :loading="loadingClients"
-                    :rules="[(v) => !!v || 'Obrigatório para Operações']" />
+                    :rules="[(v) => !!v || 'Obrigatório para Operações']"
+                    :error="!!fieldErrors.client" :error-message="fieldErrors.client"
+                    @update:model-value="() => clearField('client')" />
           <q-select v-if="form.department === 'support'" v-model="form.support_unit"
                     :options="supportUnitOptions" label="Unidade de suporte *"
                     outlined dense emit-value map-options
-                    :rules="[(v) => !!v || 'Obrigatório para Suporte']" />
+                    :rules="[(v) => !!v || 'Obrigatório para Suporte']"
+                    :error="!!fieldErrors.support_unit" :error-message="fieldErrors.support_unit"
+                    @update:model-value="() => clearField('support_unit')" />
           <q-select v-model="form.post" :options="postOptions" label="Posto"
-                    outlined dense emit-value map-options clearable :loading="loadingPosts" />
+                    outlined dense emit-value map-options clearable :loading="loadingPosts"
+                    :error="!!fieldErrors.post" :error-message="fieldErrors.post"
+                    @update:model-value="() => clearField('post')" />
           <q-input v-model="form.shift" label="Turno" outlined dense class="md:col-span-2"
-                   hint="Padrão livre nesta fase (ex: 12h trabalho / 24h descanso). Formalizado nas Escalas." />
+                   hint="Padrão livre nesta fase (ex: 12h trabalho / 24h descanso). Formalizado nas Escalas."
+                   :error="!!fieldErrors.shift" :error-message="fieldErrors.shift"
+                   @update:model-value="() => clearField('shift')" />
         </div>
 
         <div class="form-group-label">Função e admissão</div>
@@ -106,10 +167,14 @@
                     outlined dense multiple use-chips emit-value map-options options-dense
                     class="md:col-span-2"
                     hint="Pode acumular várias funções (ex: Vigilante + Supervisor)"
-                    :rules="[(v) => (Array.isArray(v) && v.length > 0) || 'Selecione pelo menos um tipo']" />
+                    :rules="[(v) => (Array.isArray(v) && v.length > 0) || 'Selecione pelo menos um tipo']"
+                    :error="!!fieldErrors.types" :error-message="fieldErrors.types"
+                    @update:model-value="() => clearField('types')" />
           <q-input v-model="form.hire_date" label="Data de admissão *" type="date"
-                   outlined dense stack-label :rules="[req]"
-                   hint="Data de entrada na empresa. O cargo e o salário são definidos no contrato." />
+                   outlined dense stack-label :rules="[req, dateNotFuture()]"
+                   hint="Data de entrada na empresa. O cargo e o salário são definidos no contrato."
+                   :error="!!fieldErrors.hire_date" :error-message="fieldErrors.hire_date"
+                   @update:model-value="() => clearField('hire_date')" />
         </div>
       </q-form>
     </q-step>
@@ -119,12 +184,29 @@
       <q-form ref="form3" greedy class="flex flex-col gap-5">
         <div class="form-group-label">Banca e M-pesa</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <q-input v-model="form.inss_number" label="Número INSS" outlined dense />
-          <q-input v-model="form.mpesa_number" label="Número M-pesa" outlined dense inputmode="tel" />
-          <q-input v-model="form.mpesa_name" label="Nome M-pesa" outlined dense />
-          <q-input v-model="form.bank" label="Banco" outlined dense />
-          <q-input v-model="form.bank_account_number" label="Número de conta" outlined dense />
-          <q-input v-model="form.nib" label="NIB" outlined dense />
+          <q-input v-model="form.inss_number" label="Número INSS" outlined dense
+                   :rules="[inss()]"
+                   :error="!!fieldErrors.inss_number" :error-message="fieldErrors.inss_number"
+                   @update:model-value="() => clearField('inss_number')" />
+          <q-input v-model="form.mpesa_number" label="Número M-pesa" outlined dense inputmode="tel"
+                   :rules="[mpesa()]"
+                   :error="!!fieldErrors.mpesa_number" :error-message="fieldErrors.mpesa_number"
+                   @update:model-value="() => clearField('mpesa_number')" />
+          <q-input v-model="form.mpesa_name" label="Nome M-pesa" outlined dense
+                   :error="!!fieldErrors.mpesa_name" :error-message="fieldErrors.mpesa_name"
+                   @update:model-value="() => clearField('mpesa_name')" />
+          <q-input v-model="form.bank" label="Banco" outlined dense
+                   :error="!!fieldErrors.bank" :error-message="fieldErrors.bank"
+                   @update:model-value="() => clearField('bank')" />
+          <q-input v-model="form.bank_account_number" label="Número de conta" outlined dense
+                   :rules="[ibanMz()]"
+                   hint="IBAN moçambicano (MZ59 + 21 dígitos), se aplicável"
+                   :error="!!fieldErrors.bank_account_number" :error-message="fieldErrors.bank_account_number"
+                   @update:model-value="() => clearField('bank_account_number')" />
+          <q-input v-model="form.nib" label="NIB" outlined dense
+                   :rules="[nib()]"
+                   :error="!!fieldErrors.nib" :error-message="fieldErrors.nib"
+                   @update:model-value="() => clearField('nib')" />
         </div>
 
         <template v-if="mode === 'create'">
@@ -164,36 +246,64 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-select v-model="contract.contract_type" :options="contractTypeOptions"
                     label="Tipo de contrato *" outlined dense emit-value map-options
-                    :rules="[req]" />
+                    :rules="[req]"
+                    :error="!!fieldErrors['initial_contract.contract_type']"
+                    :error-message="fieldErrors['initial_contract.contract_type']"
+                    @update:model-value="() => clearField('initial_contract.contract_type')" />
           <q-select v-model="contract.job_title" :options="jobTitleFiltered"
                     label="Cargo *" outlined dense use-input fill-input hide-selected
                     new-value-mode="add-unique" input-debounce="200"
                     @filter="filterJobTitles" :rules="[req]"
-                    hint="Escolha da lista ou escreva um cargo novo" />
+                    hint="Escolha da lista ou escreva um cargo novo"
+                    :error="!!fieldErrors['initial_contract.job_title']"
+                    :error-message="fieldErrors['initial_contract.job_title']"
+                    @update:model-value="() => clearField('initial_contract.job_title')" />
           <q-input v-model="contract.start_date" label="Início do contrato *" type="date"
-                   outlined dense stack-label :rules="[req]" />
+                   outlined dense stack-label :rules="[req]"
+                   :error="!!fieldErrors['initial_contract.start_date']"
+                   :error-message="fieldErrors['initial_contract.start_date']"
+                   @update:model-value="() => clearField('initial_contract.start_date')" />
           <q-input v-if="contractNeedsEnd" v-model="contract.end_date"
                    label="Fim do contrato *" type="date" outlined dense stack-label
-                   :rules="[req]" />
+                   :rules="[req, dateAfter(contract.start_date)]"
+                   :error="!!fieldErrors['initial_contract.end_date']"
+                   :error-message="fieldErrors['initial_contract.end_date']"
+                   @update:model-value="() => clearField('initial_contract.end_date')" />
           <q-input v-model="contract.probation_end_date" label="Fim do período probatório"
-                   type="date" outlined dense stack-label />
+                   type="date" outlined dense stack-label
+                   :rules="[dateAfter(contract.start_date)]"
+                   :error="!!fieldErrors['initial_contract.probation_end_date']"
+                   :error-message="fieldErrors['initial_contract.probation_end_date']"
+                   @update:model-value="() => clearField('initial_contract.probation_end_date')" />
           <q-input v-model.number="contract.weekly_hours" label="Horas semanais"
-                   type="number" outlined dense min="0" max="80" />
+                   type="number" outlined dense min="0" max="80"
+                   :error="!!fieldErrors['initial_contract.weekly_hours']"
+                   :error-message="fieldErrors['initial_contract.weekly_hours']"
+                   @update:model-value="() => clearField('initial_contract.weekly_hours')" />
           <q-select v-model="contract.salary_category" :options="salaryCategoryOptions"
                     label="Categoria salarial" outlined dense emit-value map-options
                     clearable :loading="loadingSalary"
-                    hint="Aplicável a vigilantes (4 escalões fixos)" />
+                    hint="Aplicável a vigilantes (4 escalões fixos)"
+                    :error="!!fieldErrors['initial_contract.salary_category']"
+                    :error-message="fieldErrors['initial_contract.salary_category']"
+                    @update:model-value="() => clearField('initial_contract.salary_category')" />
           <q-input v-model="contract.base_salary" label="Salário do contrato (MZN)"
                    type="number" outlined dense step="0.01"
                    :disable="!!contract.salary_category"
                    :rules="[(v) => !!contract.salary_category || !!v
-                     || 'Indique o salário ou escolha uma categoria']"
+                     || 'Indique o salário ou escolha uma categoria', decimalAmount()]"
                    :hint="contract.salary_category
                      ? 'Definido pela categoria salarial'
-                     : 'Salário livre acordado (MZN)'" />
+                     : 'Salário livre acordado (MZN)'"
+                   :error="!!fieldErrors['initial_contract.base_salary']"
+                   :error-message="fieldErrors['initial_contract.base_salary']"
+                   @update:model-value="() => clearField('initial_contract.base_salary')" />
           <q-input v-model="contract.workplace" label="Local de trabalho" outlined dense
                    class="md:col-span-2"
-                   hint="Posto, cliente ou unidade à data da assinatura" />
+                   hint="Posto, cliente ou unidade à data da assinatura"
+                   :error="!!fieldErrors['initial_contract.workplace']"
+                   :error-message="fieldErrors['initial_contract.workplace']"
+                   @update:model-value="() => clearField('initial_contract.workplace')" />
         </div>
       </q-form>
     </q-step>
@@ -231,6 +341,11 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useToast } from 'src/composables/useToast'
+import { useFormErrors } from 'src/composables/useFormErrors'
+import {
+  mozambicanPhone, nuit, email, bilheteIdentidade, mpesa, nib, ibanMz, inss,
+  dateNotFuture, dateAfter,
+} from 'src/utils/validators'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
 import { groupService } from 'src/services/group.service'
@@ -250,6 +365,9 @@ const emit = defineEmits(['submit', 'cancel'])
 
 const toast = useToast()
 const req = (v) => !!v || 'Obrigatório'
+
+// Erros do backend mapeados por campo. Exposed for parent via defineExpose.
+const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors, clearField } = useFormErrors()
 
 const step = ref(1)
 const stepperRef = ref(null)
@@ -517,6 +635,13 @@ async function onSubmit() {
 
   emit('submit', { payload, initialDocuments, initialContract })
 }
+
+// Exposed para o parent injectar erros do backend após uma falha de API.
+defineExpose({
+  setFromResponse,
+  clearErrors,
+  clearField,
+})
 </script>
 
 <style scoped>

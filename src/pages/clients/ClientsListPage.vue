@@ -52,6 +52,15 @@
         />
       </q-card-section>
 
+      <q-card-section class="pt-0">
+        <ActiveFiltersBar
+          :filters="filters"
+          :config="filterConfig"
+          @clear="onClearFilter"
+          @clear-all="onClearAllFilters"
+        />
+      </q-card-section>
+
       <q-table
         v-model:pagination="pagination"
         :rows="rows"
@@ -116,6 +125,7 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
+import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
 const router = useRouter()
 
@@ -135,6 +145,25 @@ const columns = [
 ]
 
 const reviewCount = computed(() => rows.value.filter((c) => c.stage === 'risk_review').length)
+
+// Config para a barra de filtros activos
+const filterConfig = [
+  { key: 'search', label: 'Pesquisa', emptyValue: '' },
+  { key: 'stage', label: 'Etapa', emptyValue: '', options: clientStageOptions },
+  { key: 'client_type', label: 'Tipo', emptyValue: '', options: clientTypeOptions },
+]
+
+function onClearFilter(key, emptyValue) {
+  filters[key] = emptyValue
+  onFiltersChanged()
+}
+
+function onClearAllFilters() {
+  filters.search = ''
+  filters.stage = ''
+  filters.client_type = ''
+  onFiltersChanged()
+}
 
 function stageVariant(stage) {
   return { prospecting: 'neutral', risk_review: 'warning', approved: 'success' }[stage] || 'neutral'

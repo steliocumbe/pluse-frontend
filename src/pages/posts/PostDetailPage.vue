@@ -6,6 +6,11 @@
     eyebrow="Cadastros · Posto"
     :title="post?.name || 'Posto'"
     :description="post?.client_name || ''"
+    :breadcrumb="[
+      { label: 'Postos', to: { name: 'posts-list' } },
+      { label: post?.name || 'Detalhe' },
+    ]"
+    :back-to="{ name: 'posts-list' }"
   >
     <template #meta>
       <span v-if="post" class="admin-meta-chip admin-meta-chip--accent">

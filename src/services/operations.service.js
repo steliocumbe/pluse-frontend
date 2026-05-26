@@ -1,13 +1,15 @@
-import { api } from './api'
+import { api, uploadConfig } from './api'
 
 /**
  * Operações — Ocorrências e Participações (Fase 4.1).
- * Multipart automático quando há anexo.
+ * Multipart automático quando há anexo, com timeout estendido e callback
+ * opcional de progresso passável como `_onProgress` na payload.
  */
 
 function toFormData(payload) {
   const fd = new FormData()
   for (const [k, v] of Object.entries(payload)) {
+    if (k.startsWith('_')) continue  // chaves internas (ex: _onProgress)
     if (v === null || v === undefined || v === '') continue
     if (Array.isArray(v)) {
       v.forEach((item) => fd.append(k, item))
@@ -24,9 +26,8 @@ function hasFile(payload) {
 }
 function send(method, url, payload) {
   if (hasFile(payload)) {
-    return api[method](url, toFormData(payload), {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data)
+    return api[method](url, toFormData(payload), uploadConfig(payload._onProgress))
+      .then((r) => r.data)
   }
   return api[method](url, payload).then((r) => r.data)
 }

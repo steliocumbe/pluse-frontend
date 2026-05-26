@@ -66,6 +66,15 @@
         />
       </q-card-section>
 
+      <q-card-section class="pt-0">
+        <ActiveFiltersBar
+          :filters="filters"
+          :config="filterConfig"
+          @clear="onClearFilter"
+          @clear-all="onClearAllFilters"
+        />
+      </q-card-section>
+
       <q-table
         v-model:pagination="pagination"
         :rows="store.items"
@@ -156,6 +165,7 @@ import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
+import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
 const router = useRouter()
 const store = useContractsStore()
@@ -169,6 +179,23 @@ const views = [
   { name: 'pending', label: 'Pendentes', icon: 'pending' },
 ]
 const viewLabel = computed(() => views.find((v) => v.name === view.value)?.label || '')
+
+// Config para a barra de filtros activos
+const filterConfig = [
+  { key: 'search', label: 'Pesquisa', emptyValue: '' },
+  { key: 'contract_type', label: 'Tipo', emptyValue: '', options: contractTypeOptions },
+]
+
+function onClearFilter(key, emptyValue) {
+  filters[key] = emptyValue
+  onFiltersChanged()
+}
+
+function onClearAllFilters() {
+  filters.search = ''
+  filters.contract_type = ''
+  onFiltersChanged()
+}
 
 const filters = reactive({ search: '', contract_type: '' })
 const pagination = ref({

@@ -43,6 +43,15 @@
         />
       </q-card-section>
 
+      <q-card-section class="pt-0">
+        <ActiveFiltersBar
+          :filters="filters"
+          :config="filterConfig"
+          @clear="onClearFilter"
+          @clear-all="onClearAllFilters"
+        />
+      </q-card-section>
+
       <q-table
         v-model:pagination="pagination"
         :rows="rows" :columns="columns" :loading="loading"
@@ -114,24 +123,34 @@
           {{ newLabel }}
         </AppHeading>
         <q-form ref="formRef" greedy class="flex flex-col gap-4" @submit="submitCreate">
+          <!-- Erros globais do servidor -->
+          <div v-if="globalErrors.length" class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            <p v-for="(e, i) in globalErrors" :key="i" class="m-0">{{ e }}</p>
+          </div>
+
           <q-select
             v-model="form.employee" :options="employeeOptions" label="Colaborador *"
             outlined dense emit-value map-options use-input input-debounce="200"
             @filter="filterEmployees" :rules="[req]"
+            :error="!!fieldErrors.employee" :error-message="fieldErrors.employee"
           />
           <q-input v-model="form.leave_type_display" label="Tipo"
                    outlined dense readonly />
           <div class="grid grid-cols-2 gap-3">
             <q-input v-model="form.start_date" label="Início *" type="date" outlined dense
-                     stack-label :rules="[req]" />
+                     stack-label :rules="[req]"
+                     :error="!!fieldErrors.start_date" :error-message="fieldErrors.start_date" />
             <q-input v-model="form.end_date" label="Fim *" type="date" outlined dense
-                     stack-label :rules="[req]" />
+                     stack-label :rules="[req]"
+                     :error="!!fieldErrors.end_date" :error-message="fieldErrors.end_date" />
           </div>
           <q-input v-model="form.reason" label="Motivo / observações" type="textarea"
-                   outlined dense autogrow />
+                   outlined dense autogrow
+                   :error="!!fieldErrors.reason" :error-message="fieldErrors.reason" />
           <q-file v-model="form.document" label="Documento (opcional)"
                   outlined dense clearable max-file-size="10485760"
-                  accept=".pdf,.jpg,.jpeg,.png">
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  :error="!!fieldErrors.document" :error-message="fieldErrors.document">
             <template #prepend><q-icon name="attach_file" /></template>
           </q-file>
           <div class="flex justify-end gap-2">
@@ -155,12 +174,14 @@ import {
 } from 'src/config/leaves'
 import { useAuthStore } from 'src/stores/auth'
 import { useToast } from 'src/composables/useToast'
+import { useFormErrors } from 'src/composables/useFormErrors'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
+import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
 const props = defineProps({
   defaultType: { type: String, default: 'vacation' },
@@ -170,6 +191,9 @@ const $q = useQuasar()
 const auth = useAuthStore()
 const toast = useToast()
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
+
+// Erros do backend mapeados por campo
+const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors } = useFormErrors()
 
 const canApprove = computed(
   () => auth.user?.is_superuser
@@ -215,6 +239,23 @@ const columns = [
 const pendingCount = computed(
   () => rows.value.filter((r) => r.status === 'pending').length,
 )
+
+// Config para a barra de filtros activos
+const filterConfig = [
+  { key: 'search', label: 'Pesquisa', emptyValue: '' },
+  { key: 'status', label: 'Estado', emptyValue: '', options: leaveStatusOptions },
+]
+
+function onClearFilter(key, emptyValue) {
+  filters[key] = emptyValue
+  onFiltersChanged()
+}
+
+function onClearAllFilters() {
+  filters.search = ''
+  filters.status = ''
+  onFiltersChanged()
+}
 
 function formatDate(s) {
   if (!s) return '—'
@@ -325,6 +366,7 @@ function openCreate() {
 }
 
 async function submitCreate() {
+  clearErrors()
   if (!(await formRef.value?.validate())) return
   submitting.value = true
   try {
@@ -341,10 +383,8 @@ async function submitCreate() {
     showCreate.value = false
     await fetchPage()
   } catch (err) {
-    toast.error('Não foi possível submeter.', {
-      caption: err?.response?.data?.detail
-        || Object.values(err?.response?.data || {})?.[0],
-    })
+    setFromResponse(err.response)
+    toast.error('Verifique os campos assinalados.')
   } finally {
     submitting.value = false
   }

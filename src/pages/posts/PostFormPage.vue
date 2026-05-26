@@ -8,6 +8,17 @@
     :description="isEdit
       ? 'Actualize os dados do posto.'
       : 'Registe um posto. Entra em configuração — é activado depois de anexar o formulário de abertura.'"
+    :breadcrumb="isEdit
+      ? [
+          { label: 'Postos', to: { name: 'posts-list' } },
+          { label: postName || 'Posto', to: route.params.id ? { name: 'posts-detail', params: { id: route.params.id } } : null },
+          { label: 'Editar' },
+        ]
+      : [
+          { label: 'Postos', to: { name: 'posts-list' } },
+          { label: 'Novo' },
+        ]"
+    :back-to="isEdit && route.params.id ? { name: 'posts-detail', params: { id: route.params.id } } : { name: 'posts-list' }"
   >
     <template #actions>
       <q-btn
@@ -105,6 +116,7 @@ const isEdit = computed(() => !!route.params.id)
 const lockedClient = computed(() => !isEdit.value && !!route.query.client)
 const formRef = ref(null)
 const submitting = ref(false)
+const postName = ref('')
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
 
 const form = reactive({
@@ -152,6 +164,7 @@ onMounted(async () => {
   if (isEdit.value) {
     try {
       const p = await postService.get(route.params.id)
+      postName.value = p.name || ''
       Object.assign(form, {
         name: p.name,
         client: p.client,

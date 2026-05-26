@@ -10,11 +10,41 @@ const baseURL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replac
  * The interceptors are registered by src/boot/axios.js so the auth store
  * is already available (Pinia must be installed before axios runs).
  */
+/**
+ * Default timeouts:
+ *   - 20 s para JSON normal
+ *   - 120 s para uploads (fotos, anexos) — definido por request
+ *
+ * Use `uploadConfig(onProgress)` para construir um config com progresso.
+ */
+export const DEFAULT_TIMEOUT = 20_000
+export const UPLOAD_TIMEOUT = 120_000
+
 export const api = axios.create({
   baseURL: `${baseURL}/api/v1`,
-  timeout: 15000,
+  timeout: DEFAULT_TIMEOUT,
   headers: { 'Content-Type': 'application/json' },
 })
+
+/**
+ * Constrói o config axios apropriado para um upload multipart com callback
+ * de progresso. Devolve `{headers, timeout, onUploadProgress}` para passar
+ * a `api.post(url, formData, uploadConfig(...))`.
+ *
+ * `onProgress` recebe um objecto `{loaded, total, percent}` periodicamente.
+ */
+export function uploadConfig(onProgress) {
+  return {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT,
+    onUploadProgress: (event) => {
+      if (typeof onProgress !== 'function') return
+      const total = event.total || event.loaded
+      const percent = total ? Math.min(100, Math.round((event.loaded / total) * 100)) : 0
+      onProgress({ loaded: event.loaded, total, percent })
+    },
+  }
+}
 
 let _isRefreshing = false
 let _waiters = []

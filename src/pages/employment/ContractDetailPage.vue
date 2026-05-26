@@ -8,6 +8,11 @@
     :eyebrow="`Contratos · ${contract?.reference || '…'}`"
     :title="contract?.job_title || 'Contrato de trabalho'"
     :description="contract?.employee_name || ''"
+    :breadcrumb="[
+      { label: 'Contratos', to: { name: 'employment-contracts-list' } },
+      { label: contract?.reference || contract?.job_title || 'Detalhe' },
+    ]"
+    :back-to="{ name: 'employment-contracts-list' }"
   >
     <template #meta>
       <span v-if="contract" class="admin-meta-chip admin-meta-chip--accent">

@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, uploadConfig } from './api'
 
 
 export const employeeService = {
@@ -59,9 +59,7 @@ export const employeeService = {
     })
 
     return api
-      .post('/employees/', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post('/employees/', fd, uploadConfig())
       .then((r) => r.data)
   },
 
@@ -88,9 +86,7 @@ export const employeeService = {
 
   uploadDocument(employeeId, formData) {
     return api
-      .post(`/employees/${employeeId}/documents/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post(`/employees/${employeeId}/documents/`, formData, uploadConfig())
       .then((r) => r.data)
   },
 
