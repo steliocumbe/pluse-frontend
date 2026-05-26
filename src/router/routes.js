@@ -113,6 +113,11 @@ const routes = [
         component: () => import('pages/clients/ClientFormPage.vue'),
       },
       {
+        path: 'clients/wizard',
+        name: 'clients-wizard',
+        component: () => import('pages/clients/ClientWizardPage.vue'),
+      },
+      {
         path: 'clients/:id/edit',
         name: 'clients-edit',
         component: () => import('pages/clients/ClientFormPage.vue'),

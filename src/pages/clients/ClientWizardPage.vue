@@ -29,7 +29,6 @@
       <q-card-section>
         <q-stepper
           v-model="step"
-          ref="stepperRef"
           color="primary"
           animated
           flat
@@ -43,7 +42,6 @@
             title="Cliente"
             icon="person_add"
             :done="!!createdClient"
-            :error="false"
             :header-nav="false"
           >
             <q-form ref="clientFormRef" greedy class="flex flex-col gap-5" @submit.prevent="onCreateClient">
@@ -65,55 +63,55 @@
                   :disable="!!createdClient"
                   :error="!!clientFieldErrors.name"
                   :error-message="clientFieldErrors.name"
-                  @update:model-value="() => clientErrors.clearField('name')"
+                  @update:model-value="() => clientErr.clearField('name')"
                 />
                 <q-input
                   v-model="clientForm.short_name" label="Nome curto" outlined dense
                   :disable="!!createdClient"
-                  :error="!!clientErrors.fieldErrors.value.short_name"
-                  :error-message="clientErrors.fieldErrors.value.short_name"
-                  @update:model-value="() => clientErrors.clearField('short_name')"
+                  :error="!!clientFieldErrors.short_name"
+                  :error-message="clientFieldErrors.short_name"
+                  @update:model-value="() => clientErr.clearField('short_name')"
                 />
                 <q-select
                   v-model="clientForm.client_type" :options="clientTypeOptions"
                   label="Tipo de cliente *" outlined dense emit-value map-options :rules="[req]"
                   :disable="!!createdClient"
-                  :error="!!clientErrors.fieldErrors.value.client_type"
-                  :error-message="clientErrors.fieldErrors.value.client_type"
-                  @update:model-value="() => clientErrors.clearField('client_type')"
+                  :error="!!clientFieldErrors.client_type"
+                  :error-message="clientFieldErrors.client_type"
+                  @update:model-value="() => clientErr.clearField('client_type')"
                 />
                 <q-input
                   v-model="clientForm.nuit" label="NUIT" outlined dense hint="9 dígitos (opcional)"
                   :rules="[nuit()]"
                   :disable="!!createdClient"
-                  :error="!!clientErrors.fieldErrors.value.nuit"
-                  :error-message="clientErrors.fieldErrors.value.nuit"
-                  @update:model-value="() => clientErrors.clearField('nuit')"
+                  :error="!!clientFieldErrors.nuit"
+                  :error-message="clientFieldErrors.nuit"
+                  @update:model-value="() => clientErr.clearField('nuit')"
                 />
                 <q-input
                   v-model="clientForm.contact_email" label="Email de contacto" type="email" outlined dense
                   :rules="[email()]"
                   :disable="!!createdClient"
-                  :error="!!clientErrors.fieldErrors.value.contact_email"
-                  :error-message="clientErrors.fieldErrors.value.contact_email"
-                  @update:model-value="() => clientErrors.clearField('contact_email')"
+                  :error="!!clientFieldErrors.contact_email"
+                  :error-message="clientFieldErrors.contact_email"
+                  @update:model-value="() => clientErr.clearField('contact_email')"
                 />
                 <q-input
                   v-model="clientForm.contact_phone" label="Telefone de contacto" outlined dense
                   inputmode="tel" hint="9 dígitos, com ou sem +258"
                   :rules="[mozambicanPhone()]"
                   :disable="!!createdClient"
-                  :error="!!clientErrors.fieldErrors.value.contact_phone"
-                  :error-message="clientErrors.fieldErrors.value.contact_phone"
-                  @update:model-value="() => clientErrors.clearField('contact_phone')"
+                  :error="!!clientFieldErrors.contact_phone"
+                  :error-message="clientFieldErrors.contact_phone"
+                  @update:model-value="() => clientErr.clearField('contact_phone')"
                 />
                 <q-input
                   v-model="clientForm.address" label="Morada" type="textarea" outlined dense autogrow
                   class="md:col-span-2"
                   :disable="!!createdClient"
-                  :error="!!clientErrors.fieldErrors.value.address"
-                  :error-message="clientErrors.fieldErrors.value.address"
-                  @update:model-value="() => clientErrors.clearField('address')"
+                  :error="!!clientFieldErrors.address"
+                  :error-message="clientFieldErrors.address"
+                  @update:model-value="() => clientErr.clearField('address')"
                 />
               </div>
 
@@ -125,8 +123,8 @@
               <q-stepper-navigation>
                 <div class="flex flex-wrap gap-2 justify-end">
                   <q-btn
-                    flat no-caps label="Saltar contrato e postos"
                     v-if="createdClient"
+                    flat no-caps label="Saltar contrato e postos"
                     @click="goToClientDetail"
                   />
                   <q-btn
@@ -164,9 +162,9 @@
             </div>
 
             <q-form ref="contractFormRef" greedy class="flex flex-col gap-5" @submit.prevent="onCreateContract">
-              <div v-if="contractErrors.globalErrors.value.length"
+              <div v-if="contractGlobalErrors.length"
                 class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                <p v-for="(e, i) in contractErrors.globalErrors.value" :key="i" class="m-0">{{ e }}</p>
+                <p v-for="(e, i) in contractGlobalErrors" :key="i" class="m-0">{{ e }}</p>
               </div>
 
               <p class="text-sm text-muted-foreground m-0">
@@ -181,26 +179,26 @@
                   :rules="[req]"
                   class="md:col-span-2"
                   :disable="!!createdContract"
-                  :error="!!contractErrors.fieldErrors.value.title"
-                  :error-message="contractErrors.fieldErrors.value.title"
-                  @update:model-value="() => contractErrors.clearField('title')"
+                  :error="!!contractFieldErrors.title"
+                  :error-message="contractFieldErrors.title"
+                  @update:model-value="() => contractErr.clearField('title')"
                 />
                 <q-select
                   v-model="contractForm.modality" :options="modalityOptions"
                   label="Modalidade *" outlined dense emit-value map-options :rules="[req]"
                   :disable="!!createdContract"
-                  :error="!!contractErrors.fieldErrors.value.modality"
-                  :error-message="contractErrors.fieldErrors.value.modality"
-                  @update:model-value="() => contractErrors.clearField('modality')"
+                  :error="!!contractFieldErrors.modality"
+                  :error-message="contractFieldErrors.modality"
+                  @update:model-value="() => contractErr.clearField('modality')"
                 />
                 <q-input
                   v-model="contractForm.monthly_value" label="Valor mensal (MZN) *"
                   type="number" outlined dense step="0.01"
                   :rules="[req, positiveNumber(), decimalAmount()]"
                   :disable="!!createdContract"
-                  :error="!!contractErrors.fieldErrors.value.monthly_value"
-                  :error-message="contractErrors.fieldErrors.value.monthly_value"
-                  @update:model-value="() => contractErrors.clearField('monthly_value')"
+                  :error="!!contractFieldErrors.monthly_value"
+                  :error-message="contractFieldErrors.monthly_value"
+                  @update:model-value="() => contractErr.clearField('monthly_value')"
                 />
               </div>
 
@@ -210,18 +208,18 @@
                   v-model="contractForm.start_date" label="Data de início *" type="date"
                   outlined dense stack-label :rules="[req]"
                   :disable="!!createdContract"
-                  :error="!!contractErrors.fieldErrors.value.start_date"
-                  :error-message="contractErrors.fieldErrors.value.start_date"
-                  @update:model-value="() => contractErrors.clearField('start_date')"
+                  :error="!!contractFieldErrors.start_date"
+                  :error-message="contractFieldErrors.start_date"
+                  @update:model-value="() => contractErr.clearField('start_date')"
                 />
                 <q-input
                   v-model="contractForm.end_date" label="Data de fim" type="date"
                   outlined dense stack-label clearable
                   :rules="[dateAfter(contractForm.start_date)]"
                   :disable="!!createdContract"
-                  :error="!!contractErrors.fieldErrors.value.end_date"
-                  :error-message="contractErrors.fieldErrors.value.end_date"
-                  @update:model-value="() => contractErrors.clearField('end_date')"
+                  :error="!!contractFieldErrors.end_date"
+                  :error-message="contractFieldErrors.end_date"
+                  @update:model-value="() => contractErr.clearField('end_date')"
                 />
               </div>
 
@@ -435,7 +433,6 @@ const toast = useToast()
 const $q = useQuasar()
 
 const step = ref(1)
-const stepperRef = ref(null)
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
 
 function todayISO() {
@@ -449,14 +446,10 @@ function todayISO() {
 const clientFormRef = ref(null)
 const submittingClient = ref(false)
 const createdClient = ref(null)
-const clientErrors = {
-  ...useFormErrors(),
-}
-// Convert refs returned to .value reachable both in template and script
-// (useFormErrors already returns refs — wrapping not strictly needed, but
-//  keeps template references uniform.)
-clientErrors.globalErrors = clientErrors.globalErrors
-clientErrors.fieldErrors = clientErrors.fieldErrors
+
+const clientErr = useFormErrors()
+const clientFieldErrors = clientErr.fieldErrors
+const clientGlobalErrors = clientErr.globalErrors
 
 const clientForm = reactive({
   name: '',
@@ -473,7 +466,7 @@ async function onCreateClient() {
     step.value = 2
     return
   }
-  clientErrors.clear()
+  clientErr.clear()
   const ok = await clientFormRef.value?.validate()
   if (!ok) return
   submittingClient.value = true
@@ -484,7 +477,7 @@ async function onCreateClient() {
     toast.success('Cliente registado.')
     step.value = 2
   } catch (err) {
-    clientErrors.setFromResponse(err.response)
+    clientErr.setFromResponse(err.response)
     toast.error('Verifique os campos assinalados.')
   } finally {
     submittingClient.value = false
@@ -495,7 +488,10 @@ async function onCreateClient() {
 const contractFormRef = ref(null)
 const submittingContract = ref(false)
 const createdContract = ref(null)
-const contractErrors = useFormErrors()
+
+const contractErr = useFormErrors()
+const contractFieldErrors = contractErr.fieldErrors
+const contractGlobalErrors = contractErr.globalErrors
 
 const contractForm = reactive({
   title: '',
@@ -515,7 +511,7 @@ async function onCreateContract() {
     step.value = 1
     return
   }
-  contractErrors.clear()
+  contractErr.clear()
   const ok = await contractFormRef.value?.validate()
   if (!ok) return
   submittingContract.value = true
@@ -534,7 +530,7 @@ async function onCreateContract() {
     toast.success('Contrato criado.')
     step.value = 3
   } catch (err) {
-    contractErrors.setFromResponse(err.response)
+    contractErr.setFromResponse(err.response)
     toast.error('Verifique os campos assinalados.')
   } finally {
     submittingContract.value = false
@@ -577,12 +573,10 @@ async function onCreatePosts() {
     return
   }
   postsGlobalError.value = ''
-  // Se já estão todos criados, segue.
   if (postsAllCreated.value) {
     await associatePostsAndFinish()
     return
   }
-  // Valida nomes
   const pending = postsForm
     .map((p, i) => ({ p, i }))
     .filter(({ p }) => !p._createdId)
@@ -610,12 +604,15 @@ async function onCreatePosts() {
       } catch (err) {
         anyFailed = true
         const data = err?.response?.data
-        const msg =
-          (typeof data === 'string' && data) ||
-          data?.detail ||
-          Object.values(data || {})?.[0] ||
-          'Não foi possível criar este posto.'
-        p._error = Array.isArray(msg) ? msg[0] : String(msg)
+        let msg = 'Não foi possível criar este posto.'
+        if (typeof data === 'string') msg = data
+        else if (data?.detail) msg = data.detail
+        else if (data && typeof data === 'object') {
+          const first = Object.values(data)[0]
+          if (Array.isArray(first)) msg = String(first[0])
+          else if (first) msg = String(first)
+        }
+        p._error = msg
         toast.error(`Falha ao criar Posto #${i + 1}.`)
       }
     }
@@ -638,7 +635,6 @@ async function associatePostsAndFinish() {
     try {
       await clientContractService.update(createdContract.value.id, { posts: ids })
     } catch {
-      // não bloqueia — associação é melhor-esforço
       toast.warning('Postos criados, mas não foi possível associá-los ao contrato.')
     }
   }
@@ -657,7 +653,6 @@ function goToClientDetail() {
 
 function onLeave() {
   if (createdClient.value) {
-    // Confirmação ligeira para não perder a referência
     $q.dialog({
       title: 'Sair do assistente?',
       message: 'O cliente já foi criado. Quer abrir a página de detalhe do cliente para continuar a editar?',

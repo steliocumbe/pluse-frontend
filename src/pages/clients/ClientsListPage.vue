@@ -22,7 +22,12 @@
     <template #actions>
       <q-btn
         unelevated no-caps class="admin-hero-primary"
-        icon="add" label="Novo cliente"
+        icon="auto_awesome" label="Novo cliente (assistente)"
+        :to="{ name: 'clients-wizard' }"
+      />
+      <q-btn
+        outline no-caps class="admin-hero-button"
+        icon="add" label="Novo (avançado)"
         :to="{ name: 'clients-new' }"
       />
     </template>
@@ -105,8 +110,8 @@
             title="Ainda não há clientes"
             description="Registe o primeiro cliente para iniciar o onboarding."
             icon="ki-profile-user"
-            cta-label="Novo cliente"
-            :cta-to="{ name: 'clients-new' }"
+            cta-label="Novo cliente (assistente)"
+            :cta-to="{ name: 'clients-wizard' }"
           />
         </template>
       </q-table>

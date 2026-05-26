@@ -79,47 +79,29 @@
         </div>
       </div>
 
-      <!-- Tabs -->
-      <q-card flat bordered class="client-tabs-card">
-        <q-tabs
-          v-model="activeTab"
-          class="client-tabs"
-          align="left"
-          active-color="primary"
-          indicator-color="primary"
-          no-caps dense
+      <!-- Tabs (minimalist, consistent) -->
+      <nav class="client-tabs-bar" role="tablist" aria-label="Secções do cliente">
+        <button
+          v-for="tab in tabsDef"
+          :key="tab.name"
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === tab.name"
+          class="client-tab"
+          :class="{ 'is-active': activeTab === tab.name }"
+          @click="activeTab = tab.name"
         >
-          <q-tab name="geral" icon="badge" label="Geral" />
-          <q-tab name="contracts" icon="description">
-            <template #default>
-              <div class="flex items-center gap-2">
-                <q-icon name="description" size="18px" />
-                <span>Contratos</span>
-                <span v-if="contracts.length" class="client-tab-badge">{{ contracts.length }}</span>
-              </div>
-            </template>
-          </q-tab>
-          <q-tab name="posts">
-            <template #default>
-              <div class="flex items-center gap-2">
-                <q-icon name="place" size="18px" />
-                <span>Postos</span>
-                <span v-if="posts.length" class="client-tab-badge">{{ posts.length }}</span>
-              </div>
-            </template>
-          </q-tab>
-          <q-tab name="employees">
-            <template #default>
-              <div class="flex items-center gap-2">
-                <q-icon name="people" size="18px" />
-                <span>Colaboradores</span>
-                <span v-if="employees.length" class="client-tab-badge">{{ employees.length }}</span>
-              </div>
-            </template>
-          </q-tab>
-          <q-tab name="history" icon="history" label="Histórico" />
-        </q-tabs>
-      </q-card>
+          <q-icon :name="tab.icon" size="17px" class="client-tab__icon" />
+          <span class="client-tab__label">{{ tab.label }}</span>
+          <span
+            v-if="tab.count"
+            class="client-tab__count"
+            :class="{ 'is-active': activeTab === tab.name }"
+          >
+            {{ tab.count }}
+          </span>
+        </button>
+      </nav>
 
       <q-tab-panels v-model="activeTab" animated class="client-tab-panels">
         <!-- ── Geral ──────────────────────────────────────────────── -->
@@ -227,43 +209,68 @@
             <p><strong>Sem contratos comerciais.</strong></p>
             <p>Crie o primeiro contrato com este cliente.</p>
           </div>
-          <div v-else class="contract-grid">
-            <article v-for="c in contracts" :key="c.id" class="contract-card">
+          <!-- Resumo no topo -->
+          <div v-if="contracts.length" class="contracts-summary">
+            <div class="summary-pill">
+              <span class="summary-pill__label">Activos</span>
+              <strong>{{ contracts.filter((c) => c.contract_status === 'active').length }}</strong>
+            </div>
+            <div class="summary-pill">
+              <span class="summary-pill__label">Em rascunho</span>
+              <strong>{{ contracts.filter((c) => c.contract_status === 'draft').length }}</strong>
+            </div>
+            <div class="summary-pill summary-pill--accent">
+              <span class="summary-pill__label">Total mensal (activos)</span>
+              <strong>{{ formatAmount(totalActiveMonthly, 'MZN') }}</strong>
+            </div>
+          </div>
+
+          <div v-else-if="!loadingContracts" />
+
+          <div v-if="contracts.length" class="contract-grid">
+            <router-link
+              v-for="c in contracts" :key="c.id"
+              :to="{ name: 'client-contracts-detail', params: { id: c.id } }"
+              class="contract-card"
+            >
               <header class="contract-card__head">
-                <div class="min-w-0">
-                  <div class="text-xs text-muted-foreground text-mono">{{ c.reference }}</div>
-                  <div class="text-sm font-semibold text-mono truncate">{{ c.title }}</div>
+                <div class="contract-card__title-wrap">
+                  <div class="contract-card__ref">{{ c.reference }}</div>
+                  <h4 class="contract-card__title">{{ c.title }}</h4>
                 </div>
-                <AppBadge :variant="contractStatusVariant(c.contract_status)">
+                <AppBadge :variant="contractStatusVariant(c.contract_status)" size="sm">
                   {{ c.contract_status_display }}
                 </AppBadge>
               </header>
-              <div class="contract-card__body">
-                <div class="contract-card__row">
-                  <span class="contract-card__label">Modalidade</span>
+
+              <div class="contract-card__amount">
+                <span class="contract-card__amount-label">Valor mensal</span>
+                <strong>{{ formatAmount(c.monthly_value, c.currency) }}</strong>
+              </div>
+
+              <div class="contract-card__meta">
+                <div class="contract-card__meta-item">
+                  <AppIcon name="ki-shield-tick" :size="13" />
                   <span>{{ c.modality_display }}</span>
                 </div>
-                <div class="contract-card__row">
-                  <span class="contract-card__label">Período</span>
+                <div class="contract-card__meta-item">
+                  <AppIcon name="ki-calendar" :size="13" />
                   <span>
                     {{ formatDate(c.start_date) }}
-                    {{ c.end_date ? '→ ' + formatDate(c.end_date) : '' }}
+                    {{ c.end_date ? '→ ' + formatDate(c.end_date) : '· sem prazo' }}
                   </span>
                 </div>
-                <div class="contract-card__row">
-                  <span class="contract-card__label">Valor mensal</span>
-                  <span class="text-mono font-semibold">
-                    {{ formatAmount(c.monthly_value, c.currency) }}
-                  </span>
+                <div v-if="c.is_expiring_soon" class="contract-card__meta-item contract-card__meta-item--warning">
+                  <AppIcon name="ki-warning-2" :size="13" />
+                  <span>Expira em {{ c.days_to_expiry }} dia{{ c.days_to_expiry === 1 ? '' : 's' }}</span>
                 </div>
               </div>
+
               <footer class="contract-card__foot">
-                <q-btn
-                  outline no-caps dense size="sm" icon="visibility" label="Ver"
-                  :to="{ name: 'client-contracts-detail', params: { id: c.id } }"
-                />
+                <span>Ver detalhe</span>
+                <AppIcon name="ki-arrow-right" :size="14" />
               </footer>
-            </article>
+            </router-link>
           </div>
         </q-tab-panel>
 
@@ -312,39 +319,94 @@
           <div class="tab-panel-head">
             <div>
               <h3>Colaboradores alocados</h3>
-              <p>Vigilantes e equipa de operações afectos a este cliente.</p>
+              <p>Vigilantes e equipa de operações afectos a este cliente, agrupados por posto.</p>
             </div>
             <q-btn
-              outline no-caps color="primary" icon="add"
+              unelevated no-caps color="primary" icon="add"
               label="Adicionar colaborador"
               :to="{ name: 'employees-new', query: { client: client.id } }"
             />
           </div>
+
+          <!-- Resumo no topo -->
+          <div v-if="employees.length" class="contracts-summary">
+            <div class="summary-pill">
+              <span class="summary-pill__label">Total</span>
+              <strong>{{ employees.length }}</strong>
+            </div>
+            <div class="summary-pill">
+              <span class="summary-pill__label">Em posto</span>
+              <strong>{{ employees.filter((e) => e.post).length }}</strong>
+            </div>
+            <div class="summary-pill" :class="{ 'summary-pill--warn': unassignedEmployees.length }">
+              <span class="summary-pill__label">Sem posto</span>
+              <strong>{{ unassignedEmployees.length }}</strong>
+            </div>
+          </div>
+
           <div v-if="loadingEmployees" class="empty-tab"><q-spinner /> A carregar…</div>
           <div v-else-if="!employees.length" class="empty-tab">
             <AppIcon name="ki-people" :size="32" />
             <p><strong>Sem colaboradores alocados.</strong></p>
             <p>Crie colaboradores e associe a este cliente.</p>
           </div>
-          <div v-else class="flex flex-col gap-2">
-            <router-link
-              v-for="e in employees" :key="e.id"
-              :to="{ name: 'employees-detail', params: { id: e.id } }"
-              class="emp-row"
+
+          <div v-else class="emp-groups">
+            <!-- Um grupo por posto do cliente -->
+            <section
+              v-for="group in employeesByPost"
+              :key="group.postId || 'unassigned'"
+              class="emp-group"
+              :class="{ 'emp-group--unassigned': !group.postId }"
             >
-              <span class="emp-row__avatar">{{ initials(e.full_name) }}</span>
-              <div class="grow min-w-0">
-                <div class="text-sm font-semibold text-mono">{{ e.full_name }}</div>
-                <div class="text-xs text-muted-foreground">
-                  {{ e.employee_number }}
-                  <span v-if="e.current_job_title"> · {{ e.current_job_title }}</span>
-                  <span v-if="e.post_name"> · {{ e.post_name }}</span>
+              <header class="emp-group__head">
+                <span class="emp-group__icon">
+                  <AppIcon
+                    :name="group.postId ? 'ki-geolocation' : 'ki-warning-2'"
+                    :size="14"
+                  />
+                </span>
+                <div class="emp-group__title-wrap">
+                  <router-link
+                    v-if="group.postId"
+                    :to="{ name: 'posts-detail', params: { id: group.postId } }"
+                    class="emp-group__title"
+                  >{{ group.postName }}</router-link>
+                  <span v-else class="emp-group__title">Sem posto atribuído</span>
+                  <span class="emp-group__count">
+                    {{ group.employees.length }} colaborador{{ group.employees.length === 1 ? '' : 'es' }}
+                  </span>
                 </div>
+                <q-btn
+                  v-if="group.postId"
+                  outline no-caps dense size="sm"
+                  icon="arrow_forward"
+                  label="Ver posto"
+                  :to="{ name: 'posts-detail', params: { id: group.postId } }"
+                />
+              </header>
+
+              <div class="emp-group__body">
+                <router-link
+                  v-for="e in group.employees" :key="e.id"
+                  :to="{ name: 'employees-detail', params: { id: e.id } }"
+                  class="emp-row"
+                >
+                  <span class="emp-row__avatar">{{ initials(e.full_name) }}</span>
+                  <div class="emp-row__body">
+                    <div class="emp-row__name">{{ e.full_name }}</div>
+                    <div class="emp-row__meta">
+                      <span class="emp-row__number">{{ e.employee_number }}</span>
+                      <span v-if="e.current_job_title">{{ e.current_job_title }}</span>
+                      <span v-else-if="e.department_display">{{ e.department_display }}</span>
+                    </div>
+                  </div>
+                  <AppBadge :variant="postStatusVariant(e.status)" size="sm">
+                    {{ e.status_display }}
+                  </AppBadge>
+                </router-link>
               </div>
-              <AppBadge :variant="postStatusVariant(e.status)" size="sm">
-                {{ e.status_display }}
-              </AppBadge>
-            </router-link>
+            </section>
           </div>
         </q-tab-panel>
 
@@ -391,6 +453,67 @@ const loadingEmployees = ref(false)
 
 // Tab actual — preservado em ?tab= para deep-link e refresh
 const activeTab = ref(route.query.tab || 'geral')
+
+// Definição declarativa das tabs (uniforme; contagens reactivas)
+const tabsDef = computed(() => [
+  { name: 'geral', icon: 'badge', label: 'Geral', count: 0 },
+  { name: 'contracts', icon: 'description', label: 'Contratos', count: contracts.value.length },
+  { name: 'posts', icon: 'place', label: 'Postos', count: posts.value.length },
+  { name: 'employees', icon: 'people', label: 'Colaboradores', count: employees.value.length },
+  { name: 'history', icon: 'history', label: 'Histórico', count: 0 },
+])
+
+// Total mensal dos contratos activos (somatório dos valores)
+const totalActiveMonthly = computed(() => {
+  return contracts.value
+    .filter((c) => c.contract_status === 'active')
+    .reduce((acc, c) => acc + Number(c.monthly_value || 0), 0)
+})
+
+// Colaboradores sem posto atribuído
+const unassignedEmployees = computed(() =>
+  employees.value.filter((e) => !e.post),
+)
+
+/**
+ * Colaboradores agrupados por posto do cliente.
+ *
+ * Inclui:
+ *   - Um grupo por cada posto deste cliente (ordem pelo nome do posto)
+ *   - Postos sem colaboradores são omitidos (não fazem ruído)
+ *   - No fim, um grupo "Sem posto" para colaboradores do cliente mas
+ *     ainda não alocados a posto específico
+ */
+const employeesByPost = computed(() => {
+  const byPost = new Map()
+  for (const emp of employees.value) {
+    const key = emp.post || 'unassigned'
+    if (!byPost.has(key)) byPost.set(key, [])
+    byPost.get(key).push(emp)
+  }
+
+  const groups = []
+  for (const post of posts.value) {
+    const list = byPost.get(post.id)
+    if (!list?.length) continue
+    groups.push({
+      postId: post.id,
+      postName: post.name,
+      employees: list,
+    })
+  }
+
+  const unassigned = byPost.get('unassigned')
+  if (unassigned?.length) {
+    groups.push({
+      postId: null,
+      postName: 'Sem posto atribuído',
+      employees: unassigned,
+    })
+  }
+
+  return groups
+})
 function initials(name) {
   if (!name) return '?'
   const parts = String(name).trim().split(/\s+/)
@@ -696,90 +819,258 @@ watch(activeTab, (next) => {
   color: var(--primary);
 }
 
+/* ── Contracts summary pills ────────────────────────────────────────── */
+.contracts-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.summary-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  min-width: 120px;
+}
+.summary-pill__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.summary-pill strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--mono);
+}
+.summary-pill--accent {
+  border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
+  background: color-mix(in oklab, var(--primary) 6%, var(--card));
+}
+.summary-pill--accent strong { color: var(--primary); }
+.summary-pill--warn {
+  border-color: color-mix(in oklab, #f59e0b 30%, var(--border));
+  background: color-mix(in oklab, #f59e0b 6%, var(--card));
+}
+.summary-pill--warn strong { color: #b45309; }
+
 /* ── Contract cards ─────────────────────────────────────────────────── */
 .contract-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
 }
 .contract-card {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--card);
-  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.contract-card:hover {
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px rgba(15, 23, 42, .15);
 }
 .contract-card__head {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklab, var(--muted) 24%, transparent);
 }
-.contract-card__head > .min-w-0 { flex: 1; min-width: 0; }
-.contract-card__body {
+.contract-card__title-wrap { flex: 1; min-width: 0; }
+.contract-card__ref {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.02em;
+}
+.contract-card__title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 2px 0 0;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.contract-card__amount {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--primary) 7%, transparent);
+}
+.contract-card__amount-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.contract-card__amount strong {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+.contract-card__meta {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 12px 14px;
 }
-.contract-card__row {
+.contract-card__meta-item {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
   font-size: 0.84rem;
+  color: var(--foreground);
 }
-.contract-card__label {
+.contract-card__meta-item :first-child {
   color: var(--muted-foreground);
-  font-weight: 600;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  flex: none;
 }
-.contract-card__foot {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 14px;
-  border-top: 1px solid var(--border);
+.contract-card__meta-item--warning {
+  color: var(--pluse-amber-700, #b45309);
+  font-weight: 600;
+}
+.contract-card__meta-item--warning :first-child {
+  color: inherit;
 }
 
-/* ── Tabs ───────────────────────────────────────────────────────────── */
-.client-tabs-card {
-  background: var(--card);
-  margin-bottom: 18px;
-  overflow: hidden;
-}
-.client-tabs :deep(.q-tab) {
-  padding: 12px 18px;
-  min-height: 48px;
-  font-weight: 600;
-}
-.client-tab-badge {
-  background: color-mix(in oklab, var(--primary) 14%, transparent);
+.contract-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--primary);
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+/* ── Tabs (minimalista, profissional) ───────────────────────────────── */
+.client-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 22px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.client-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 12px;
+  margin-bottom: -1px;          /* sobrepõe a border do nav */
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  position: relative;
+  transition:
+    color 180ms ease,
+    border-color 200ms ease,
+    background-color 160ms ease;
+  white-space: nowrap;
+  border-radius: 6px 6px 0 0;
+}
+.client-tab:hover:not(.is-active) {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--muted) 40%, transparent);
+}
+.client-tab:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--primary) 50%, transparent);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.client-tab.is-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.client-tab.is-active .client-tab__icon {
+  color: var(--primary);
+}
+
+.client-tab__icon {
+  color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+  transition: color 180ms ease;
+  flex: none;
+}
+.client-tab:hover:not(.is-active) .client-tab__icon {
+  color: var(--foreground);
+}
+.client-tab__label {
+  letter-spacing: -0.005em;
+}
+
+.client-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--muted-foreground) 14%, transparent);
+  color: var(--muted-foreground);
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 1px 8px;
-  border-radius: 999px;
-  margin-left: 2px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  transition: background-color 180ms ease, color 180ms ease;
 }
+.client-tab__count.is-active {
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
 .client-tab-panels {
   background: transparent;
 }
 .client-tab-panels :deep(.q-tab-panel) { padding: 0; }
 
+@media (max-width: 640px) {
+  .client-tabs-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .client-tabs-bar::-webkit-scrollbar { display: none; }
+  .client-tab { padding: 12px 14px 10px; font-size: 0.82rem; }
+}
+
 .tab-panel-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
 }
-.tab-panel-head > div { flex: 1; min-width: 200px; }
+.tab-panel-head > div { min-width: 0; flex: 1 1 240px; }
+.tab-panel-head > .q-btn { flex: none; }
 .tab-panel-head h3 {
-  font-size: 1rem;
+  font-size: 1.02rem;
   font-weight: 700;
   color: var(--mono);
   margin: 0;
@@ -804,20 +1095,88 @@ watch(activeTab, (next) => {
 }
 .empty-tab p { margin: 0; font-size: 0.9rem; }
 
+/* ── Employee groups (by post) ──────────────────────────────────────── */
+.emp-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.emp-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  overflow: hidden;
+}
+.emp-group--unassigned {
+  border-color: color-mix(in oklab, #f59e0b 30%, var(--border));
+  background: color-mix(in oklab, #f59e0b 4%, var(--card));
+}
+.emp-group__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 24%, transparent);
+}
+.emp-group--unassigned .emp-group__head {
+  background: color-mix(in oklab, #f59e0b 8%, transparent);
+  border-bottom-color: color-mix(in oklab, #f59e0b 22%, var(--border));
+}
+.emp-group__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+.emp-group--unassigned .emp-group__icon {
+  background: color-mix(in oklab, #f59e0b 20%, transparent);
+  color: #b45309;
+}
+.emp-group__title-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.emp-group__title {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--foreground);
+  text-decoration: none;
+  word-break: break-word;
+  line-height: 1.25;
+}
+a.emp-group__title:hover { color: var(--primary); text-decoration: underline; }
+.emp-group__count {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.emp-group__body {
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Employee row ───────────────────────────────────────────────────── */
 .emp-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  padding: 12px 16px;
   background: var(--card);
   text-decoration: none;
-  transition: border-color 140ms ease;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  transition: background-color 140ms ease;
 }
+.emp-row:last-child { border-bottom: none; }
 .emp-row:hover {
-  border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
+  background: color-mix(in oklab, var(--primary) 5%, transparent);
 }
 .emp-row__avatar {
   width: 36px;
@@ -832,6 +1191,35 @@ watch(activeTab, (next) => {
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+.emp-row__body {
+  flex: 1;
+  min-width: 0;
+}
+.emp-row__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.emp-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+}
+.emp-row__meta > * { display: inline-flex; }
+.emp-row__meta > * + *::before {
+  content: '·';
+  margin-right: 8px;
+  color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+}
+.emp-row__number {
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 640px) {
