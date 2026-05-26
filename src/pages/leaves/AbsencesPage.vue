@@ -46,7 +46,15 @@
     />
 
     <div v-else class="flex flex-col gap-2 mt-4">
-      <div v-for="r in rows" :key="r.id" class="abs-row">
+      <div
+        v-for="r in rows"
+        :key="r.id"
+        class="abs-row"
+        role="button"
+        tabindex="0"
+        @click="openShiftDetail(r)"
+        @keyup.enter="openShiftDetail(r)"
+      >
         <span class="abs-row__date">
           <span class="abs-row__day">{{ dayOf(r.date) }}</span>
           <span class="abs-row__month">{{ monthOf(r.date) }}</span>
@@ -86,7 +94,7 @@
           </template>
           <q-btn
             v-else outline no-caps size="sm" icon="note_add"
-            label="Justificar" @click="openJustify(r)"
+            label="Justificar" @click.stop="openJustify(r)"
           />
         </div>
       </div>
@@ -123,6 +131,81 @@
                    label="Submeter justificação" :loading="saving" />
           </div>
         </q-form>
+      </div>
+    </AppModal>
+
+    <AppModal v-model="showDetail" size="lg">
+      <div v-if="detail" class="p-5 abs-detail">
+        <div class="abs-detail__head">
+          <div>
+            <p class="abs-detail__eyebrow">Falta / substituição</p>
+            <div class="abs-detail__title">{{ detail.employee_name }}</div>
+            <p class="abs-detail__subtitle">
+              {{ detail.post_name }} · {{ formatDate(detail.date) }} · {{ detail.period_display }}
+            </p>
+          </div>
+          <AppBadge :variant="detail.attendance_status === 'absent' ? 'danger' : 'warning'">
+            {{ detail.attendance_status_display }}
+          </AppBadge>
+        </div>
+
+        <div class="abs-detail__grid">
+          <div>
+            <span>Vigilante escalado</span>
+            <strong>{{ detail.employee_name }}</strong>
+          </div>
+          <div>
+            <span>Substituto</span>
+            <strong>{{ detail.substitute_name || 'Sem substituto' }}</strong>
+          </div>
+          <div>
+            <span>Entrada</span>
+            <strong>{{ formatDateTime(detail.checked_in_at) }}</strong>
+          </div>
+          <div>
+            <span>Saída</span>
+            <strong>{{ formatDateTime(detail.checked_out_at) }}</strong>
+          </div>
+        </div>
+
+        <div class="abs-detail__section">
+          <span>Justificação</span>
+          <template v-if="detailJustification">
+            <p>{{ detailJustification.description }}</p>
+            <div class="abs-detail__inline">
+              <AppBadge :variant="leaveStatusVariant(detailJustification.status)">
+                {{ detailJustification.status_display }}
+              </AppBadge>
+              <q-btn
+                v-if="detailJustification.document"
+                flat no-caps dense icon="attach_file"
+                label="Documento"
+                :href="detailJustification.document"
+                target="_blank"
+              />
+            </div>
+          </template>
+          <p v-else>Esta falta ainda não tem justificação registada.</p>
+        </div>
+
+        <div class="abs-detail__actions">
+          <q-btn flat no-caps label="Fechar" @click="showDetail = false" />
+          <q-btn
+            v-if="!detailJustification"
+            unelevated no-caps color="primary" icon="note_add" label="Justificar"
+            @click="showDetail = false; openJustify(detail)"
+          />
+          <q-btn
+            v-if="detailJustification?.status === 'pending' && canApprove"
+            unelevated no-caps color="positive" label="Aprovar"
+            @click="approveJustification(detailJustification); showDetail = false"
+          />
+          <q-btn
+            v-if="detailJustification?.status === 'pending' && canApprove"
+            unelevated no-caps color="negative" label="Rejeitar"
+            @click="rejectJustification(detailJustification); showDetail = false"
+          />
+        </div>
       </div>
     </AppModal>
   </AdminPageTemplate>
@@ -192,6 +275,11 @@ function formatDate(s) {
   try { return new Date(s).toLocaleDateString('pt-PT') } catch { return s }
 }
 
+function formatDateTime(s) {
+  if (!s) return '—'
+  try { return new Date(s).toLocaleString('pt-PT') } catch { return s }
+}
+
 async function loadPosts() {
   try {
     const data = await postService.list({ page_size: 200 })
@@ -225,9 +313,19 @@ async function fetch() {
 
 // ── Justify modal ───────────────────────────────────────────────────────
 const showJustify = ref(false)
+const showDetail = ref(false)
 const justifyForm = ref(null)
 const current = ref(null)
+const detail = ref(null)
 const justify = reactive({ justification_type: 'medical', description: '', document: null })
+const detailJustification = computed(() => (
+  detail.value ? justificationOf(detail.value) : null
+))
+
+function openShiftDetail(shift) {
+  detail.value = shift
+  showDetail.value = true
+}
 
 function openJustify(shift) {
   current.value = shift
@@ -344,5 +442,84 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.abs-row {
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+.abs-row:hover {
+  border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
+  box-shadow: 0 14px 34px rgba(15, 37, 68, 0.08);
+  transform: translateY(-1px);
+}
+.abs-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.abs-detail__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.abs-detail__eyebrow {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.abs-detail__title {
+  color: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+.abs-detail__subtitle {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+}
+.abs-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.abs-detail__grid > div,
+.abs-detail__section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--muted) 20%, transparent);
+  padding: 12px;
+}
+.abs-detail span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.abs-detail strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mono);
+}
+.abs-detail__section p {
+  margin: 6px 0 0;
+  color: var(--foreground);
+  line-height: 1.6;
+}
+.abs-detail__inline,
+.abs-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.abs-detail__actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .abs-row { align-items: flex-start; flex-wrap: wrap; }
+  .abs-detail__grid { grid-template-columns: 1fr; }
 }
 </style>

@@ -1,29 +1,17 @@
 <template>
   <AdminPageTemplate
     eyebrow="Visão geral"
-    title="Dashboard administrativo"
-    :description="`Resumo das operações, equipas e sinais críticos do PLUSE em ${today}.`"
+    title="Centro executivo"
+    :description="`Leitura rápida da operação do PLUSE em ${today}.`"
   >
     <template #actions>
-      <button type="button" class="kt-btn kt-btn-outline pluse-dashboard-hero-action">
-        <AppIcon name="ki-cloud-download" :size="16" icon-class="me-1.5" />
-        Exportar
-      </button>
-      <button type="button" class="kt-btn kt-btn-primary pluse-dashboard-hero-primary">
-        <AppIcon name="ki-plus" :size="16" icon-class="me-1.5" />
-        Nova escala
-      </button>
+      <q-btn outline no-caps class="admin-hero-button" icon="refresh" label="Actualizar" :loading="loading" @click="fetchDashboard" />
+      <q-btn unelevated no-caps class="admin-hero-primary" icon="add" label="Nova escala" :to="{ name: 'schedules' }" />
     </template>
 
     <template #meta>
-      <span class="pluse-dashboard-meta">
-        <AppIcon name="ki-time" :size="14" />
-        Actualizado agora
-      </span>
-      <span class="pluse-dashboard-meta">
-        <AppIcon name="ki-shield-tick" :size="14" />
-        Sessão segura
-      </span>
+      <span class="pluse-dashboard-meta"><AppIcon name="ki-time" :size="14" />{{ loading ? 'A actualizar...' : 'Dados em tempo real' }}</span>
+      <span class="pluse-dashboard-meta"><AppIcon name="ki-shield-tick" :size="14" />Operação, presença e risco</span>
     </template>
 
     <template #hero>
@@ -38,9 +26,7 @@
     <div class="pluse-dashboard">
       <section class="pluse-dashboard-kpis">
         <article v-for="card in kpiCards" :key="card.label" class="pluse-dashboard-kpi" :class="card.tone">
-          <span class="pluse-dashboard-kpi-icon">
-            <AppIcon :name="card.icon" :size="19" />
-          </span>
+          <span class="pluse-dashboard-kpi-icon"><AppIcon :name="card.icon" :size="19" /></span>
           <span class="pluse-dashboard-kpi-label">{{ card.label }}</span>
           <strong>{{ card.value }}</strong>
           <span class="pluse-dashboard-kpi-caption">{{ card.caption }}</span>
@@ -48,398 +34,178 @@
         </article>
       </section>
 
-      <section class="pluse-dashboard-alerts">
-        <HrAlertsPanel :days="30" :limit="5" />
+      <section class="pluse-dashboard-main-grid">
+        <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
+          <div class="pluse-dashboard-panel-head">
+            <div><span>Cobertura</span><strong>Postos por estado operacional</strong></div>
+            <span class="pluse-dashboard-chip success">{{ coverageRate }} coberto</span>
+          </div>
+          <AppApexChart type="bar" :height="280" :series="coverageSeries" :options="coverageOptions" />
+        </article>
+
+        <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
+          <div class="pluse-dashboard-panel-head">
+            <div><span>Presenças</span><strong>Turnos do dia</strong></div>
+            <span class="pluse-dashboard-chip neutral">{{ totalShifts }} turnos</span>
+          </div>
+          <AppApexChart type="donut" :height="280" :series="attendanceSeries" :options="attendanceOptions" />
+        </article>
       </section>
 
-      <section class="pluse-dashboard-panel pluse-dashboard-flow">
-        <div class="pluse-dashboard-panel-head compact">
-          <div>
-            <span>Fluxo do negócio</span>
-            <strong>Do contrato à presença validada</strong>
+      <section class="pluse-dashboard-main-grid">
+        <article class="pluse-dashboard-panel">
+          <div class="pluse-dashboard-panel-head compact">
+            <div><span>Acções prioritárias</span><strong>O que precisa de decisão</strong></div>
+            <router-link :to="{ name: 'cco' }" class="kt-btn kt-btn-outline kt-btn-sm">Abrir CCO</router-link>
           </div>
-          <span class="pluse-dashboard-chip neutral">Guiado</span>
-        </div>
-
-        <div class="pluse-dashboard-flow-steps">
-          <router-link
-            v-for="step in businessFlow"
-            :key="step.title"
-            :to="step.to"
-            class="pluse-dashboard-flow-step"
-          >
-            <span :class="step.tone">
-              <AppIcon :name="step.icon" :size="17" />
-            </span>
-            <div>
-              <strong>{{ step.title }}</strong>
-              <p>{{ step.copy }}</p>
+          <div class="pluse-dashboard-tasks">
+            <div v-for="task in tasks" :key="task.title" class="pluse-dashboard-task">
+              <span :class="task.tone">{{ task.badge }}</span>
+              <div><strong>{{ task.title }}</strong><p>{{ task.copy }}</p></div>
             </div>
-          </router-link>
-        </div>
+          </div>
+        </article>
+
+        <article class="pluse-dashboard-panel">
+          <div class="pluse-dashboard-panel-head compact">
+            <div><span>Postos por cobrir</span><strong>Primeiros alvos de alocação</strong></div>
+            <span class="pluse-dashboard-chip danger">{{ uncoveredPosts.length }}</span>
+          </div>
+          <div class="pluse-dashboard-compact-list">
+            <div v-for="post in uncoveredPosts.slice(0, 5)" :key="post.id" class="pluse-dashboard-compact-row">
+              <div><strong>{{ post.name }}</strong><p>{{ post.client_name }}</p></div>
+              <router-link :to="{ name: 'cco' }" class="kt-btn kt-btn-outline kt-btn-sm">Alocar</router-link>
+            </div>
+            <AppEmptyState v-if="!uncoveredPosts.length" title="Tudo coberto" description="Não há postos totalmente descobertos neste momento." icon="ki-check-circle" />
+          </div>
+        </article>
       </section>
 
       <section class="pluse-dashboard-main-grid">
         <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
           <div class="pluse-dashboard-panel-head">
-            <div>
-              <span>Operação diária</span>
-              <strong>Check-ins vs. cobertura prevista</strong>
-            </div>
-            <span class="pluse-dashboard-chip success">95.7% validado</span>
+            <div><span>Ocorrências</span><strong>Distribuição por severidade</strong></div>
+            <span class="pluse-dashboard-chip danger">{{ openIncidents }} abertas</span>
           </div>
-          <AppApexChart type="area" :height="282" :series="attendanceSeries" :options="attendanceOptions" />
-        </article>
-
-        <article class="pluse-dashboard-panel pluse-dashboard-chart-panel">
-          <div class="pluse-dashboard-panel-head">
-            <div>
-              <span>Sinais críticos</span>
-              <strong>Ocorrências por categoria</strong>
-            </div>
-            <span class="pluse-dashboard-chip danger">27 registos</span>
-          </div>
-          <AppApexChart type="bar" :height="282" :series="incidentSeries" :options="incidentOptions" />
-        </article>
-      </section>
-
-      <section class="pluse-dashboard-secondary-grid">
-        <article class="pluse-dashboard-panel">
-          <div class="pluse-dashboard-panel-head compact">
-            <div>
-              <span>Resumo executivo</span>
-              <strong>O que importa hoje</strong>
-            </div>
-          </div>
-
-          <div class="pluse-dashboard-insights">
-            <div v-for="item in insights" :key="item.title" class="pluse-dashboard-insight">
-              <span :class="item.tone">
-                <AppIcon :name="item.icon" :size="17" />
-              </span>
-              <div>
-                <strong>{{ item.title }}</strong>
-                <p>{{ item.copy }}</p>
-              </div>
-            </div>
-          </div>
+          <AppApexChart type="bar" :height="260" :series="incidentSeries" :options="incidentOptions" />
         </article>
 
         <article class="pluse-dashboard-panel">
           <div class="pluse-dashboard-panel-head compact">
-            <div>
-              <span>Cobertura geográfica</span>
-              <strong>Estado por zona operacional</strong>
-            </div>
-            <span class="pluse-dashboard-chip neutral">5 zonas</span>
+            <div><span>Faturação potencial</span><strong>Base mensal dos postos activos</strong></div>
+            <span class="pluse-dashboard-chip success">{{ money(totalBilling) }}</span>
           </div>
-          <AppApexChart type="donut" :height="224" :series="zoneSeries" :options="zoneOptions" />
-        </article>
-
-        <article class="pluse-dashboard-panel">
-          <div class="pluse-dashboard-panel-head compact">
-            <div>
-              <span>Prioridades</span>
-              <strong>Ações recomendadas</strong>
+          <div class="pluse-dashboard-compact-list">
+            <div v-for="client in billingByClient" :key="client.name" class="pluse-dashboard-compact-row">
+              <div><strong>{{ client.name }}</strong><p>{{ client.posts }} posto(s) activo(s)</p></div>
+              <span>{{ money(client.amount) }}</span>
             </div>
-            <button type="button" class="kt-btn kt-btn-outline kt-btn-sm">Ver tudo</button>
-          </div>
-
-          <div class="pluse-dashboard-tasks">
-            <div v-for="task in tasks" :key="task.title" class="pluse-dashboard-task">
-              <span :class="task.tone">{{ task.badge }}</span>
-              <div>
-                <strong>{{ task.title }}</strong>
-                <p>{{ task.copy }}</p>
-              </div>
-            </div>
+            <AppEmptyState v-if="!billingByClient.length" title="Sem base financeira" description="Ainda não há postos activos com valor de facturação." icon="ki-dollar" />
           </div>
         </article>
-
-        <article class="pluse-dashboard-panel">
-          <div class="pluse-dashboard-panel-head compact">
-            <div>
-              <span>Financeiro</span>
-              <strong>Base de faturação do período</strong>
-            </div>
-            <span class="pluse-dashboard-chip success">87% pronto</span>
-          </div>
-
-          <div class="pluse-dashboard-billing">
-            <div v-for="client in billingBase" :key="client.name" class="pluse-dashboard-billing-row">
-              <div>
-                <strong>{{ client.name }}</strong>
-                <p>{{ client.posts }} postos, {{ client.presences }} presenças validadas</p>
-              </div>
-              <span>{{ client.amount }}</span>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="pluse-dashboard-panel pluse-dashboard-timeline-panel">
-        <div class="pluse-dashboard-panel-head compact">
-          <div>
-            <span>Actividade recente</span>
-            <strong>Linha do tempo operacional</strong>
-          </div>
-          <span class="pluse-dashboard-chip neutral">Ao vivo</span>
-        </div>
-
-        <div class="pluse-dashboard-timeline">
-          <div v-for="event in timeline" :key="event.title" class="pluse-dashboard-event">
-            <span :class="event.tone" />
-            <div>
-              <strong>{{ event.title }}</strong>
-              <p>{{ event.copy }}</p>
-            </div>
-            <time>{{ event.time }}</time>
-          </div>
-        </div>
       </section>
     </div>
   </AdminPageTemplate>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppApexChart from 'src/components/ui/AppApexChart.vue'
+import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
-import HrAlertsPanel from 'src/components/employment/HrAlertsPanel.vue'
+import { ccoService, incidentService } from 'src/services/operations.service'
+import { postService } from 'src/services/post.service'
 
 const palette = {
-  navy: '#0f2544',
-  blue: '#3f6df6',
-  cyan: '#0ea5e9',
-  emerald: '#16b981',
-  amber: '#f59e0b',
-  red: '#ef4444',
-  slate: '#64748b',
-  grid: '#e5edf7',
+  blue: '#3f6df6', emerald: '#16b981', amber: '#f59e0b', red: '#ef4444', slate: '#64748b', grid: '#e5edf7',
 }
+const today = computed(() => new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }))
+const todayIso = new Date().toISOString().slice(0, 10)
+const loading = ref(false)
+const state = reactive({ cco: null, posts: [], incidents: [] })
 
-const today = computed(() =>
-  new Date().toLocaleDateString('pt-PT', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  }),
-)
+function rows(payload) { return payload?.results ?? payload ?? [] }
+function number(value) { return new Intl.NumberFormat('pt-PT').format(Number(value || 0)) }
+function money(value) { return `${number(Math.round(Number(value || 0)))} MT` }
 
-const heroStats = [
-  { label: 'Cobertura prevista', value: '98%' },
-  { label: 'Escalas em revisão', value: '12' },
-  { label: 'Alertas críticos', value: '3' },
-]
-
-const kpiCards = [
-  {
-    label: 'Cobertura prevista',
-    value: '98%',
-    caption: '181 de 184 postos cobertos',
-    trend: '+4% vs ontem',
-    icon: 'ki-shield-tick',
-    tone: 'is-blue',
-  },
-  {
-    label: 'Check-ins confirmados',
-    value: '312',
-    caption: 'entrada validada por localização',
-    trend: '95.7%',
-    icon: 'ki-qr-code',
-    tone: 'is-green',
-  },
-  {
-    label: 'Atrasos monitorados',
-    value: '18',
-    caption: '9 resolvidos nas ultimas 2h',
-    trend: '-12%',
-    icon: 'ki-time',
-    tone: 'is-amber',
-  },
-  {
-    label: 'Alertas críticos',
-    value: '3',
-    caption: 'requerem ação do Centro de Controlo Operacional',
-    trend: 'Prioridade',
-    icon: 'ki-warning-2',
-    tone: 'is-red',
-  },
-]
-
-const businessFlow = [
-  {
-    title: 'Cliente',
-    copy: 'Criar ou rever dados comerciais antes de avançar.',
-    icon: 'ki-profile-user',
-    tone: 'is-blue',
-    to: '/clients',
-  },
-  {
-    title: 'Contrato',
-    copy: 'Definir serviço, preço e regras de faturação.',
-    icon: 'ki-document',
-    tone: 'is-green',
-    to: '/contracts',
-  },
-  {
-    title: 'Postos',
-    copy: 'Configurar localização, raio, QR e requisitos.',
-    icon: 'ki-geolocation',
-    tone: 'is-amber',
-    to: '/posts',
-  },
-  {
-    title: 'Escala',
-    copy: 'Publicar turnos e resolver conflitos antes do dia.',
-    icon: 'ki-calendar',
-    tone: 'is-blue',
-    to: '/schedules',
-  },
-  {
-    title: 'Presença',
-    copy: 'Validar check-ins e alimentar operação e faturação.',
-    icon: 'ki-check-circle',
-    tone: 'is-green',
-    to: '/attendances/today',
-  },
-]
-
-const baseChart = {
-  dataLabels: { enabled: false },
-  grid: { borderColor: palette.grid, strokeDashArray: 4 },
-  tooltip: { theme: 'light' },
-  legend: { labels: { colors: palette.slate } },
+async function fetchDashboard() {
+  loading.value = true
+  try {
+    const [cco, posts, incidents] = await Promise.allSettled([
+      ccoService.overview(todayIso),
+      postService.list({ page_size: 500 }),
+      incidentService.list({ state__in: 'registered,validated', page_size: 300 }),
+    ])
+    state.cco = cco.status === 'fulfilled' ? cco.value : null
+    state.posts = posts.status === 'fulfilled' ? rows(posts.value) : []
+    state.incidents = incidents.status === 'fulfilled' ? rows(incidents.value) : []
+  } finally {
+    loading.value = false
+  }
 }
+onMounted(fetchDashboard)
 
-const attendanceSeries = [
-  { name: 'Check-ins confirmados', data: [46, 112, 92, 84, 107, 132, 96] },
-  { name: 'Cobertura prevista', data: [50, 118, 96, 90, 111, 136, 100] },
-]
+const stats = computed(() => state.cco?.stats || {})
+const totalPosts = computed(() => stats.value.posts_total || 0)
+const totalShifts = computed(() => number(stats.value.total_shifts || 0))
+const openIncidents = computed(() => number(stats.value.open_incidents || state.incidents.length))
+const coverageRate = computed(() => totalPosts.value ? `${Math.round(((stats.value.posts_covered || 0) / totalPosts.value) * 100)}%` : '0%')
+const attendanceRate = computed(() => {
+  const total = stats.value.total_shifts || 0
+  const valid = (stats.value.present || 0) + (stats.value.substituted || 0)
+  return total ? `${Math.round((valid / total) * 100)}%` : '0%'
+})
+const uncoveredPosts = computed(() => state.cco?.posts?.filter((post) => post.coverage === 'uncovered') || [])
 
-const attendanceOptions = {
-  ...baseChart,
-  colors: [palette.blue, palette.emerald],
-  stroke: { curve: 'smooth', width: 3 },
-  fill: {
-    type: 'gradient',
-    gradient: { opacityFrom: 0.32, opacityTo: 0.04 },
-  },
-  xaxis: { categories: ['06h', '08h', '10h', '12h', '14h', '16h', '18h'] },
-  yaxis: { labels: { formatter: (value) => Math.round(value) } },
-  legend: { position: 'top', horizontalAlign: 'right' },
-}
+const heroStats = computed(() => [
+  { label: 'Cobertura', value: coverageRate.value },
+  { label: 'Presença validada', value: attendanceRate.value },
+  { label: 'Ocorrências abertas', value: openIncidents.value },
+])
+const kpiCards = computed(() => [
+  { label: 'Postos activos', value: number(totalPosts.value), caption: `${number(stats.value.posts_covered || 0)} cobertos`, trend: `${number(stats.value.posts_uncovered || 0)} descobertos`, icon: 'ki-geolocation', tone: 'is-blue' },
+  { label: 'Turnos hoje', value: number(stats.value.total_shifts || 0), caption: `${number(stats.value.pending || 0)} por marcar`, trend: `${number(stats.value.absent || 0)} faltas`, icon: 'ki-calendar', tone: 'is-amber' },
+  { label: 'Check-ins válidos', value: number((stats.value.present || 0) + (stats.value.substituted || 0)), caption: 'presenças e substituições', trend: attendanceRate.value, icon: 'ki-qr-code', tone: 'is-green' },
+  { label: 'Ocorrências', value: openIncidents.value, caption: 'registadas ou validadas', trend: 'prioridade', icon: 'ki-warning-2', tone: 'is-red' },
+])
 
-const incidentSeries = [
-  { name: 'Registos', data: [10, 7, 6, 4] },
-]
+const chartBase = { dataLabels: { enabled: false }, grid: { borderColor: palette.grid, strokeDashArray: 4 }, tooltip: { theme: 'light' } }
+const coverageSeries = computed(() => [{ name: 'Postos', data: [stats.value.posts_covered || 0, stats.value.posts_partial || 0, stats.value.posts_uncovered || 0] }])
+const coverageOptions = computed(() => ({ ...chartBase, colors: [palette.blue], plotOptions: { bar: { borderRadius: 8, columnWidth: '45%' } }, xaxis: { categories: ['Cobertos', 'Parciais', 'Descobertos'] }, legend: { show: false } }))
+const attendanceSeries = computed(() => [stats.value.present || 0, stats.value.substituted || 0, stats.value.absent || 0, stats.value.pending || 0])
+const attendanceOptions = computed(() => ({ labels: ['Presentes', 'Substituídos', 'Faltas', 'Pendentes'], colors: [palette.emerald, palette.blue, palette.red, palette.amber], legend: { position: 'bottom' }, stroke: { width: 0 } }))
 
-const incidentOptions = {
-  ...baseChart,
-  colors: [palette.red],
-  plotOptions: {
-    bar: {
-      borderRadius: 7,
-      horizontal: true,
-      barHeight: '46%',
-      distributed: true,
-    },
-  },
-  xaxis: { categories: ['Atrasos', 'Ausências', 'Rondas incompletas', 'Equipamento'] },
-  legend: { show: false },
-}
+const severityLabels = { low: 'Baixa', medium: 'Média', high: 'Alta', critical: 'Crítica' }
+const incidentGroups = computed(() => {
+  const map = new Map([['low', 0], ['medium', 0], ['high', 0], ['critical', 0]])
+  for (const incident of state.incidents) map.set(incident.severity, (map.get(incident.severity) || 0) + 1)
+  return [...map.entries()]
+})
+const incidentSeries = computed(() => [{ name: 'Ocorrências', data: incidentGroups.value.map(([, value]) => value) }])
+const incidentOptions = computed(() => ({ ...chartBase, colors: [palette.red], plotOptions: { bar: { horizontal: true, borderRadius: 8, barHeight: '48%' } }, xaxis: { categories: incidentGroups.value.map(([key]) => severityLabels[key] || key) }, legend: { show: false } }))
 
-const zoneSeries = [62, 48, 33, 27, 14]
-const zoneOptions = {
-  labels: ['Centro urbano', 'Industrial', 'Norte', 'Sul', 'Remotos'],
-  colors: [palette.blue, palette.emerald, palette.cyan, palette.amber, palette.red],
-  stroke: { width: 0 },
-  legend: { position: 'bottom' },
-  plotOptions: {
-    pie: {
-      donut: {
-        size: '72%',
-        labels: {
-          show: true,
-          total: { show: true, label: 'Postos', formatter: () => '184' },
-        },
-      },
-    },
-  },
-}
+const tasks = computed(() => [
+  { title: 'Alocar postos descobertos', copy: `${number(stats.value.posts_uncovered || 0)} posto(s) precisam de vigilante.`, badge: number(stats.value.posts_uncovered || 0), tone: 'is-red' },
+  { title: 'Validar presenças pendentes', copy: `${number(stats.value.pending || 0)} turno(s) ainda não foram marcados.`, badge: number(stats.value.pending || 0), tone: 'is-amber' },
+  { title: 'Fechar ocorrências abertas', copy: `${openIncidents.value} ocorrência(s) ainda requerem acompanhamento.`, badge: openIncidents.value, tone: 'is-blue' },
+])
 
-const insights = [
-  {
-    title: 'Centro de Controlo Operacional acompanha a operação em tempo real',
-    copy: 'Postos descobertos, atrasos, ausências e check-ins fora do raio ficam visíveis no mesmo painel.',
-    icon: 'ki-monitor-mobile',
-    tone: 'is-blue',
-  },
-  {
-    title: 'Escalas alimentam presenças e faturação',
-    copy: 'O fluxo importante para a apresentação e ligar contrato, posto, escala, presença validada e valor a faturar.',
-    icon: 'ki-route',
-    tone: 'is-green',
-  },
-  {
-    title: 'Prioridades ficam acionáveis',
-    copy: 'A dashboard destaca apenas o que precisa de decisão, sem transformar a página num relatório longo.',
-    icon: 'ki-notification-status',
-    tone: 'is-amber',
-  },
-]
-
-const tasks = [
-  {
-    title: 'Resolver postos descobertos',
-    copy: '3 postos sem vigilante confirmado para o próximo turno.',
-    badge: '3',
-    tone: 'is-red',
-  },
-  {
-    title: 'Rever escalas em conflito',
-    copy: '12 escalas precisam de ajuste antes do fecho operacional.',
-    badge: '12',
-    tone: 'is-amber',
-  },
-  {
-    title: 'Sincronizar presenças offline',
-    copy: '14 check-ins aguardam internet para entrar na base operacional.',
-    badge: '14',
-    tone: 'is-blue',
-  },
-]
-
-const billingBase = [
-  { name: 'MozMall Retail', posts: 18, presences: 426, amount: '1.280.000 MT' },
-  { name: 'Porto Logística', posts: 12, presences: 311, amount: '940.000 MT' },
-  { name: 'Banco Central', posts: 9, presences: 268, amount: '810.000 MT' },
-]
-
-const timeline = [
-  {
-    title: 'Check-in fora do raio permitido',
-    copy: 'Posto Matola Centro, validação enviada ao supervisor.',
-    time: '09:42',
-    tone: 'is-amber',
-  },
-  {
-    title: 'Ronda concluída sem ocorrências',
-    copy: 'Supervisor fechou a ronda do turno da manhã.',
-    time: '09:18',
-    tone: 'is-green',
-  },
-  {
-    title: 'Ocorrência crítica escalada',
-    copy: 'Centro de Controlo Operacional notificou equipa de resposta e cliente.',
-    time: '08:57',
-    tone: 'is-red',
-  },
-]
+const billingByClient = computed(() => {
+  const map = new Map()
+  for (const post of state.posts) {
+    const amount = Number(post.billing_amount || 0)
+    if (!amount) continue
+    const name = post.client_name || 'Sem cliente'
+    const item = map.get(name) || { name, posts: 0, amount: 0 }
+    item.posts += 1
+    item.amount += amount
+    map.set(name, item)
+  }
+  return [...map.values()].sort((a, b) => b.amount - a.amount).slice(0, 5)
+})
+const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => sum + item.amount, 0))
 </script>
-
 <style>
 .pluse-dashboard {
   display: flex;
@@ -667,6 +433,7 @@ const timeline = [
 .pluse-dashboard-insights,
 .pluse-dashboard-tasks,
 .pluse-dashboard-billing,
+.pluse-dashboard-compact-list,
 .pluse-dashboard-timeline {
   display: flex;
   flex-direction: column;
@@ -734,6 +501,7 @@ const timeline = [
 .pluse-dashboard-insight,
 .pluse-dashboard-task,
 .pluse-dashboard-billing-row,
+.pluse-dashboard-compact-row,
 .pluse-dashboard-event {
   display: flex;
   align-items: flex-start;
@@ -780,8 +548,13 @@ const timeline = [
   align-items: center;
   justify-content: space-between;
 }
+.pluse-dashboard-compact-row {
+  align-items: center;
+  justify-content: space-between;
+}
 
-.pluse-dashboard-billing-row > span {
+.pluse-dashboard-billing-row > span,
+.pluse-dashboard-compact-row > span {
   color: #047857;
   font-size: 0.95rem;
   font-weight: 850;

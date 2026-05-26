@@ -18,11 +18,11 @@
     <template #meta>
       <span class="pluse-demo-meta">
         <AppIcon name="ki-document" :size="14" />
-        36 activos
+        {{ activeContracts }} activos
       </span>
       <span class="pluse-demo-meta">
         <AppIcon name="ki-time" :size="14" />
-        4 aguardam aprovação
+        {{ pendingContracts }} por parametrizar
       </span>
     </template>
 
@@ -119,29 +119,75 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
+import { postService } from 'src/services/post.service'
 
 const route = useRoute()
 
-const stats = [
-  { label: 'Ativos', value: '36', copy: 'contratos em operação', icon: 'ki-check-circle', tone: 'is-green' },
-  { label: 'Pendentes', value: '4', copy: 'aguardam aprovação', icon: 'ki-time', tone: 'is-amber' },
-  { label: 'A expirar', value: '7', copy: 'nos próximos 30 dias', icon: 'ki-calendar', tone: 'is-red' },
-  { label: 'Valor mensal', value: '8.400.000 MT', copy: 'base contratada', icon: 'ki-dollar', tone: 'is-blue' },
-]
+const posts = ref([])
+const loading = ref(false)
 
-const contracts = [
-  { code: 'C-104', name: 'Segurança perimetral', client: 'MozMall Retail', period: '01/05/2026 - 30/04/2027', posts: 18, amount: '1.280.000 MT', status: 'Ativo', variant: 'success', view: 'active' },
-  { code: 'C-097', name: 'Proteccao industrial', client: 'Porto Logística', period: '15/03/2026 - 14/03/2027', posts: 12, amount: '940.000 MT', status: 'Ativo', variant: 'success', view: 'active' },
-  { code: 'C-088', name: 'Agencias e cofre', client: 'Banco Central', period: 'Expira em 22 dias', posts: 9, amount: '810.000 MT', status: 'A expirar', variant: 'warning', view: 'expiring' },
-  { code: 'C-121', name: 'Servico hospitalar', client: 'Hospital Maputo', period: 'Aguardando Direção', posts: 7, amount: '520.000 MT', status: 'Pendente', variant: 'info', view: 'pending' },
-  { code: 'C-122', name: 'Armazens Norte', client: 'Nacala Storage', period: 'Aguardando Financeiro', posts: 5, amount: '410.000 MT', status: 'Pendente', variant: 'info', view: 'pending' },
-]
+function money(value) {
+  return `${new Intl.NumberFormat('pt-PT').format(Math.round(Number(value || 0)))} MT`
+}
 
+async function fetchContracts() {
+  loading.value = true
+  try {
+    const data = await postService.list({ page_size: 500 })
+    posts.value = data?.results ?? data ?? []
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchContracts)
+
+const contracts = computed(() => {
+  const map = new Map()
+  for (const post of posts.value) {
+    const client = post.client_name || 'Sem cliente'
+    const item = map.get(client) || {
+      code: `COM-${String(map.size + 1).padStart(3, '0')}`,
+      name: 'Contrato operacional',
+      client,
+      posts: 0,
+      amountValue: 0,
+      status: 'Ativo',
+      variant: 'success',
+      view: 'active',
+    }
+    item.posts += 1
+    item.amountValue += Number(post.billing_amount || 0)
+    if (!post.billing_amount) {
+      item.status = 'Pendente'
+      item.variant = 'info'
+      item.view = 'pending'
+    }
+    map.set(client, item)
+  }
+  return [...map.values()].map((item) => ({
+    ...item,
+    period: `${item.posts} posto(s) parametrizado(s)`,
+    amount: money(item.amountValue),
+  }))
+})
+
+const activeContracts = computed(() => contracts.value.filter((contract) => contract.view === 'active').length)
+const pendingContracts = computed(() => contracts.value.filter((contract) => contract.view === 'pending').length)
+const expiringContracts = computed(() => 0)
+const monthlyAmount = computed(() => contracts.value.reduce((sum, item) => sum + item.amountValue, 0))
+
+const stats = computed(() => [
+  { label: 'Ativos', value: activeContracts.value, copy: 'clientes com postos faturáveis', icon: 'ki-check-circle', tone: 'is-green' },
+  { label: 'Pendentes', value: pendingContracts.value, copy: 'faltam valores de faturação', icon: 'ki-time', tone: 'is-amber' },
+  { label: 'A expirar', value: expiringContracts.value, copy: 'requer entidade comercial dedicada', icon: 'ki-calendar', tone: 'is-red' },
+  { label: 'Valor mensal', value: money(monthlyAmount.value), copy: 'base dos postos ativos', icon: 'ki-dollar', tone: 'is-blue' },
+])
 const activeViewLabel = computed(() => {
   const map = { active: 'Ativos', pending: 'Pendentes', expiring: 'A expirar' }
   return map[route.params.view] || 'Todos'
@@ -149,47 +195,37 @@ const activeViewLabel = computed(() => {
 
 const filteredContracts = computed(() => {
   const view = route.params.view
-  if (!view) return contracts
-  return contracts.filter((contract) => contract.view === view)
+  if (!view) return contracts.value
+  return contracts.value.filter((contract) => contract.view === view)
 })
 
-const approvalColumns = [
+const approvalColumns = computed(() => [
   {
-    title: 'Em preparacao',
+    title: 'Pendentes de parametrização',
     variant: 'info',
     tone: 'is-blue',
     icon: 'ki-document',
-    items: [
-      { name: 'Hospital Maputo', copy: 'Falta confirmar turnos noturnos.', amount: '520.000 MT' },
-      { name: 'Nacala Storage', copy: 'Aguardando proposta assinada.', amount: '410.000 MT' },
-    ],
+    items: contracts.value.filter((item) => item.view === 'pending').slice(0, 4).map((item) => ({
+      name: item.client,
+      copy: 'Complete o valor mensal dos postos para fechar a base comercial.',
+      amount: `${item.posts} posto(s)`,
+    })),
   },
   {
-    title: 'Aguardando aprovação',
-    variant: 'warning',
-    tone: 'is-amber',
-    icon: 'ki-time',
-    items: [
-      { name: 'Banco Central', copy: 'Renovacao com ajuste de 2 postos.', amount: '810.000 MT' },
-      { name: 'MozMall Retail', copy: 'Aditivo para estacionamento.', amount: '180.000 MT' },
-    ],
-  },
-  {
-    title: 'Prontos para postos',
+    title: 'Activos',
     variant: 'success',
     tone: 'is-green',
     icon: 'ki-check-circle',
-    items: [
-      { name: 'Porto Logística', copy: 'Contrato activo e parametrizado.', amount: '12 postos' },
-      { name: 'MozMall Retail', copy: 'Escalas liberadas para operações.', amount: '18 postos' },
-    ],
+    items: contracts.value.filter((item) => item.view === 'active').slice(0, 4).map((item) => ({
+      name: item.client,
+      copy: 'Contrato operacional derivado dos postos activos.',
+      amount: item.amount,
+    })),
   },
-]
-
-const validations = [
-  { label: 'Cliente aprovado', copy: 'Dados fiscais e contacto operacional confirmados.', icon: 'ki-check-circle', tone: 'is-green' },
-  { label: 'Valor e período definidos', copy: 'Base necessária para relatório de faturação.', icon: 'ki-dollar', tone: 'is-blue' },
-  { label: 'Regras de posto pendentes', copy: 'Alguns contratos ainda nao definiram turnos e lotacao.', icon: 'ki-warning-2', tone: 'is-amber' },
-  { label: 'Aprovacao obrigatoria', copy: 'Contratos sensiveis precisam de Direção antes de activar.', icon: 'ki-shield-tick', tone: 'is-red' },
-]
-</script>
+])
+const validations = computed(() => [
+  { label: 'Cliente aprovado', copy: 'A base comercial parte do cliente cadastrado e dos seus postos.', icon: 'ki-check-circle', tone: 'is-green' },
+  { label: 'Valor mensal definido', copy: `${pendingContracts.value} cliente(s) ainda têm posto sem valor de facturação.`, icon: 'ki-dollar', tone: pendingContracts.value ? 'is-amber' : 'is-green' },
+  { label: 'Postos ligados', copy: `${posts.value.length} posto(s) alimentam a base comercial actual.`, icon: 'ki-geolocation', tone: 'is-blue' },
+  { label: 'Próximo passo', copy: 'Criar entidade própria de contrato comercial para anexos, vigência e aprovações.', icon: 'ki-shield-tick', tone: 'is-red' },
+])</script>

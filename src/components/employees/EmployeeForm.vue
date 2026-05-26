@@ -270,20 +270,6 @@
           do Diretor Financeiro.
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <q-select v-model="contract.client" :options="clientOptions"
-                    label="Cliente do contrato" outlined dense emit-value map-options
-                    clearable :loading="loadingClients"
-                    hint="Herda o cliente operacional, mas pode ser ajustado antes de guardar."
-                    :error="!!fieldErrors['initial_contract.client']"
-                    :error-message="fieldErrors['initial_contract.client']"
-                    @update:model-value="() => clearField('initial_contract.client')" />
-          <q-select v-model="contract.post" :options="contractPostOptions"
-                    label="Posto associado" outlined dense emit-value map-options
-                    clearable :loading="loadingPosts"
-                    hint="Ajuda a ligar contrato, posto, escala e faturação."
-                    :error="!!fieldErrors['initial_contract.post']"
-                    :error-message="fieldErrors['initial_contract.post']"
-                    @update:model-value="() => clearField('initial_contract.post')" />
           <q-select v-model="contract.contract_type" :options="contractTypeOptions"
                     label="Tipo de contrato *" outlined dense emit-value map-options
                     :rules="[req]"
@@ -465,8 +451,6 @@ const form = reactive({ ...blank })
 // Step 5 — the initial work contract. Kept separate from `form` because it
 // is a distinct entity; emitted to the parent as `initialContract`.
 const blankContract = {
-  client: null,
-  post: null,
   contract_type: 'fixed_term',
   job_title: '',
   start_date: '',
@@ -482,10 +466,6 @@ const contract = reactive({ ...blankContract })
 const contractNeedsEnd = computed(
   () => termedContractTypes.includes(contract.contract_type),
 )
-const contractPostOptions = computed(() => {
-  if (!contract.client) return postOptions.value
-  return postOptions.value.filter((post) => post.clientId === contract.client)
-})
 
 watch(
   () => props.initial,
@@ -510,30 +490,6 @@ watch(
   () => form.hire_date,
   (date) => {
     if (date && !contract.start_date) contract.start_date = date
-  },
-)
-watch(
-  () => form.client,
-  (clientId) => {
-    if (!contract.client) contract.client = clientId
-  },
-)
-watch(
-  () => form.post,
-  (postId) => {
-    if (!contract.post) contract.post = postId
-  },
-)
-watch(
-  () => contract.client,
-  (clientId) => {
-    if (contract.post && !contractPostOptions.value.some((post) => post.value === contract.post)) {
-      contract.post = null
-    }
-    if (clientId && !contract.workplace) {
-      const client = clientOptions.value.find((item) => item.value === clientId)
-      contract.workplace = client?.label || ''
-    }
   },
 )
 watch(
@@ -622,12 +578,7 @@ onMounted(async () => {
       const cap = p.max_guards != null
         ? ` (${p.current_guards}/${p.max_guards}${p.has_capacity ? '' : ' · cheio'})`
         : ''
-      return {
-        label: base + cap,
-        value: p.id,
-        clientId: p.client,
-        disable: p.has_capacity === false,
-      }
+      return { label: base + cap, value: p.id, disable: p.has_capacity === false }
     })
   } catch {
     /* ignore */

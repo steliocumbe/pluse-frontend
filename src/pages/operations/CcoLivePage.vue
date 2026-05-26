@@ -177,11 +177,33 @@
               <AppBadge :variant="attendanceVariant(s.attendance_status)" size="sm">
                 {{ s.attendance_status_display }}
               </AppBadge>
+              <div class="shift-line__actions">
+                <q-btn
+                  flat dense round size="sm" icon="swap_horiz"
+                  @click="openSubstitution(post, s)"
+                >
+                  <q-tooltip>Substituir vigilante</q-tooltip>
+                </q-btn>
+                <q-btn
+                  flat dense round size="sm" icon="person_off"
+                  @click="openAbsence(post, s)"
+                >
+                  <q-tooltip>Marcar falta</q-tooltip>
+                </q-btn>
+              </div>
             </div>
           </div>
           <div v-else class="post-card__empty">
             Nenhum turno para hoje.
           </div>
+          <footer class="post-card__actions">
+            <q-btn
+              no-caps unelevated size="sm" color="primary"
+              icon="person_add"
+              :label="post.shifts.length ? 'Adicionar reforço' : 'Alocar vigilante'"
+              @click="openAllocation(post)"
+            />
+          </footer>
         </div>
       </div>
 
@@ -214,6 +236,53 @@
         </div>
       </div>
     </template>
+
+    <q-dialog v-model="actionDialog.open" persistent>
+      <q-card class="cco-action-dialog">
+        <q-card-section>
+          <div class="cco-action-dialog__eyebrow">{{ actionDialog.eyebrow }}</div>
+          <div class="cco-action-dialog__title">{{ actionDialog.title }}</div>
+          <p class="cco-action-dialog__copy">{{ actionDialog.copy }}</p>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none cco-action-dialog__body">
+          <q-select
+            v-if="actionDialog.mode !== 'absence'"
+            v-model="actionForm.employee"
+            :options="employeeOptions"
+            label="Vigilante"
+            outlined dense emit-value map-options use-input clearable
+            :loading="loadingEmployees"
+            @filter="filterEmployees"
+          />
+          <q-select
+            v-if="actionDialog.mode === 'allocation'"
+            v-model="actionForm.period"
+            :options="periodOptions"
+            label="Período"
+            outlined dense emit-value map-options
+          />
+          <q-input
+            v-if="actionDialog.mode === 'absence'"
+            v-model="actionForm.reason"
+            type="textarea"
+            autogrow outlined dense
+            label="Motivo da falta"
+            placeholder="Ex.: não compareceu ao posto, informou doença, atraso sem contacto..."
+          />
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat no-caps label="Cancelar" v-close-popup />
+          <q-btn
+            unelevated no-caps color="primary"
+            :label="actionDialog.okLabel"
+            :loading="savingAction"
+            @click="submitCcoAction"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </AdminPageTemplate>
 </template>
 
@@ -221,6 +290,8 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { ccoService } from 'src/services/operations.service'
+import { shiftService } from 'src/services/scheduling.service'
+import { employeeService } from 'src/services/employee.service'
 import { attendanceVariant } from 'src/config/scheduling'
 import { severityVariant, incidentStateVariant } from 'src/config/operations'
 import { formatRelativeTime, useRealtimePolling } from 'src/composables/useRealtimePolling'
@@ -232,6 +303,32 @@ import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
 const $q = useQuasar()
 const date = ref(new Date().toISOString().slice(0, 10))
+const loadingEmployees = ref(false)
+const savingAction = ref(false)
+const allEmployees = ref([])
+const employeeOptions = ref([])
+
+const periodOptions = [
+  { label: 'Diurno', value: 'day' },
+  { label: 'Noturno', value: 'night' },
+  { label: '24 horas', value: 'full' },
+]
+
+const actionDialog = reactive({
+  open: false,
+  mode: 'allocation',
+  eyebrow: '',
+  title: '',
+  copy: '',
+  okLabel: 'Guardar',
+  post: null,
+  shift: null,
+})
+const actionForm = reactive({
+  employee: null,
+  period: 'day',
+  reason: '',
+})
 
 const { data, loading, lastUpdated, online, fetch } = useRealtimePolling(
   () => ccoService.overview(date.value),
@@ -327,29 +424,116 @@ function openQuickAllocation() {
     return
   }
 
-  $q.dialog({
-    title: 'Alocação rápida',
-    message: `Posto: ${post.name} · Cliente: ${post.client_name}. Indique o vigilante ou equipa de substituição.`,
-    prompt: {
-      model: '',
-      type: 'text',
-      label: 'Vigilante ou equipa',
-      isValid: (value) => String(value || '').trim().length >= 2,
-    },
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Preparar alocação', color: 'primary', unelevated: true, noCaps: true },
-    persistent: true,
-  }).onOk((value) => {
-    filter.coverage = 'uncovered'
-    $q.notify({
-      type: 'positive',
-      icon: 'person_add',
-      message: 'Alocação preparada.',
-      caption: `${value} foi associado ao pedido de cobertura de ${post.name}.`,
-    })
+  openAllocation(post)
+}
+
+function resetActionForm() {
+  actionForm.employee = null
+  actionForm.period = 'day'
+  actionForm.reason = ''
+}
+
+function openAllocation(post) {
+  resetActionForm()
+  actionDialog.mode = 'allocation'
+  actionDialog.eyebrow = 'Alocação operacional'
+  actionDialog.title = post.shifts?.length ? 'Adicionar reforço ao posto' : 'Alocar vigilante ao posto'
+  actionDialog.copy = `${post.name} · ${post.client_name}`
+  actionDialog.okLabel = 'Alocar vigilante'
+  actionDialog.post = post
+  actionDialog.shift = null
+  actionDialog.open = true
+}
+
+function openSubstitution(post, shift) {
+  resetActionForm()
+  actionDialog.mode = 'substitution'
+  actionDialog.eyebrow = 'Substituição'
+  actionDialog.title = 'Substituir vigilante escalado'
+  actionDialog.copy = `${shift.employee_name} · ${post.name} · ${shift.period_display}`
+  actionDialog.okLabel = 'Confirmar substituição'
+  actionDialog.post = post
+  actionDialog.shift = shift
+  actionDialog.open = true
+}
+
+function openAbsence(post, shift) {
+  resetActionForm()
+  actionDialog.mode = 'absence'
+  actionDialog.eyebrow = 'Presença'
+  actionDialog.title = 'Marcar falta'
+  actionDialog.copy = `${shift.employee_name} · ${post.name} · ${shift.period_display}`
+  actionDialog.okLabel = 'Marcar falta'
+  actionDialog.post = post
+  actionDialog.shift = shift
+  actionDialog.open = true
+}
+
+async function submitCcoAction() {
+  if (actionDialog.mode !== 'absence' && !actionForm.employee) {
+    $q.notify({ type: 'warning', message: 'Escolha o vigilante antes de continuar.' })
+    return
+  }
+
+  savingAction.value = true
+  try {
+    if (actionDialog.mode === 'allocation') {
+      await shiftService.create({
+        post: actionDialog.post.id,
+        employee: actionForm.employee,
+        date: date.value,
+        period: actionForm.period,
+      })
+      $q.notify({ type: 'positive', icon: 'person_add', message: 'Vigilante alocado ao posto.' })
+    } else if (actionDialog.mode === 'substitution') {
+      await shiftService.markAttendance(actionDialog.shift.id, {
+        attendance_status: 'substituted',
+        substitute: actionForm.employee,
+      })
+      $q.notify({ type: 'positive', icon: 'swap_horiz', message: 'Substituição registada.' })
+    } else {
+      await shiftService.markAttendance(actionDialog.shift.id, {
+        attendance_status: 'absent',
+        absence_reason: actionForm.reason || 'Falta marcada pelo Centro de Controlo Operacional.',
+      })
+      $q.notify({ type: 'positive', icon: 'person_off', message: 'Falta registada.' })
+    }
+    actionDialog.open = false
+    await fetch()
+  } catch (error) {
+    const data = error?.response?.data || {}
+    const detail = data.detail || data.employee?.[0] || data.non_field_errors?.[0] || 'Não foi possível concluir a ação.'
+    $q.notify({ type: 'negative', message: detail })
+  } finally {
+    savingAction.value = false
+  }
+}
+
+function filterEmployees(needle, update) {
+  update(() => {
+    const q = String(needle || '').toLowerCase()
+    employeeOptions.value = q
+      ? allEmployees.value.filter((employee) => employee.label.toLowerCase().includes(q))
+      : allEmployees.value
   })
 }
 
+async function loadEmployees() {
+  loadingEmployees.value = true
+  try {
+    const data = await employeeService.list({ page_size: 300, status: 'active' })
+    const rows = data?.results ?? data ?? []
+    allEmployees.value = rows.map((employee) => ({
+      label: employee.employee_number
+        ? `${employee.full_name} · ${employee.employee_number}`
+        : employee.full_name,
+      value: employee.id,
+    }))
+    employeeOptions.value = allEmployees.value
+  } finally {
+    loadingEmployees.value = false
+  }
+}
 function onClearFilter(key, emptyValue) { filter[key] = emptyValue }
 function onClearAllFilters() {
   filter.search = ''
@@ -400,6 +584,7 @@ function notifyCritical(event) {
 }
 
 onMounted(() => {
+  loadEmployees()
   window.addEventListener('pluse-incident-critical', notifyCritical)
   // Pedir permissão para notificações (não-bloqueante)
   if ('Notification' in window && Notification.permission === 'default') {
@@ -731,6 +916,13 @@ function coverageLabel(c) {
   font-size: 0.7rem;
   color: var(--muted-foreground);
 }
+.shift-line__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  color: var(--muted-foreground);
+}
 .period-chip {
   display: inline-flex;
   align-items: center;
@@ -756,6 +948,39 @@ function coverageLabel(c) {
   font-size: 0.8rem;
   color: var(--muted-foreground);
   font-style: italic;
+}
+.post-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 14px 14px;
+  border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+}
+
+.cco-action-dialog {
+  width: min(440px, calc(100vw - 32px));
+  border-radius: 18px;
+}
+.cco-action-dialog__eyebrow {
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.cco-action-dialog__title {
+  margin-top: 6px;
+  color: var(--mono);
+  font-size: 1.18rem;
+  font-weight: 850;
+}
+.cco-action-dialog__copy {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+.cco-action-dialog__body {
+  display: grid;
+  gap: 12px;
 }
 
 /* ── Incidents list ──────────────────────────────────────────────────── */

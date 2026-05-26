@@ -60,6 +60,7 @@
         class="pluse-table"
         no-data-label="Sem pedidos registados."
         @request="onTableRequest"
+        @row-click="(_, row) => openDetail(row)"
       >
         <template #body-cell-employee="props">
           <q-td :props="props">
@@ -85,6 +86,9 @@
 
         <template #body-cell-actions="props">
           <q-td :props="props" auto-width @click.stop>
+            <q-btn flat round dense icon="visibility" size="sm" @click="openDetail(props.row)">
+              <q-tooltip>Ver detalhe</q-tooltip>
+            </q-btn>
             <q-btn
               v-if="props.row.status === 'pending' && canApprove"
               flat round dense icon="more_vert" size="sm"
@@ -159,6 +163,65 @@
                    label="Submeter" :loading="submitting" />
           </div>
         </q-form>
+      </div>
+    </AppModal>
+
+    <AppModal v-model="showDetail" size="lg">
+      <div v-if="detail" class="p-5 leave-detail">
+        <div class="leave-detail__head">
+          <div>
+            <p class="leave-detail__eyebrow">{{ detail.leave_type_display }}</p>
+            <div class="leave-detail__title">{{ detail.employee_name }}</div>
+            <p class="leave-detail__subtitle">{{ detail.employee_number }}</p>
+          </div>
+          <AppBadge :variant="leaveStatusVariant(detail.status)">
+            {{ detail.status_display }}
+          </AppBadge>
+        </div>
+
+        <div class="leave-detail__grid">
+          <div>
+            <span>Período</span>
+            <strong>{{ formatDate(detail.start_date) }} → {{ formatDate(detail.end_date) }}</strong>
+          </div>
+          <div>
+            <span>Duração</span>
+            <strong>{{ detail.days }} dia(s)</strong>
+          </div>
+          <div>
+            <span>Criado em</span>
+            <strong>{{ formatDateTime(detail.created_at) }}</strong>
+          </div>
+          <div>
+            <span>Aprovado em</span>
+            <strong>{{ formatDateTime(detail.approved_at) }}</strong>
+          </div>
+        </div>
+
+        <div class="leave-detail__section">
+          <span>Motivo / observações</span>
+          <p>{{ detail.reason || 'Sem observações registadas.' }}</p>
+        </div>
+
+        <div v-if="detail.rejection_reason" class="leave-detail__section is-danger">
+          <span>Motivo da rejeição</span>
+          <p>{{ detail.rejection_reason }}</p>
+        </div>
+
+        <div class="leave-detail__actions">
+          <q-btn v-if="detail.document" flat no-caps icon="attach_file" label="Abrir documento" :href="detail.document" target="_blank" />
+          <q-btn flat no-caps label="Fechar" @click="showDetail = false" />
+          <q-btn
+            v-if="detail.status === 'pending' && canApprove"
+            unelevated no-caps color="positive" label="Aprovar"
+            @click="approve(detail); showDetail = false"
+          />
+          <q-btn
+            v-if="detail.status === 'pending' && canApprove"
+            unelevated no-caps color="negative" label="Rejeitar"
+            @click="reject(detail); showDetail = false"
+          />
+        </div>
       </div>
     </AppModal>
   </AdminPageTemplate>
@@ -351,7 +414,9 @@ function reject(row) {
 
 // ── Create modal ────────────────────────────────────────────────────────
 const showCreate = ref(false)
+const showDetail = ref(false)
 const formRef = ref(null)
+const detail = ref(null)
 const form = reactive({
   employee: '', leave_type_display: '', start_date: '', end_date: '',
   reason: '', document: null,
@@ -363,6 +428,21 @@ function openCreate() {
     start_date: '', end_date: '', reason: '', document: null,
   })
   showCreate.value = true
+}
+
+function formatDateTime(s) {
+  if (!s) return '—'
+  try { return new Date(s).toLocaleString('pt-PT') } catch { return s }
+}
+
+async function openDetail(row) {
+  detail.value = row
+  showDetail.value = true
+  try {
+    detail.value = await leaveRequestService.get(row.id)
+  } catch {
+    /* mantém os dados da tabela como fallback */
+  }
 }
 
 async function submitCreate() {
@@ -399,4 +479,72 @@ onMounted(async () => {
 <style scoped>
 .pluse-card { background: var(--card); }
 .pluse-table :deep(.q-table__top) { display: none; }
+.leave-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.leave-detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.leave-detail__eyebrow {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.leave-detail__title {
+  color: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+.leave-detail__subtitle {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+}
+.leave-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.leave-detail__grid > div,
+.leave-detail__section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--muted) 20%, transparent);
+  padding: 12px;
+}
+.leave-detail span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.leave-detail strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mono);
+}
+.leave-detail__section p {
+  margin: 6px 0 0;
+  color: var(--foreground);
+  line-height: 1.6;
+}
+.leave-detail__section.is-danger {
+  border-color: color-mix(in oklab, var(--destructive) 30%, var(--border));
+  background: color-mix(in oklab, var(--destructive) 7%, transparent);
+}
+.leave-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .leave-detail__grid { grid-template-columns: 1fr; }
+}
 </style>
