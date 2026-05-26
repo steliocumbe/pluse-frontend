@@ -64,6 +64,7 @@
         :rows-per-page-options="[10, 15, 25, 50]"
         class="pluse-table" no-data-label="Sem participações registadas."
         @request="onTableRequest"
+        @row-click="(_, row) => openDetail(row)"
       >
         <template #body-cell-employee="props">
           <q-td :props="props">
@@ -91,6 +92,9 @@
 
         <template #body-cell-actions="props">
           <q-td :props="props" auto-width @click.stop>
+            <q-btn flat round dense icon="visibility" size="sm" @click="openDetail(props.row)">
+              <q-tooltip>Ver detalhe</q-tooltip>
+            </q-btn>
             <q-btn
               v-if="canAct(props.row)"
               flat round dense icon="more_vert" size="sm"
@@ -184,11 +188,96 @@
         </q-form>
       </div>
     </AppModal>
+
+    <!-- Detail modal -->
+    <AppModal v-model="showDetail" size="lg">
+      <div v-if="detail" class="p-5 part-detail">
+        <div class="part-detail__head">
+          <div class="min-w-0">
+            <p class="part-detail__eyebrow">{{ detail.source_display }}</p>
+            <RouterLink
+              v-if="detail.employee"
+              :to="`/employees/${detail.employee}`"
+              class="part-detail__title-link"
+            >
+              <span class="part-detail__title">{{ detail.employee_name }}</span>
+            </RouterLink>
+            <div v-else class="part-detail__title">{{ detail.employee_name }}</div>
+            <p v-if="detail.employee_number" class="part-detail__subtitle">
+              {{ detail.employee_number }}
+            </p>
+          </div>
+          <AppBadge :variant="participationStateVariant(detail.state)" size="md">
+            {{ detail.state_display }}
+          </AppBadge>
+        </div>
+
+        <div class="part-detail__grid">
+          <div>
+            <span>Origem</span>
+            <strong>{{ detail.source_display }}</strong>
+          </div>
+          <div>
+            <span>Data/hora</span>
+            <strong>{{ formatDateTime(detail.occurred_at) }}</strong>
+          </div>
+        </div>
+
+        <div class="part-detail__section">
+          <span>Motivo</span>
+          <p class="part-detail__reason">{{ detail.reason || '—' }}</p>
+        </div>
+
+        <div class="part-detail__section">
+          <span>Descrição</span>
+          <p class="whitespace-pre-wrap">{{ detail.description || '—' }}</p>
+        </div>
+
+        <div v-if="detail.file" class="part-detail__section">
+          <span>Anexo</span>
+          <q-btn
+            flat no-caps icon="attach_file" label="Abrir anexo"
+            :href="detail.file" target="_blank" class="mt-1 self-start"
+          />
+        </div>
+
+        <div v-if="detail.disciplinary_record_id" class="part-detail__section is-info">
+          <span>Convertida em processo disciplinar</span>
+          <RouterLink
+            v-if="detail.employee"
+            :to="`/employees/${detail.employee}`"
+            class="text-primary text-sm underline mt-1 inline-block"
+          >
+            Ver no processo do colaborador
+          </RouterLink>
+        </div>
+
+        <AuditTrail :entity="detail" />
+
+        <div class="part-detail__actions">
+          <q-btn flat no-caps icon="edit" label="Editar" disable>
+            <q-tooltip>Edição em breve</q-tooltip>
+          </q-btn>
+          <q-btn flat no-caps label="Fechar" @click="showDetail = false" />
+          <q-btn
+            v-if="canAct(detail)"
+            unelevated no-caps color="primary" icon="gavel" label="Converter em disciplinar"
+            @click="openConvert(detail); showDetail = false"
+          />
+          <q-btn
+            v-if="canAct(detail)"
+            unelevated no-caps color="negative" icon="archive" label="Arquivar"
+            @click="dismiss(detail); showDetail = false"
+          />
+        </div>
+      </div>
+    </AppModal>
   </AdminPageTemplate>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { participationService } from 'src/services/operations.service'
 import { employeeService } from 'src/services/employee.service'
@@ -204,6 +293,7 @@ import AppModal from 'src/components/ui/AppModal.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
+import AuditTrail from 'src/components/ui/AuditTrail.vue'
 
 const $q = useQuasar()
 const toast = useToast()
@@ -305,6 +395,20 @@ function onTableRequest(p) {
 function onFiltersChanged() {
   pagination.value.page = 1
   fetchPage()
+}
+
+// ── Detail modal ────────────────────────────────────────────────────────
+const showDetail = ref(false)
+const detail = ref(null)
+
+async function openDetail(row) {
+  detail.value = row
+  showDetail.value = true
+  try {
+    detail.value = await participationService.get(row.id)
+  } catch {
+    /* mantém os dados da tabela como fallback */
+  }
 }
 
 // ── Create ──────────────────────────────────────────────────────────────
@@ -412,4 +516,88 @@ onMounted(async () => {
 <style scoped>
 .pluse-card { background: var(--card); }
 .pluse-table :deep(.q-table__top) { display: none; }
+.pluse-table :deep(tbody tr) { cursor: pointer; }
+
+.part-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.part-detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.part-detail__eyebrow {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.part-detail__title-link {
+  text-decoration: none;
+  color: inherit;
+}
+.part-detail__title-link:hover .part-detail__title {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.part-detail__title {
+  color: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 850;
+  display: inline-block;
+}
+.part-detail__subtitle {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+}
+.part-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.part-detail__grid > div,
+.part-detail__section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--muted) 20%, transparent);
+  padding: 12px;
+}
+.part-detail span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.part-detail strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mono);
+}
+.part-detail__section p {
+  margin: 6px 0 0;
+  color: var(--foreground);
+  line-height: 1.6;
+}
+.part-detail__reason {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--mono);
+}
+.part-detail__section.is-info {
+  border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
+  background: color-mix(in oklab, var(--primary) 6%, transparent);
+}
+.part-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .part-detail__grid { grid-template-columns: 1fr; }
+}
 </style>

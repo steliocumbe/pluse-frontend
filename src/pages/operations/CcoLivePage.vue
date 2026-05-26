@@ -168,16 +168,26 @@
               <span class="period-chip" :class="`period-chip--${s.period}`">
                 {{ s.period_display }}
               </span>
-              <div class="grow min-w-0">
-                <div class="shift-line__name">{{ s.employee_name }}</div>
+              <div class="shift-line__body">
+                <div class="shift-line__head">
+                  <span class="shift-line__name">{{ s.employee_name }}</span>
+                  <AppBadge :variant="attendanceVariant(s.attendance_status)" size="sm">
+                    {{ s.attendance_status_display }}
+                  </AppBadge>
+                </div>
                 <div v-if="s.substitute_name" class="shift-line__sub">
                   substituído por {{ s.substitute_name }}
                 </div>
               </div>
-              <AppBadge :variant="attendanceVariant(s.attendance_status)" size="sm">
-                {{ s.attendance_status_display }}
-              </AppBadge>
               <div class="shift-line__actions">
+                <q-btn
+                  v-if="s.attendance_status === 'pending'"
+                  flat dense round size="sm" icon="how_to_reg" color="positive"
+                  :loading="markingPresent === s.id"
+                  @click="markPresent(s)"
+                >
+                  <q-tooltip>Marcar presença</q-tooltip>
+                </q-btn>
                 <q-btn
                   flat dense round size="sm" icon="swap_horiz"
                   @click="openSubstitution(post, s)"
@@ -185,7 +195,7 @@
                   <q-tooltip>Substituir vigilante</q-tooltip>
                 </q-btn>
                 <q-btn
-                  flat dense round size="sm" icon="person_off"
+                  flat dense round size="sm" icon="person_off" color="negative"
                   @click="openAbsence(post, s)"
                 >
                   <q-tooltip>Marcar falta</q-tooltip>
@@ -305,6 +315,7 @@ const $q = useQuasar()
 const date = ref(new Date().toISOString().slice(0, 10))
 const loadingEmployees = ref(false)
 const savingAction = ref(false)
+const markingPresent = ref(null)  // id do shift cuja acção está em curso
 const allEmployees = ref([])
 const employeeOptions = ref([])
 
@@ -455,6 +466,42 @@ function openSubstitution(post, shift) {
   actionDialog.post = post
   actionDialog.shift = shift
   actionDialog.open = true
+}
+
+/**
+ * Acção rápida — confirma presença sem abrir modal.
+ * Útil para o CCO marcar manualmente um vigilante (ex: sem dispositivo móvel,
+ * só com rádio) sem ter de passar por um diálogo.
+ */
+async function markPresent(shift) {
+  $q.dialog({
+    title: 'Marcar presença',
+    message: `Confirmar que <b>${shift.employee_name}</b> está em serviço?`,
+    html: true,
+    cancel: { label: 'Cancelar', flat: true, noCaps: true },
+    ok: { label: 'Confirmar', color: 'positive', unelevated: true, noCaps: true, icon: 'how_to_reg' },
+  }).onOk(async () => {
+    markingPresent.value = shift.id
+    try {
+      await shiftService.markAttendance(shift.id, {
+        attendance_status: 'present',
+        checked_in_at: new Date().toISOString(),
+      })
+      $q.notify({
+        type: 'positive', icon: 'how_to_reg',
+        message: `${shift.employee_name} marcado como presente.`,
+      })
+      await fetch()
+    } catch (error) {
+      const data = error?.response?.data || {}
+      $q.notify({
+        type: 'negative',
+        message: data.detail || 'Não foi possível marcar a presença.',
+      })
+    } finally {
+      markingPresent.value = null
+    }
+  })
 }
 
 function openAbsence(post, shift) {
@@ -901,16 +948,31 @@ function coverageLabel(c) {
 }
 .shift-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
 }
 .shift-line:last-child { border-bottom: none; }
+.shift-line__body {
+  flex: 1;
+  min-width: 0;
+}
+.shift-line__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
 .shift-line__name {
   font-size: 0.84rem;
   font-weight: 600;
   color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 .shift-line__sub {
   font-size: 0.7rem;
@@ -920,7 +982,8 @@ function coverageLabel(c) {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  margin-left: auto;
+  flex: none;
+  align-self: center;
   color: var(--muted-foreground);
 }
 .period-chip {

@@ -64,6 +64,7 @@
         :rows-per-page-options="[10, 15, 25, 50]"
         class="pluse-table" no-data-label="Sem ocorrências registadas."
         @request="onTableRequest"
+        @row-click="(_, row) => openDetail(row)"
       >
         <template #body-cell-when="props">
           <q-td :props="props">
@@ -96,6 +97,9 @@
 
         <template #body-cell-actions="props">
           <q-td :props="props" auto-width @click.stop>
+            <q-btn flat round dense icon="visibility" size="sm" @click="openDetail(props.row)">
+              <q-tooltip>Ver detalhe</q-tooltip>
+            </q-btn>
             <q-btn
               v-if="props.row.state !== 'closed'"
               flat round dense icon="more_vert" size="sm"
@@ -172,6 +176,94 @@
         </q-form>
       </div>
     </AppModal>
+
+    <!-- Detail modal -->
+    <AppModal v-model="showDetail" size="lg">
+      <div v-if="detail" class="p-5 incident-detail">
+        <div class="incident-detail__head">
+          <div class="min-w-0">
+            <p class="incident-detail__eyebrow">{{ detail.incident_type_display }}</p>
+            <div class="incident-detail__title">
+              {{ detail.post_name || '—' }}
+            </div>
+            <p v-if="detail.client_name" class="incident-detail__subtitle">
+              {{ detail.client_name }}
+            </p>
+          </div>
+          <div class="flex flex-col items-end gap-2 shrink-0">
+            <AppBadge :variant="severityVariant(detail.severity)" size="md">
+              {{ detail.severity_display }}
+            </AppBadge>
+            <AppBadge :variant="incidentStateVariant(detail.state)" size="md">
+              {{ detail.state_display }}
+            </AppBadge>
+          </div>
+        </div>
+
+        <div class="incident-detail__grid">
+          <div>
+            <span>Data/hora ocorrência</span>
+            <strong>{{ formatDateTime(detail.occurred_at) }}</strong>
+          </div>
+          <div>
+            <span>Local específico</span>
+            <strong>{{ detail.location_description || '—' }}</strong>
+          </div>
+        </div>
+
+        <div class="incident-detail__section">
+          <span>Descrição</span>
+          <p class="whitespace-pre-wrap">{{ detail.description || '—' }}</p>
+        </div>
+
+        <div
+          v-if="detail.employees_involved_names && detail.employees_involved_names.length"
+          class="incident-detail__section"
+        >
+          <span>Vigilantes envolvidos</span>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <AppBadge
+              v-for="(name, i) in detail.employees_involved_names"
+              :key="i" variant="neutral" size="sm"
+            >
+              {{ name }}
+            </AppBadge>
+          </div>
+        </div>
+
+        <div v-if="detail.file" class="incident-detail__section">
+          <span>Anexo</span>
+          <q-btn
+            flat no-caps icon="attach_file" label="Abrir anexo"
+            :href="detail.file" target="_blank" class="mt-1 self-start"
+          />
+        </div>
+
+        <div v-if="detail.notes" class="incident-detail__section">
+          <span>Notas internas</span>
+          <p class="whitespace-pre-wrap">{{ detail.notes }}</p>
+        </div>
+
+        <AuditTrail :entity="detail" />
+
+        <div class="incident-detail__actions">
+          <q-btn flat no-caps icon="edit" label="Editar" disable>
+            <q-tooltip>Edição em breve</q-tooltip>
+          </q-btn>
+          <q-btn flat no-caps label="Fechar" @click="showDetail = false" />
+          <q-btn
+            v-if="detail.state === 'registered'"
+            unelevated no-caps color="positive" icon="check_circle" label="Validar"
+            @click="validate(detail); showDetail = false"
+          />
+          <q-btn
+            v-if="detail.state === 'validated'"
+            unelevated no-caps color="primary" icon="lock" label="Encerrar"
+            @click="close(detail); showDetail = false"
+          />
+        </div>
+      </div>
+    </AppModal>
   </AdminPageTemplate>
 </template>
 
@@ -193,6 +285,7 @@ import AppModal from 'src/components/ui/AppModal.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
+import AuditTrail from 'src/components/ui/AuditTrail.vue'
 
 const $q = useQuasar()
 const toast = useToast()
@@ -347,6 +440,20 @@ function close(row) {
   })
 }
 
+// ── Detail modal ────────────────────────────────────────────────────────
+const showDetail = ref(false)
+const detail = ref(null)
+
+async function openDetail(row) {
+  detail.value = row
+  showDetail.value = true
+  try {
+    detail.value = await incidentService.get(row.id)
+  } catch {
+    /* mantém os dados da tabela como fallback */
+  }
+}
+
 // ── Create modal ────────────────────────────────────────────────────────
 const showCreate = ref(false)
 const formRef = ref(null)
@@ -397,4 +504,70 @@ onMounted(async () => {
 <style scoped>
 .pluse-card { background: var(--card); }
 .pluse-table :deep(.q-table__top) { display: none; }
+.pluse-table :deep(tbody tr) { cursor: pointer; }
+
+.incident-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.incident-detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.incident-detail__eyebrow {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.incident-detail__title {
+  color: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+.incident-detail__subtitle {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+}
+.incident-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.incident-detail__grid > div,
+.incident-detail__section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--muted) 20%, transparent);
+  padding: 12px;
+}
+.incident-detail span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.incident-detail strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mono);
+}
+.incident-detail__section p {
+  margin: 6px 0 0;
+  color: var(--foreground);
+  line-height: 1.6;
+}
+.incident-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .incident-detail__grid { grid-template-columns: 1fr; }
+}
 </style>

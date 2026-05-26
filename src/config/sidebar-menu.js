@@ -18,6 +18,7 @@ export const sidebarMenu = [
   { label: 'Rondas e supervisões', icon: 'ki-route', to: '/supervisor/patrols' },
 
   { type: 'heading', label: 'Clientes e operação' },
+  { label: 'Contratos de cliente', icon: 'ki-document', to: '/client-contracts' },
   { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
   { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },
 

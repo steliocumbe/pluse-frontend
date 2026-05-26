@@ -162,6 +162,51 @@
             <p v-if="post.notes" class="text-sm whitespace-pre-line mt-2">{{ post.notes }}</p>
           </div>
         </section>
+
+        <!-- Contratos comerciais a cobrir este posto -->
+        <section class="detail-section lg:col-span-2">
+          <header class="detail-section__head">
+            <span class="detail-section__icon"><AppIcon name="ki-document" :size="16" /></span>
+            <span class="detail-section__title">Contratos comerciais a cobrir este posto</span>
+            <span v-if="postContracts.length" class="posts-count">{{ postContracts.length }}</span>
+          </header>
+          <div class="detail-section__body detail-section__body--single">
+            <div v-if="loadingContracts" class="text-sm text-muted-foreground">
+              <q-spinner size="14px" class="q-mr-xs" /> A verificar…
+            </div>
+            <div v-else-if="!postContracts.length" class="text-sm text-muted-foreground">
+              Este posto ainda não está coberto por nenhum contrato comercial activo.
+              <router-link
+                :to="{ name: 'client-contracts-new', query: { client: post.client } }"
+                class="text-primary font-semibold"
+              >
+                Criar contrato →
+              </router-link>
+            </div>
+            <div v-else class="flex flex-col gap-2">
+              <router-link
+                v-for="c in postContracts" :key="c.id"
+                :to="{ name: 'client-contracts-detail', params: { id: c.id } }"
+                class="contract-link"
+              >
+                <span class="contract-link__icon"><AppIcon name="ki-document" :size="16" /></span>
+                <div class="grow min-w-0">
+                  <div class="text-sm font-semibold text-mono truncate">
+                    {{ c.reference }} — {{ c.title }}
+                  </div>
+                  <div class="text-xs text-muted-foreground">
+                    {{ c.modality_display }} ·
+                    {{ formatDate(c.start_date) }}
+                    {{ c.end_date ? '→ ' + formatDate(c.end_date) : '' }}
+                  </div>
+                </div>
+                <AppBadge :variant="contractStatusVariant(c.contract_status)" size="sm">
+                  {{ c.contract_status_display }}
+                </AppBadge>
+              </router-link>
+            </div>
+          </div>
+        </section>
       </div>
     </template>
   </AdminPageTemplate>
@@ -172,6 +217,8 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { postService } from 'src/services/post.service'
+import { clientContractService } from 'src/services/client-contract.service'
+import { contractStatusVariant } from 'src/config/client-contracts'
 import { useToast } from 'src/composables/useToast'
 import { absoluteFileUrl } from 'src/utils/file-url'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
@@ -184,6 +231,46 @@ const $q = useQuasar()
 const toast = useToast()
 
 const post = ref(null)
+const postContracts = ref([])
+const loadingContracts = ref(false)
+
+function formatDate(s) {
+  if (!s) return '—'
+  try { return new Date(s).toLocaleDateString('pt-PT') } catch { return s }
+}
+
+async function loadContractsForPost() {
+  if (!post.value) return
+  loadingContracts.value = true
+  try {
+    // Backend não tem filtro `posts=<id>` direto — pedimos os contratos do mesmo
+    // cliente e filtramos no cliente quais incluem este posto. Aceitável a esta
+    // escala (poucas dezenas de contratos por cliente).
+    const data = await clientContractService.list({
+      client: post.value.client,
+      page_size: 100,
+    })
+    const rows = data?.results ?? data ?? []
+    postContracts.value = rows.filter((c) => {
+      // ClientContractSerializer detail tem `posts_data`; o list tem só ids.
+      // Como aqui usamos list, vamos buscar o detalhe quando necessário, mas
+      // para evitar N+1 começamos por filtrar pelos contratos activos ou em rascunho.
+      return c.contract_status !== 'expired' && c.contract_status !== 'terminated'
+    })
+    // Refina: para cada contrato pedimos o detalhe para ver os posts cobertos.
+    // Limite de 8 detalhes para não saturar.
+    const detailed = await Promise.all(
+      postContracts.value.slice(0, 8).map((c) => clientContractService.get(c.id)),
+    )
+    postContracts.value = detailed.filter(
+      (c) => Array.isArray(c.posts) && c.posts.includes(Number(post.value.id)),
+    )
+  } catch {
+    /* interceptor toasts */
+  } finally {
+    loadingContracts.value = false
+  }
+}
 
 function statusIcon(status) {
   return { active: 'check_circle', pending: 'schedule', inactive: 'block' }[status] || 'info'
@@ -215,6 +302,7 @@ function activate() {
 onMounted(async () => {
   try {
     post.value = await postService.get(route.params.id)
+    loadContractsForPost()
   } catch {
     toast.error('Posto não encontrado.')
     router.push({ name: 'posts-list' })
@@ -321,6 +409,40 @@ onMounted(async () => {
   text-decoration: none;
 }
 .file-link:hover { text-decoration: underline; }
+
+.posts-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.contract-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  text-decoration: none;
+  transition: border-color 140ms ease;
+}
+.contract-link:hover {
+  border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
+}
+.contract-link__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 9px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
 
 @media (max-width: 640px) {
   .detail-section__body { grid-template-columns: 1fr; }

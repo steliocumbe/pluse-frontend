@@ -15,6 +15,15 @@
       </span>
     </template>
 
+    <template #actions>
+      <q-btn
+        outline no-caps class="admin-hero-button"
+        icon="file_download" label="Exportar Excel"
+        :loading="exporting" :disable="!rows.length"
+        @click="exportXlsx"
+      />
+    </template>
+
     <q-card flat bordered class="pluse-card">
       <q-card-section class="flex flex-wrap items-end gap-3">
         <q-input v-model="filters.from" label="De" type="date" outlined dense stack-label
@@ -75,10 +84,14 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useQuasar } from 'quasar'
 import { shiftService } from 'src/services/scheduling.service'
 import { postService } from 'src/services/post.service'
+import { api } from 'src/services/api'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
+
+const $q = useQuasar()
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 
 function firstOfMonth() {
@@ -89,6 +102,7 @@ const today = new Date().toISOString().slice(0, 10)
 
 const rows = ref([])
 const loading = ref(false)
+const exporting = ref(false)
 const filters = reactive({ from: firstOfMonth(), to: today, post: '' })
 
 const columns = [
@@ -123,6 +137,38 @@ async function fetchSummary() {
     rows.value = data?.rows ?? []
   } finally {
     loading.value = false
+  }
+}
+
+async function exportXlsx() {
+  if (!filters.from || !filters.to) return
+  exporting.value = true
+  try {
+    const params = { from: filters.from, to: filters.to, export: 'xlsx' }
+    if (filters.post) params.post = filters.post
+    const response = await api.get('/attendance-summary/', {
+      params,
+      responseType: 'blob',
+    })
+    // Extrai filename do header (se vier)
+    let filename = `mapa-assiduidade_${filters.from}_${filters.to}.xlsx`
+    const cd = response.headers?.['content-disposition'] || ''
+    const match = cd.match(/filename="?([^";]+)"?/)
+    if (match) filename = match[1]
+
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    $q.notify({ type: 'positive', icon: 'file_download', message: 'Excel exportado.' })
+  } catch {
+    $q.notify({ type: 'negative', message: 'Falha ao exportar Excel.' })
+  } finally {
+    exporting.value = false
   }
 }
 

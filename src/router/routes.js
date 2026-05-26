@@ -123,6 +123,26 @@ const routes = [
         component: () => import('pages/clients/ClientDetailPage.vue'),
       },
       {
+        path: 'client-contracts',
+        name: 'client-contracts-list',
+        component: () => import('pages/clients/ClientContractsListPage.vue'),
+      },
+      {
+        path: 'client-contracts/new',
+        name: 'client-contracts-new',
+        component: () => import('pages/clients/ClientContractFormPage.vue'),
+      },
+      {
+        path: 'client-contracts/:id/edit',
+        name: 'client-contracts-edit',
+        component: () => import('pages/clients/ClientContractFormPage.vue'),
+      },
+      {
+        path: 'client-contracts/:id',
+        name: 'client-contracts-detail',
+        component: () => import('pages/clients/ClientContractDetailPage.vue'),
+      },
+      {
         path: 'contracts/new',
         name: 'contracts-new',
         component: () => import('pages/contracts/ContractNewPage.vue'),

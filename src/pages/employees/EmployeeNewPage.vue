@@ -31,6 +31,7 @@
         <EmployeeForm
           ref="formRef"
           mode="create"
+          :initial="initialFromQuery"
           :submitting="store.submitting"
           @submit="onSubmit"
           @cancel="onCancel"
@@ -86,8 +87,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { copyToClipboard } from 'quasar'
 import { useEmployeesStore } from 'src/stores/employees'
 import { useToast } from 'src/composables/useToast'
@@ -97,9 +98,18 @@ import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import EmployeeForm from 'src/components/employees/EmployeeForm.vue'
 
+const route = useRoute()
 const router = useRouter()
 const store = useEmployeesStore()
 const toast = useToast()
+
+// Pré-popular o formulário quando vier `?client=<id>` (vindo do detalhe do cliente)
+const initialFromQuery = computed(() => {
+  const clientId = route.query.client ? Number(route.query.client) : null
+  return clientId
+    ? { department: 'operations', client: clientId }
+    : {}
+})
 
 const formRef = ref(null)
 const showTempPassword = ref(false)
