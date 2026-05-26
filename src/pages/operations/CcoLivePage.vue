@@ -13,6 +13,12 @@
         <AppIcon name="ki-calendar" :size="14" />
         {{ formatDateLong(date) }}
       </span>
+      <span class="admin-meta-chip cco-live-chip" :class="liveChipClass">
+        <span class="cco-live-dot" :class="{ 'is-pulsing': loading }" />
+        <span v-if="!online">Offline</span>
+        <span v-else-if="loading">A actualizar…</span>
+        <span v-else>Ao vivo · {{ relativeUpdated }}</span>
+      </span>
       <span v-if="data?.stats?.posts_uncovered" class="admin-meta-chip admin-meta-chip--accent">
         <AppIcon name="ki-warning-2" :size="13" />
         {{ data.stats.posts_uncovered }} posto(s) por cobrir
@@ -161,17 +167,38 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ccoService } from 'src/services/operations.service'
 import { attendanceVariant } from 'src/config/scheduling'
 import { severityVariant, incidentStateVariant } from 'src/config/operations'
+import { formatRelativeTime, useRealtimePolling } from 'src/composables/useRealtimePolling'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 
-const data = ref(null)
-const loading = ref(false)
 const date = ref(new Date().toISOString().slice(0, 10))
+
+const { data, loading, lastUpdated, online, fetch } = useRealtimePolling(
+  () => ccoService.overview(date.value),
+  { intervalMs: 30_000 },
+)
+
+// Atualiza o label "há X seg" a cada segundo (não bate no backend).
+const tick = ref(0)
+let tickTimer = null
+onMounted(() => { tickTimer = setInterval(() => { tick.value += 1 }, 1000) })
+onBeforeUnmount(() => { if (tickTimer) clearInterval(tickTimer) })
+
+const relativeUpdated = computed(() => {
+  void tick.value  // dependência para forçar reactividade
+  return formatRelativeTime(lastUpdated.value)
+})
+
+const liveChipClass = computed(() => ({
+  'cco-live-chip--offline': !online.value,
+  'cco-live-chip--syncing': loading.value && online.value,
+  'cco-live-chip--ok': !loading.value && online.value && lastUpdated.value,
+}))
 
 const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -191,43 +218,33 @@ function formatDateTime(s) {
 function coverageLabel(c) {
   return { complete: 'Cobertura completa', partial: 'Cobertura parcial', uncovered: 'Por cobrir' }[c] || c
 }
-
-async function fetch() {
-  loading.value = true
-  try {
-    data.value = await ccoService.overview(date.value)
-  } finally {
-    loading.value = false
-  }
-}
-
-// Polling 30s — sincroniza o painel ao vivo. Pausa quando o utilizador deixa
-// a página (visibility) para não bater no backend sem necessidade.
-let timer = null
-function startPolling() {
-  stopPolling()
-  timer = setInterval(fetch, 30000)
-}
-function stopPolling() {
-  if (timer) { clearInterval(timer); timer = null }
-}
-function onVisibility() {
-  if (document.hidden) stopPolling()
-  else startPolling()
-}
-
-onMounted(async () => {
-  await fetch()
-  startPolling()
-  document.addEventListener('visibilitychange', onVisibility)
-})
-onBeforeUnmount(() => {
-  stopPolling()
-  document.removeEventListener('visibilitychange', onVisibility)
-})
 </script>
 
 <style scoped>
+/* ── Live indicator ───────────────────────────────────────────────────── */
+.cco-live-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.cco-live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+  transition: background-color .2s;
+}
+.cco-live-chip--ok .cco-live-dot { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.18); }
+.cco-live-chip--syncing .cco-live-dot { background: #f59e0b; }
+.cco-live-chip--offline .cco-live-dot { background: #dc2626; }
+.cco-live-dot.is-pulsing {
+  animation: cco-live-pulse 1.2s ease-in-out infinite;
+}
+@keyframes cco-live-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: .65; }
+}
+
 .loading-state {
   display: flex;
   align-items: center;

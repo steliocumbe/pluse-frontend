@@ -11,43 +11,39 @@ const routes = [
 
   {
     path: '/vigilante',
+    component: () => import('layouts/VigilanteLayout.vue'),
+    meta: { requiresAuth: true },
     redirect: '/vigilante/escala',
     children: [
       {
         path: 'escala',
         name: 'vigilante-schedule',
-        component: () => import('pages/field/FieldMobileAppPage.vue'),
-        props: { screen: 'schedule' },
+        component: () => import('pages/field/VigilanteSchedulePage.vue'),
       },
       {
         path: 'posto',
         name: 'vigilante-post',
-        component: () => import('pages/field/FieldMobileAppPage.vue'),
-        props: { screen: 'post' },
+        component: () => import('pages/field/VigilantePostPage.vue'),
       },
       {
         path: 'check-in',
         name: 'vigilante-check-in',
-        component: () => import('pages/field/FieldMobileAppPage.vue'),
-        props: { screen: 'check-in' },
+        component: () => import('pages/field/VigilanteCheckInPage.vue'),
       },
       {
         path: 'resultado',
         name: 'vigilante-result',
-        component: () => import('pages/field/FieldMobileAppPage.vue'),
-        props: { screen: 'result' },
+        component: () => import('pages/field/VigilanteResultPage.vue'),
       },
       {
         path: 'offline',
         name: 'vigilante-offline',
-        component: () => import('pages/field/FieldMobileAppPage.vue'),
-        props: { screen: 'offline' },
+        component: () => import('pages/field/VigilanteOfflinePage.vue'),
       },
       {
         path: 'ocorrencia',
         name: 'vigilante-incident',
-        component: () => import('pages/field/FieldMobileAppPage.vue'),
-        props: { screen: 'incident' },
+        component: () => import('pages/field/VigilanteIncidentPage.vue'),
       },
     ],
   },

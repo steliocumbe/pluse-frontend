@@ -1,0 +1,152 @@
+/* Estilos partilhados pelas páginas /vigilante/*. */
+
+.vig-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vig-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.vig-section { display: flex; flex-direction: column; gap: 10px; }
+.vig-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.vig-section-head h3 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #475569;
+  margin: 0;
+}
+.vig-section-count {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.vig-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #4f46e5;
+  margin: 0;
+}
+
+.vig-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.vig-pill--success { background: #dcfce7; color: #166534; }
+.vig-pill--warning { background: #fef3c7; color: #92400e; }
+.vig-pill--danger { background: #fee2e2; color: #991b1b; }
+.vig-pill--info { background: #dbeafe; color: #1e40af; }
+.vig-pill--neutral { background: #f1f5f9; color: #475569; }
+
+.vig-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  min-height: 48px;
+  transition: transform .08s, opacity .15s;
+}
+.vig-btn:active { transform: scale(.98); }
+.vig-btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+.vig-btn--primary { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; }
+.vig-btn--primary:hover { box-shadow: 0 8px 20px -4px rgba(79,70,229,.45); }
+.vig-btn--warning { background: #f59e0b; color: #fff; }
+.vig-btn--success { background: #16a34a; color: #fff; }
+.vig-btn--danger { background: #dc2626; color: #fff; }
+.vig-btn--ghost {
+  background: rgba(255,255,255,.7);
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+.vig-btn--block { width: 100%; }
+
+.vig-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: #64748b;
+}
+.vig-empty h3 { font-size: 15px; font-weight: 600; color: #334155; margin: 12px 0 4px; }
+.vig-empty p { font-size: 13px; margin: 0; }
+.vig-empty-sub { font-size: 12px; color: #94a3b8; text-align: center; padding: 0 16px; margin: 0; }
+
+.vig-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  font-size: 13px;
+  color: #475569;
+}
+.vig-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: vig-spin .8s linear infinite;
+}
+@keyframes vig-spin { to { transform: rotate(360deg); } }
+
+.vig-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vig-field label,
+.vig-field > span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+.vig-field input,
+.vig-field select,
+.vig-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  transition: border-color .15s, box-shadow .15s;
+}
+.vig-field input:focus,
+.vig-field select:focus,
+.vig-field textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+}
+.vig-field textarea { resize: vertical; min-height: 110px; }
