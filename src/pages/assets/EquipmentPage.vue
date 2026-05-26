@@ -34,6 +34,12 @@
                   outlined dense emit-value map-options clearable
                   label="Disponibilidade" style="min-width: 180px"
                   @update:model-value="onFiltersChanged" />
+        <q-toggle
+          v-model="filters.only_overdue"
+          label="Só com manutenção atrasada"
+          color="negative"
+          @update:model-value="onFiltersChanged"
+        />
       </q-card-section>
 
       <q-table v-model:pagination="pagination"
@@ -53,6 +59,26 @@
             <AppBadge :variant="availabilityVariant(props.row.availability)">
               {{ props.row.availability_display }}
             </AppBadge>
+          </q-td>
+        </template>
+        <template #body-cell-maintenance="props">
+          <q-td :props="props">
+            <AppBadge
+              v-if="props.row.maintenance_status === 'overdue'"
+              variant="danger"
+            >
+              Manutenção atrasada
+            </AppBadge>
+            <AppBadge
+              v-else-if="props.row.maintenance_status === 'due_soon'"
+              variant="warning"
+            >
+              Manutenção próxima
+            </AppBadge>
+            <span v-else-if="props.row.next_maintenance_at" class="text-xs text-muted-foreground">
+              {{ formatDate(props.row.next_maintenance_at) }}
+            </span>
+            <span v-else class="text-xs text-muted-foreground">—</span>
           </q-td>
         </template>
         <template #body-cell-actions="props">
@@ -93,6 +119,12 @@
                     label="Tipo *" outlined dense emit-value map-options :rules="[req]" />
           <q-select v-model="form.availability" :options="availabilityOptions"
                     label="Disponibilidade *" outlined dense emit-value map-options :rules="[req]" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <q-input v-model="form.last_maintenance_at" label="Última manutenção"
+                     type="date" outlined dense stack-label />
+            <q-input v-model="form.next_maintenance_at" label="Próxima manutenção"
+                     type="date" outlined dense stack-label />
+          </div>
           <q-input v-model="form.notes" label="Notas" type="textarea" outlined dense autogrow />
           <div class="flex justify-end gap-2">
             <q-btn flat no-caps label="Cancelar" :disable="saving" @click="showModal = false" />
@@ -126,15 +158,21 @@ const rows = ref([])
 const count = ref(0)
 const loading = ref(false)
 const saving = ref(false)
-const filters = reactive({ search: '', equipment_type: '', availability: '' })
+const filters = reactive({ search: '', equipment_type: '', availability: '', only_overdue: false })
 const pagination = ref({ sortBy: 'name', descending: false, page: 1, rowsPerPage: 20, rowsNumber: 0 })
 
 const columns = [
   { name: 'equipment', label: 'Equipamento', field: 'name', align: 'left', sortable: true },
   { name: 'equipment_type_display', label: 'Tipo', field: 'equipment_type_display', align: 'left' },
   { name: 'availability', label: 'Disponibilidade', field: 'availability', align: 'center' },
+  { name: 'maintenance', label: 'Manutenção', field: 'maintenance_status', align: 'center' },
   { name: 'actions', label: '', field: 'actions', align: 'right' },
 ]
+
+function formatDate(s) {
+  if (!s) return '—'
+  try { return new Date(s).toLocaleDateString('pt-PT') } catch { return s }
+}
 
 async function fetchPage() {
   loading.value = true
@@ -144,6 +182,7 @@ async function fetchPage() {
     if (filters.search) params.search = filters.search
     if (filters.equipment_type) params.equipment_type = filters.equipment_type
     if (filters.availability) params.availability = filters.availability
+    if (filters.only_overdue) params.maintenance_status = 'overdue'
     const data = await equipmentService.list(params)
     rows.value = data?.results ?? data ?? []
     count.value = data?.count ?? rows.value.length
@@ -159,16 +198,21 @@ const showModal = ref(false)
 const formRef = ref(null)
 const form = reactive({
   id: null, name: '', serial_number: '', equipment_type: 'radio',
-  availability: 'available', notes: '',
+  availability: 'available', last_maintenance_at: '', next_maintenance_at: '',
+  notes: '',
 })
 
 function openCreate(row) {
   Object.assign(form, row
     ? { id: row.id, name: row.name, serial_number: row.serial_number,
         equipment_type: row.equipment_type, availability: row.availability,
+        last_maintenance_at: row.last_maintenance_at || '',
+        next_maintenance_at: row.next_maintenance_at || '',
         notes: row.notes || '' }
     : { id: null, name: '', serial_number: '', equipment_type: 'radio',
-        availability: 'available', notes: '' })
+        availability: 'available',
+        last_maintenance_at: '', next_maintenance_at: '',
+        notes: '' })
   showModal.value = true
 }
 
@@ -178,6 +222,9 @@ async function submit() {
   try {
     const payload = { ...form }
     delete payload.id
+    // Datas opcionais — enviar `null` quando vazias para limpar no backend.
+    payload.last_maintenance_at = payload.last_maintenance_at || null
+    payload.next_maintenance_at = payload.next_maintenance_at || null
     if (form.id) await equipmentService.update(form.id, payload)
     else await equipmentService.create(payload)
     toast.success('Equipamento guardado.')

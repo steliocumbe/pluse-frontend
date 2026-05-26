@@ -48,13 +48,51 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useAuthStore } from 'src/stores/auth'
 import { sidebarMenu, filterMenuByGroups } from 'src/config/sidebar-menu'
+import { usePendingCounts } from 'src/composables/usePendingCounts'
 import SidebarMenuItem from 'src/components/layout/SidebarMenuItem.vue'
 
 const auth = useAuthStore()
+const { counts } = usePendingCounts()
+
+/**
+ * Mapa: rota → chave em `counts`.
+ * Quando há um valor > 0, o item da sidebar mostra o badge.
+ */
+const ROUTE_BADGES = {
+  '/employees/approvals': 'rh_approvals_total',
+  '/leaves': 'leaves_pending',
+  '/sick-leaves': 'sick_leaves_pending',
+  '/incidents': 'incidents_open',
+  '/participations': 'participations_open',
+  '/cco': 'incidents_critical',
+  '/supervisor/patrols': 'patrols_planned',
+  '/assets/equipment': 'equipment_overdue',
+}
+
+/**
+ * Aplica badges dinâmicos numa árvore de menu sem mutar o original.
+ * Itera recursivamente em `children` para suportar subníveis.
+ */
+function injectBadges(items) {
+  return items.map((item) => {
+    const next = { ...item }
+    if (item.to && ROUTE_BADGES[item.to]) {
+      const countKey = ROUTE_BADGES[item.to]
+      const value = counts.value[countKey] ?? 0
+      if (value > 0) next.badge = value
+    }
+    if (Array.isArray(item.children)) {
+      next.children = injectBadges(item.children)
+    }
+    return next
+  })
+}
 
 const visibleMenu = computed(() => {
-  if (auth.user?.is_superuser) return sidebarMenu
-  return filterMenuByGroups(sidebarMenu, auth.user?.groups || [])
+  const base = auth.user?.is_superuser
+    ? sidebarMenu
+    : filterMenuByGroups(sidebarMenu, auth.user?.groups || [])
+  return injectBadges(base)
 })
 
 function clearCollapseState() {

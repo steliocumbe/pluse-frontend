@@ -36,47 +36,77 @@
       icon="ki-check-circle"
     />
 
-    <div v-else class="flex flex-col gap-6">
-      <section v-for="group in groups" :key="group.key" v-show="group.items.length">
-        <header class="group-head">
-          <span class="group-icon" :class="`group-icon--${group.tone}`">
-            <AppIcon :name="group.icon" :size="16" />
-          </span>
-          <span class="group-title">{{ group.title }}</span>
-          <span class="group-count">{{ group.items.length }}</span>
-        </header>
-
-        <div class="grid gap-3">
-          <q-card
-            v-for="item in group.items"
-            :key="`${group.key}-${item.id}`"
-            flat bordered class="approval-card"
-          >
-            <div class="flex flex-wrap items-center gap-4 p-4">
-              <div class="grow min-w-0">
-                <router-link :to="item.to" class="approval-title">
-                  {{ item.title }}
-                </router-link>
-                <div class="text-sm text-muted-foreground">{{ item.subtitle }}</div>
-              </div>
-              <div class="flex flex-wrap gap-2 ms-auto">
-                <q-btn outline no-caps icon="visibility" label="Ver" :to="item.to" />
-                <q-btn
-                  v-if="group.key !== 'employees'"
-                  outline no-caps color="negative" icon="cancel" label="Rejeitar"
-                  @click="reject(group, item)"
-                />
-                <q-btn
-                  color="positive" unelevated no-caps
-                  icon="check_circle" label="Aprovar"
-                  @click="approve(group, item)"
-                />
-              </div>
+    <template v-else>
+      <!-- Tabs com contagens por categoria -->
+      <q-tabs
+        v-model="activeTab"
+        class="approvals-tabs"
+        align="left"
+        active-color="primary"
+        indicator-color="primary"
+        no-caps
+        dense
+      >
+        <q-tab
+          v-for="group in groups"
+          :key="group.key"
+          :name="group.key"
+        >
+          <template #default>
+            <div class="flex items-center gap-2">
+              <AppIcon :name="group.icon" :size="14" />
+              <span>{{ group.title }}</span>
+              <span v-if="group.items.length" class="tab-badge">{{ group.items.length }}</span>
             </div>
-          </q-card>
-        </div>
-      </section>
-    </div>
+          </template>
+        </q-tab>
+      </q-tabs>
+
+      <q-tab-panels v-model="activeTab" animated class="approvals-panels">
+        <q-tab-panel
+          v-for="group in groups" :key="group.key"
+          :name="group.key" class="p-0"
+        >
+          <div v-if="!group.items.length" class="empty-tab">
+            <AppIcon name="ki-check-circle" :size="32" icon-class="text-positive" />
+            <p>Nada pendente nesta categoria.</p>
+          </div>
+
+          <div v-else class="grid gap-3">
+            <q-card
+              v-for="item in group.items"
+              :key="`${group.key}-${item.id}`"
+              flat bordered class="approval-card"
+            >
+              <div class="flex flex-wrap items-center gap-4 p-4">
+                <span class="approval-icon" :class="`approval-icon--${group.tone}`">
+                  <AppIcon :name="group.icon" :size="16" />
+                </span>
+                <div class="grow min-w-0">
+                  <router-link :to="item.to" class="approval-title">
+                    {{ item.title }}
+                  </router-link>
+                  <div class="text-sm text-muted-foreground">{{ item.subtitle }}</div>
+                </div>
+                <div class="flex flex-wrap gap-2 ms-auto">
+                  <q-btn outline no-caps icon="visibility" label="Ver" :to="item.to" />
+                  <q-btn
+                    v-if="group.key !== 'employees'"
+                    outline no-caps color="negative" icon="cancel" label="Rejeitar"
+                    @click="reject(group, item)"
+                  />
+                  <q-btn
+                    color="positive" unelevated no-caps
+                    icon="check_circle" label="Aprovar"
+                    @click="approve(group, item)"
+                  />
+                </div>
+              </div>
+            </q-card>
+          </div>
+        </q-tab-panel>
+      </q-tab-panels>
+    </template>
   </AdminPageTemplate>
 </template>
 
@@ -94,6 +124,7 @@ import {
   absenceJustificationService,
 } from 'src/services/leaves.service'
 import { useToast } from 'src/composables/useToast'
+import { refreshPendingCounts } from 'src/composables/usePendingCounts'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
@@ -108,6 +139,9 @@ const terminations = ref([])
 const transfers = ref([])
 const leaves = ref([])
 const justifications = ref([])
+
+// Tab actual — começa na primeira com items, fallback para 'employees'
+const activeTab = ref('employees')
 
 function rows(data) {
   return data?.results ?? data ?? []
@@ -219,6 +253,12 @@ async function loadAll() {
     transfers.value = rows(tra)
     leaves.value = rows(lvs)
     justifications.value = rows(jst)
+
+    // Auto-select primeira tab com items
+    if (groups.value.find((g) => g.key === activeTab.value)?.items.length === 0) {
+      const firstWithItems = groups.value.find((g) => g.items.length > 0)
+      if (firstWithItems) activeTab.value = firstWithItems.key
+    }
   } catch {
     /* axios interceptor toasts */
   } finally {
@@ -238,6 +278,7 @@ function approve(group, item) {
       await group.service.approve(item.id)
       toast.success('Aprovado.')
       await loadAll()
+      refreshPendingCounts()
     } catch (err) {
       toast.error('Não foi possível aprovar.', { caption: err?.response?.data?.detail })
     }
@@ -256,6 +297,7 @@ function reject(group, item) {
       await group.service.reject(item.id)
       toast.success('Rejeitado.')
       await loadAll()
+      refreshPendingCounts()
     } catch (err) {
       toast.error('Não foi possível rejeitar.', { caption: err?.response?.data?.detail })
     }
@@ -297,6 +339,59 @@ onMounted(loadAll)
   font-weight: 700;
   color: var(--mono);
 }
+/* ── Tabs ───────────────────────────────────────────────────────────── */
+.approvals-tabs {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.approvals-tabs :deep(.q-tab) {
+  padding: 10px 14px;
+  min-height: 44px;
+  font-weight: 600;
+}
+.tab-badge {
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 2px;
+}
+.approvals-panels {
+  background: transparent;
+}
+.approvals-panels :deep(.q-tab-panel) {
+  padding: 0;
+}
+
+.empty-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 16px;
+  color: var(--muted-foreground);
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.empty-tab p { margin: 0; font-size: 0.9rem; }
+
+.approval-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+}
+.approval-icon--primary { background: color-mix(in oklab, var(--primary) 14%, transparent); color: var(--primary); }
+.approval-icon--info { background: color-mix(in oklab, var(--pluse-cyan-500, #06b6d4) 14%, transparent); color: var(--pluse-cyan-500, #06b6d4); }
+.approval-icon--danger { background: color-mix(in oklab, var(--destructive) 14%, transparent); color: var(--destructive); }
+.approval-icon--warning { background: color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 16%, transparent); color: var(--pluse-amber-600, #d97706); }
+
 .group-count {
   font-size: 0.72rem;
   font-weight: 700;

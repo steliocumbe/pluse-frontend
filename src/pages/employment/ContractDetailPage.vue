@@ -259,6 +259,10 @@
         </q-form>
       </div>
     </AppModal>
+
+    <!-- Histórico de auditoria -->
+    <AuditTrail v-if="contract" :entity="contract" title="Histórico do contrato" />
+    <AuditTrail v-if="termination" :entity="termination" title="Histórico da cessação" />
   </AdminPageTemplate>
 </template>
 
@@ -276,6 +280,7 @@ import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
+import AuditTrail from 'src/components/ui/AuditTrail.vue'
 
 const route = useRoute()
 const router = useRouter()

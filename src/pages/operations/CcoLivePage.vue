@@ -47,23 +47,29 @@
     </div>
 
     <template v-else-if="data">
-      <!-- Stats -->
+      <!-- Stats (clicáveis para filtrar) -->
       <div class="stats-grid">
-        <div class="stat-card">
+        <button type="button" class="stat-card stat-card--button"
+                :class="{ 'is-active': filter.coverage === 'complete' }"
+                @click="toggleCoverage('complete')">
           <span class="stat-card__label">Postos cobertos</span>
           <div class="stat-card__row">
             <strong class="stat-card__value">{{ data.stats.posts_covered }}</strong>
             <span class="stat-card__suffix">/ {{ data.stats.posts_total }}</span>
           </div>
-        </div>
-        <div class="stat-card stat-card--warning">
+        </button>
+        <button type="button" class="stat-card stat-card--warning stat-card--button"
+                :class="{ 'is-active': filter.coverage === 'partial' }"
+                @click="toggleCoverage('partial')">
           <span class="stat-card__label">Cobertura parcial</span>
           <strong class="stat-card__value">{{ data.stats.posts_partial }}</strong>
-        </div>
-        <div class="stat-card stat-card--danger">
+        </button>
+        <button type="button" class="stat-card stat-card--danger stat-card--button"
+                :class="{ 'is-active': filter.coverage === 'uncovered' }"
+                @click="toggleCoverage('uncovered')">
           <span class="stat-card__label">Por cobrir</span>
           <strong class="stat-card__value">{{ data.stats.posts_uncovered }}</strong>
-        </div>
+        </button>
         <div class="stat-card stat-card--success">
           <span class="stat-card__label">Presenças</span>
           <strong class="stat-card__value">{{ data.stats.present }}</strong>
@@ -86,18 +92,48 @@
         </div>
       </div>
 
+      <!-- Filtros -->
+      <div class="cco-filters">
+        <q-input
+          v-model="filter.search" outlined dense clearable debounce="300"
+          placeholder="Filtrar por posto ou cliente…" class="cco-filter-search"
+        >
+          <template #prepend><q-icon name="search" size="18px" /></template>
+        </q-input>
+        <q-select
+          v-model="filter.client" :options="clientOptions"
+          outlined dense emit-value map-options clearable
+          label="Cliente" style="min-width: 200px"
+        />
+        <q-select
+          v-model="filter.coverage" :options="coverageOptions"
+          outlined dense emit-value map-options clearable
+          label="Cobertura" style="min-width: 180px"
+        />
+        <q-toggle
+          v-model="filter.armedOnly" label="Só armados" dense color="primary"
+        />
+      </div>
+      <ActiveFiltersBar
+        :filters="filter"
+        :config="filterConfig"
+        @clear="onClearFilter"
+        @clear-all="onClearAllFilters"
+      />
+
       <!-- Postos -->
       <section class="block-title">
         <AppIcon name="ki-geolocation" :size="16" />
         <span>Postos do dia</span>
+        <span class="block-title__count">{{ filteredPosts.length }} / {{ data.posts.length }}</span>
       </section>
 
-      <div v-if="!data.posts.length" class="text-sm text-muted-foreground py-4">
-        Não há postos activos.
+      <div v-if="!filteredPosts.length" class="text-sm text-muted-foreground py-4">
+        Sem postos para os filtros actuais.
       </div>
 
       <div v-else class="posts-grid">
-        <div v-for="post in data.posts" :key="post.id" class="post-card"
+        <div v-for="post in filteredPosts" :key="post.id" class="post-card"
              :class="`post-card--${post.coverage}`">
           <header class="post-card__head">
             <div class="grow min-w-0">
@@ -167,21 +203,130 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useQuasar } from 'quasar'
 import { ccoService } from 'src/services/operations.service'
 import { attendanceVariant } from 'src/config/scheduling'
 import { severityVariant, incidentStateVariant } from 'src/config/operations'
 import { formatRelativeTime, useRealtimePolling } from 'src/composables/useRealtimePolling'
+import { usePendingCounts } from 'src/composables/usePendingCounts'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
+import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
 
+const $q = useQuasar()
 const date = ref(new Date().toISOString().slice(0, 10))
 
 const { data, loading, lastUpdated, online, fetch } = useRealtimePolling(
   () => ccoService.overview(date.value),
   { intervalMs: 30_000 },
 )
+
+// Activa o polling de contagens pendentes (emite `pluse-incident-critical`)
+usePendingCounts()
+
+// ── Filtros sobre os postos ─────────────────────────────────────────────
+const filter = reactive({
+  search: '',
+  client: null,
+  coverage: '',
+  armedOnly: false,
+})
+
+const coverageOptions = [
+  { value: 'complete', label: 'Cobertura completa' },
+  { value: 'partial', label: 'Cobertura parcial' },
+  { value: 'uncovered', label: 'Por cobrir' },
+]
+
+const clientOptions = computed(() => {
+  if (!data.value?.posts) return []
+  const seen = new Map()
+  for (const p of data.value.posts) {
+    if (!seen.has(p.client_name)) seen.set(p.client_name, p.client_name)
+  }
+  return [...seen.values()].map((name) => ({ value: name, label: name }))
+})
+
+const filteredPosts = computed(() => {
+  if (!data.value?.posts) return []
+  const q = filter.search.trim().toLowerCase()
+  return data.value.posts.filter((p) => {
+    if (q && !p.name.toLowerCase().includes(q) && !p.client_name.toLowerCase().includes(q)) return false
+    if (filter.client && p.client_name !== filter.client) return false
+    if (filter.coverage && p.coverage !== filter.coverage) return false
+    if (filter.armedOnly && !p.is_armed) return false
+    return true
+  })
+})
+
+const filterConfig = [
+  { key: 'search', label: 'Pesquisa', emptyValue: '' },
+  { key: 'client', label: 'Cliente', emptyValue: null },
+  { key: 'coverage', label: 'Cobertura', emptyValue: '', options: coverageOptions },
+  { key: 'armedOnly', label: 'Armados', emptyValue: false },
+]
+
+function onClearFilter(key, emptyValue) { filter[key] = emptyValue }
+function onClearAllFilters() {
+  filter.search = ''
+  filter.client = null
+  filter.coverage = ''
+  filter.armedOnly = false
+}
+
+function toggleCoverage(value) {
+  filter.coverage = filter.coverage === value ? '' : value
+}
+
+// ── Notificação de ocorrências críticas ─────────────────────────────────
+function notifyCritical(event) {
+  const { delta } = event.detail || {}
+  $q.notify({
+    type: 'negative',
+    icon: 'warning',
+    message: `Nova ocorrência crítica/alta (${delta})`,
+    caption: 'Verifique a lista de ocorrências em aberto.',
+    timeout: 0,
+    actions: [
+      { label: 'Ver', color: 'white', handler: () => fetch() },
+      { label: 'Fechar', color: 'white' },
+    ],
+    position: 'top-right',
+  })
+  // Browser notification (se utilizador autorizar)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('PLUSE — Ocorrência crítica', {
+      body: 'Há novas ocorrências críticas em aberto.',
+      icon: '/icons/android-chrome-192x192.png',
+      tag: 'pluse-incident-critical',
+    })
+  }
+  // Pequeno beep
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    o.connect(g); g.connect(ctx.destination)
+    o.frequency.value = 880
+    g.gain.setValueAtTime(0.15, ctx.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+    o.start(); o.stop(ctx.currentTime + 0.4)
+  } catch { /* sem áudio */ }
+  fetch()  // refresh imediato
+}
+
+onMounted(() => {
+  window.addEventListener('pluse-incident-critical', notifyCritical)
+  // Pedir permissão para notificações (não-bloqueante)
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {})
+  }
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('pluse-incident-critical', notifyCritical)
+})
 
 // Atualiza o label "há X seg" a cada segundo (não bate no backend).
 const tick = ref(0)
@@ -297,6 +442,46 @@ function coverageLabel(c) {
 }
 .stat-card--danger .stat-card__value { color: var(--destructive); }
 .stat-card--info { background: color-mix(in oklab, var(--primary) 8%, var(--card)); }
+
+/* Stats clicáveis: cards transformam-se em botões para filtrar */
+.stat-card--button {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.stat-card--button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -6px rgba(15, 23, 42, .12);
+}
+.stat-card--button.is-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent);
+}
+
+/* ── Filtros do CCO ──────────────────────────────────────────────────── */
+.cco-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.cco-filter-search { min-width: 220px; flex: 1; }
+
+.block-title__count {
+  margin-left: auto;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
 
 /* ── Block titles ────────────────────────────────────────────────────── */
 .block-title {

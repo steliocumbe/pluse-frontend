@@ -160,6 +160,7 @@
           </q-tab>
           <q-tab name="disciplinary" no-caps icon="gavel" label="Disciplina" />
           <q-tab name="transfers" no-caps icon="swap_horiz" label="Transferências" />
+          <q-tab name="assets" no-caps icon="inventory_2" label="Ativos" />
           <q-tab name="history" no-caps icon="history" label="Histórico" />
         </q-tabs>
       </q-card>
@@ -481,6 +482,11 @@
         <EmployeeTransfersTab :employee-id="employee.id" @changed="reloadEmployee" />
       </q-tab-panel>
 
+      <!-- Ativos -->
+      <q-tab-panel name="assets" class="p-0">
+        <EmployeeAssetsTab :employee-id="employee.id" />
+      </q-tab-panel>
+
       <!-- Histórico -->
       <q-tab-panel name="history" class="p-0">
         <q-card flat bordered class="pluse-card">
@@ -588,6 +594,7 @@ import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocument
 import EmployeeContractsTab from 'src/components/employment/EmployeeContractsTab.vue'
 import EmployeeDisciplinaryTab from 'src/components/employment/EmployeeDisciplinaryTab.vue'
 import EmployeeTransfersTab from 'src/components/employment/EmployeeTransfersTab.vue'
+import EmployeeAssetsTab from 'src/components/employees/EmployeeAssetsTab.vue'
 import { absoluteFileUrl } from 'src/utils/file-url'
 import { documentCategories, documentTypeMap, documentTypeLabel } from 'src/config/document-types'
 
