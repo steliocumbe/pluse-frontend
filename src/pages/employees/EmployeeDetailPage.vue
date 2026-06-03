@@ -579,7 +579,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useEmployeesStore } from 'src/stores/employees'
@@ -605,7 +605,15 @@ const store = useEmployeesStore()
 const toast = useToast()
 
 const employee = computed(() => store.current)
-const tab = ref('general')
+
+// Tab activa — lê `?tab=` da URL no init e sincroniza ao mudar
+const VALID_TABS = ['general', 'contracts', 'documents', 'disciplinary', 'transfers', 'assets', 'history']
+const tab = ref(VALID_TABS.includes(route.query.tab) ? route.query.tab : 'general')
+
+watch(tab, (next) => {
+  if (next === (route.query.tab || 'general')) return
+  router.replace({ query: { ...route.query, tab: next === 'general' ? undefined : next } })
+})
 
 const documents = ref([])
 const loadingDocs = ref(false)

@@ -26,19 +26,19 @@
       icon="ki-arrow-right"
     />
 
-    <div v-else class="flex flex-col gap-2">
-      <div v-for="t in items" :key="t.id" class="transfer-row">
-        <span class="transfer-row__icon"><AppIcon name="ki-arrow-right" :size="18" /></span>
-        <div class="grow min-w-0">
-          <div class="text-sm font-semibold text-mono">
-            {{ describeDestination(t) }}
+    <div v-else class="flex flex-col gap-3">
+      <article v-for="t in items" :key="t.id" class="transfer-card">
+        <header class="transfer-card__head">
+          <span class="transfer-card__icon"><AppIcon name="ki-arrow-right" :size="18" /></span>
+          <div class="transfer-card__head-body">
+            <div class="transfer-card__title">
+              Efectiva a {{ formatDate(t.effective_date) }}
+            </div>
+            <div class="transfer-card__sub">
+              Registada {{ formatDate(t.created_at) }}
+              <span v-if="t.created_by_name"> · por {{ t.created_by_name }}</span>
+            </div>
           </div>
-          <div class="text-xs text-muted-foreground">
-            Efectiva a {{ formatDate(t.effective_date) }}
-            <template v-if="t.reason"> · {{ t.reason }}</template>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
           <AppBadge :variant="statusVariant(t.status)">{{ t.status_display }}</AppBadge>
           <q-btn
             v-if="t.status === 'pending' && canApprove"
@@ -57,8 +57,39 @@
               </q-list>
             </q-menu>
           </q-btn>
+        </header>
+
+        <div class="transfer-card__flow">
+          <div class="transfer-side transfer-side--from">
+            <span class="transfer-side__label">
+              <AppIcon name="ki-arrow-up" :size="11" /> Origem
+            </span>
+            <strong>{{ describeOrigin(t) }}</strong>
+          </div>
+          <span class="transfer-card__arrow" aria-hidden="true">→</span>
+          <div class="transfer-side transfer-side--to">
+            <span class="transfer-side__label">
+              <AppIcon name="ki-arrow-right" :size="11" /> Destino
+            </span>
+            <strong>{{ describeDestination(t) }}</strong>
+          </div>
         </div>
-      </div>
+
+        <div v-if="t.reason || t.notes" class="transfer-card__meta">
+          <div v-if="t.reason" class="transfer-meta">
+            <span class="transfer-meta__label">
+              <AppIcon name="ki-message-text" :size="12" /> Motivo
+            </span>
+            <span class="transfer-meta__value">{{ t.reason }}</span>
+          </div>
+          <div v-if="t.notes" class="transfer-meta">
+            <span class="transfer-meta__label">
+              <AppIcon name="ki-document" :size="12" /> Notas
+            </span>
+            <span class="transfer-meta__value">{{ t.notes }}</span>
+          </div>
+        </div>
+      </article>
     </div>
 
     <!-- Add modal -->
@@ -166,13 +197,28 @@ function formatDate(s) {
 function statusVariant(status) {
   return { active: 'success', pending: 'warning', inactive: 'neutral' }[status] || 'neutral'
 }
+function describeOrigin(t) {
+  const parts = []
+  if (t.previous_client_name) parts.push(t.previous_client_name)
+  if (t.previous_post_name) parts.push(t.previous_post_name)
+  if (!parts.length && t.previous_department_display) {
+    parts.push(t.previous_department_display)
+    if (t.previous_support_unit_display) parts.push(t.previous_support_unit_display)
+  }
+  if (t.previous_shift) parts.push(`turno ${t.previous_shift}`)
+  return parts.length ? parts.join(' · ') : '— (sem registo)'
+}
+
 function describeDestination(t) {
   const parts = []
-  if (t.new_department_display) parts.push(t.new_department_display)
   if (t.new_client_name) parts.push(t.new_client_name)
   if (t.new_post_name) parts.push(t.new_post_name)
-  if (t.new_shift) parts.push(t.new_shift)
-  return parts.length ? `Para ${parts.join(' · ')}` : 'Transferência'
+  if (!parts.length && t.new_department_display) {
+    parts.push(t.new_department_display)
+    if (t.new_support_unit_display) parts.push(t.new_support_unit_display)
+  }
+  if (t.new_shift) parts.push(`turno ${t.new_shift}`)
+  return parts.length ? parts.join(' · ') : '—'
 }
 
 async function fetchTransfers() {
@@ -282,16 +328,21 @@ onMounted(fetchTransfers)
   padding: 24px 0;
   color: var(--muted-foreground);
 }
-.transfer-row {
+.transfer-card {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
 }
-.transfer-row__icon {
+.transfer-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.transfer-card__icon {
   display: grid;
   place-items: center;
   width: 38px;
@@ -300,5 +351,97 @@ onMounted(fetchTransfers)
   border-radius: 10px;
   background: color-mix(in oklab, var(--primary) 12%, transparent);
   color: var(--primary);
+}
+.transfer-card__head-body { flex: 1; min-width: 0; }
+.transfer-card__title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.transfer-card__sub {
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+}
+
+.transfer-card__flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: stretch;
+  padding: 12px;
+  background: color-mix(in oklab, var(--muted) 30%, transparent);
+  border-radius: 10px;
+}
+.transfer-side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.transfer-side__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+.transfer-side strong {
+  font-size: 0.86rem;
+  color: var(--foreground);
+  font-weight: 600;
+  word-break: break-word;
+  line-height: 1.35;
+}
+.transfer-side--to strong { color: var(--primary); }
+.transfer-card__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.transfer-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 0;
+}
+.transfer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--foreground);
+  line-height: 1.4;
+}
+.transfer-meta__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  flex: none;
+}
+.transfer-meta__value {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .transfer-card__flow {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+  .transfer-card__arrow {
+    transform: rotate(90deg);
+    font-size: 1.2rem;
+  }
 }
 </style>

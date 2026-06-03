@@ -143,8 +143,8 @@
           <div class="grid grid-cols-2 gap-3">
             <q-select v-model="form.kind" :options="patrolKindOptions"
                       label="Tipo *" outlined dense emit-value map-options :rules="[req]" />
-            <q-input v-model="form.planned_for" label="Data planeada *"
-                     type="date" outlined dense stack-label :rules="[req]" />
+            <q-input v-model="form.planned_for" label="Data e hora planeadas *"
+                     type="datetime-local" outlined dense stack-label :rules="[req]" />
           </div>
           <q-select v-model="form.supervisor" :options="supervisorOptions"
                     label="Supervisor *" outlined dense emit-value map-options
@@ -237,7 +237,10 @@ const columns = [
 
 const today = new Date().toISOString().slice(0, 10)
 const pendingCount = computed(
-  () => rows.value.filter((r) => r.state === 'planned' && r.planned_for === today).length,
+  () => rows.value.filter((r) => {
+    if (r.state !== 'planned' || !r.planned_for) return false
+    return r.planned_for.slice(0, 10) === today
+  }).length,
 )
 
 function canAct(row) {
@@ -245,7 +248,12 @@ function canAct(row) {
 }
 function formatDate(s) {
   if (!s) return '—'
-  try { return new Date(s).toLocaleDateString('pt-PT') } catch { return s }
+  try {
+    return new Date(s).toLocaleString('pt-PT', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+  } catch { return s }
 }
 
 // ── Refs ────────────────────────────────────────────────────────────────
@@ -284,14 +292,14 @@ async function loadRefs() {
   // Sem endpoint de utilizadores, usamos um fallback simples:
   // todos os utilizadores activos. Na prática, o gestor escolhe-os.
   try {
-    const data = await api.get('/auth/users/').then((r) => r.data).catch(() => [])
+    const data = await api.get('/supervisors/').then((r) => r.data)
     const list = data?.results ?? data ?? []
     allSupervisors.value = list.map((u) => ({
-      label: `${u.full_name || u.email} (${u.email})`,
+      label: u.label || u.full_name || u.email,
       value: u.id,
     }))
     supervisorOptions.value = allSupervisors.value
-  } catch { /* sem endpoint — fica vazio, supervisor pode ser escrito ad-hoc */ }
+  } catch { /* interceptor toasts */ }
 }
 
 async function fetchPage() {
@@ -366,9 +374,14 @@ const form = reactive({
 })
 
 function openCreate() {
+  // Default: hoje às 08:00 (formato `YYYY-MM-DDTHH:mm` para datetime-local)
+  const now = new Date()
+  now.setHours(8, 0, 0, 0)
+  const offset = now.getTimezoneOffset()
+  const localIso = new Date(now.getTime() - offset * 60000).toISOString().slice(0, 16)
   Object.assign(form, {
     kind: 'patrol',
-    planned_for: new Date().toISOString().slice(0, 10),
+    planned_for: localIso,
     supervisor: '', post: '', planned_period: '', observations: '',
   })
   showCreate.value = true

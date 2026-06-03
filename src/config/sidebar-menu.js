@@ -10,7 +10,7 @@ export const sidebarMenu = [
   { label: 'Dashboard', icon: 'ki-element-11', to: '/' },
 
   { type: 'heading', label: 'Centro de Controlo' },
-  { label: 'Centro de comando', icon: 'ki-chart-line', to: '/cco' },
+  { label: 'Centro de controle', icon: 'ki-chart-line', to: '/cco' },
   { label: 'Ocorrências', icon: 'ki-warning-2', to: '/incidents' },
   { label: 'Participações', icon: 'ki-information-2', to: '/participations' },
 
