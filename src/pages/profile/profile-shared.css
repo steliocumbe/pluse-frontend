@@ -35,6 +35,13 @@
   color: var(--mono);
 }
 
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+}
+
 .loading-state {
   display: flex;
   align-items: center;

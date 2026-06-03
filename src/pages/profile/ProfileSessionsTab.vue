@@ -2,7 +2,7 @@
   <div class="profile-tab-content">
     <section class="detail-section">
       <header class="detail-section__head">
-        <span class="detail-section__icon"><AppIcon name="ki-devices" :size="16" /></span>
+        <span class="detail-section__icon"><AppIcon name="ki-monitor" :size="16" /></span>
         <span class="detail-section__title">Sessões activas</span>
         <span v-if="data" class="sessions-count">{{ data.count }}</span>
         <q-btn
@@ -38,7 +38,7 @@
             :class="{ 'is-current': s.jti === currentJti }"
           >
             <div class="session-icon">
-              <AppIcon :name="s.jti === currentJti ? 'ki-check-circle' : 'ki-devices'" :size="18" />
+              <AppIcon :name="s.jti === currentJti ? 'ki-check-circle' : 'ki-monitor'" :size="18" />
             </div>
             <div class="session-body">
               <div class="session-title">

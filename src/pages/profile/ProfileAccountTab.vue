@@ -6,17 +6,34 @@
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <!-- Card avatar + identidade -->
-      <section class="detail-section">
+      <section class="detail-section detail-section--identity">
         <header class="detail-section__head">
           <span class="detail-section__icon"><AppIcon name="ki-profile-circle" :size="16" /></span>
           <span class="detail-section__title">Identidade</span>
         </header>
         <div class="profile-identity">
-          <div class="profile-avatar">{{ initials }}</div>
-          <p class="profile-name">{{ form.full_name || me?.email }}</p>
-          <p class="profile-email">{{ me?.email }}</p>
+          <div class="profile-identity__top">
+            <div class="profile-avatar">{{ initials }}</div>
+            <div class="profile-identity__main">
+              <p class="profile-name">{{ form.full_name || me?.email }}</p>
+              <p class="profile-email">{{ me?.email }}</p>
+            </div>
+          </div>
+
+          <div class="profile-facts">
+            <div class="profile-fact">
+              <span>Telefone</span>
+              <strong>{{ form.phone || 'Não informado' }}</strong>
+            </div>
+            <div class="profile-fact">
+              <span>Username</span>
+              <strong>{{ me?.username || '—' }}</strong>
+            </div>
+          </div>
+
           <div class="profile-roles">
             <span v-for="g in groups" :key="g" class="profile-role-chip">{{ g }}</span>
+            <span v-if="!groups.length" class="profile-role-chip is-muted">Sem grupo</span>
           </div>
         </div>
       </section>
@@ -167,20 +184,31 @@ onMounted(load)
 .profile-identity {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+.detail-section--identity {
+  align-self: start;
+}
+.profile-identity__top {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 24px 16px;
+  gap: 14px;
+}
+.profile-identity__main {
+  min-width: 0;
 }
 .profile-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 62px;
+  height: 62px;
+  flex: none;
+  border-radius: 18px;
   background: color-mix(in oklab, var(--primary) 16%, transparent);
   color: var(--primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.8rem;
+  font-size: 1.45rem;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -188,20 +216,41 @@ onMounted(load)
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--foreground);
-  margin: 8px 0 0;
-  text-align: center;
+  margin: 0;
 }
 .profile-email {
   font-size: 0.86rem;
   color: var(--muted-foreground);
-  margin: 0;
+  margin: 4px 0 0;
+  word-break: break-word;
+}
+.profile-facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.profile-fact {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--muted) 22%, transparent);
+  padding: 10px 12px;
+}
+.profile-fact span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.profile-fact strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--mono);
+  font-size: 0.9rem;
 }
 .profile-roles {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 6px;
-  margin-top: 6px;
 }
 .profile-role-chip {
   background: color-mix(in oklab, var(--primary) 12%, transparent);
@@ -210,6 +259,10 @@ onMounted(load)
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
+}
+.profile-role-chip.is-muted {
+  background: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .profile-form {
