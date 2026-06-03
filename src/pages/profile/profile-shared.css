@@ -1,0 +1,54 @@
+/* Estilos partilhados pelas tabs do perfil. */
+
+.profile-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detail-section {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+.detail-section__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 30%, transparent);
+}
+.detail-section__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.detail-section__title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--mono);
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: var(--muted-foreground);
+}
+
+.form-error-bar {
+  background: color-mix(in oklab, var(--destructive) 8%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--destructive) 32%, var(--border));
+  color: color-mix(in oklab, var(--destructive) 80%, black 20%);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+}

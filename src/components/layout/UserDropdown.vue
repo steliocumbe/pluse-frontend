@@ -54,19 +54,19 @@
           <div class="border-t border-border my-1.5" />
         </li>
         <li>
-          <router-link to="/perfil" class="kt-dropdown-menu-link" @click="close">
+          <router-link :to="{ name: 'profile' }" class="kt-dropdown-menu-link" @click="close">
             <AppIcon name="ki-profile-circle" :size="16" icon-class="text-muted-foreground" />
             Meu perfil
           </router-link>
         </li>
         <li>
-          <router-link to="/perfil/password" class="kt-dropdown-menu-link" @click="close">
+          <router-link :to="{ name: 'profile', query: { tab: 'security' } }" class="kt-dropdown-menu-link" @click="close">
             <AppIcon name="ki-key" :size="16" icon-class="text-muted-foreground" />
             Alterar senha
           </router-link>
         </li>
         <li>
-          <router-link to="/perfil/sessoes" class="kt-dropdown-menu-link" @click="close">
+          <router-link :to="{ name: 'profile', query: { tab: 'sessions' } }" class="kt-dropdown-menu-link" @click="close">
             <AppIcon name="ki-shield-tick" :size="16" icon-class="text-muted-foreground" />
             Sessões activas
           </router-link>

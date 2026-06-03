@@ -54,6 +54,11 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: '', name: 'dashboard', component: () => import('pages/IndexPage.vue') },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('pages/profile/ProfilePage.vue'),
+      },
 
       {
         path: 'employees',
