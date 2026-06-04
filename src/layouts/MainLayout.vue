@@ -33,6 +33,8 @@
     <main class="flex-1 pt-5 flex flex-col" role="main">
       <router-view />
     </main>
+
+    <LicenseExpiryModal />
   </div>
 </template>
 
@@ -42,6 +44,7 @@ import { useBodyClasses } from 'src/composables/useBodyClasses'
 import AppSidebar from 'src/components/layout/AppSidebar.vue'
 import AppHeader from 'src/components/layout/AppHeader.vue'
 import LicenseBanner from 'src/components/layout/LicenseBanner.vue'
+import LicenseExpiryModal from 'src/components/layout/LicenseExpiryModal.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
 // Apply Metronic body classes for the duration of this layout.
