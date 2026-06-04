@@ -1,4 +1,11 @@
 const routes = [
+  // Página de bloqueio por licença — standalone, sem layout, sem auth.
+  {
+    path: '/locked',
+    name: 'locked',
+    component: () => import('pages/locked/LockedPage.vue'),
+  },
+
   {
     path: '/auth',
     component: () => import('layouts/AuthLayout.vue'),
@@ -58,6 +65,11 @@ const routes = [
         path: 'profile',
         name: 'profile',
         component: () => import('pages/profile/ProfilePage.vue'),
+      },
+      {
+        path: 'admin/license',
+        name: 'license-admin',
+        component: () => import('pages/admin/LicensePage.vue'),
       },
 
       {

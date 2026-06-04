@@ -40,6 +40,9 @@ export const sidebarMenu = [
   { label: 'Viaturas', icon: 'ki-setting-2', to: '/assets/vehicles' },
   { label: 'Equipamentos', icon: 'ki-shield-tick', to: '/assets/equipment' },
   { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
+
+  { type: 'heading', label: 'Administração' },
+  { label: 'Licença do sistema', icon: 'ki-shield-tick', to: '/admin/license' },
 ]
 
 export const parkedModules = [

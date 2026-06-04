@@ -70,6 +70,21 @@ export function attachInterceptors(authStore) {
       const original = error.config || {}
       const url = original.url || ''
 
+      // HTTP 423 Locked → sistema bloqueado por licença. Redirecciona o
+      // utilizador para /locked sem tocar nos tokens (vai precisar deles
+      // para fazer upload).
+      if (status === 423 && typeof window !== 'undefined') {
+        if (!window.location.pathname.includes('/locked')) {
+          // Soft redirect via location para não depender do router aqui
+          // (api.js é carregado antes do router).
+          const target = window.location.hash.startsWith('#/')
+            ? '#/locked'
+            : '/locked'
+          window.location.assign(target)
+        }
+        return Promise.reject(error)
+      }
+
       // Don't try to refresh on the auth endpoints themselves
       const isAuthCall = url.includes('/auth/login') || url.includes('/auth/refresh')
 
