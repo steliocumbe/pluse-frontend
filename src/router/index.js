@@ -62,6 +62,19 @@ export default defineRouter((/* { store, ssrContext } */) => {
       return { name: 'locked' }
     }
 
+    // ── Mudança obrigatória de password ─────────────────────────────
+    // Se o utilizador tem `must_change_password=true`, força ir para a
+    // página de segurança do perfil até mudar. Permite-se sair só por
+    // logout.
+    if (
+      auth.isAuthenticated &&
+      auth.user?.must_change_password &&
+      to.name !== 'profile' &&
+      to.name !== 'login'
+    ) {
+      return { name: 'profile', query: { tab: 'security', force: '1' } }
+    }
+
     return true
   })
 

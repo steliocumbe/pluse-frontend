@@ -1,6 +1,10 @@
 import axios from 'axios'
 
-const baseURL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+// VITE_API_URL override (definido em .env do frontend) — útil em dev quando
+// a SPA corre num porto diferente do Django dev server.
+// Em produção (Electron a carregar http://127.0.0.1:PORT/ servido pelo
+// backend) deixamos vazio → axios usa a origem actual da página.
+const baseURL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
 
 /**
  * Shared axios instance for the PLUSE backend.

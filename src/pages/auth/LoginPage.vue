@@ -5,12 +5,10 @@
         <aside class="login-intro hidden lg:flex flex-col justify-between gap-8 p-12">
           <div class="login-intro-content">
             <div class="brand-mark mb-8">
-              <img src="/icons/android-chrome-192x192.png" alt="PLUSE" />
+              <img :src="brandLogoUrl" alt="PLUSE" />
             </div>
 
-            <p class="login-kicker">
-              Plataforma PLUSE
-            </p>
+            <p class="login-kicker">Plataforma PLUSE</p>
             <div class="login-intro-title">
               Aceda ao seu centro de operações.
             </div>
@@ -44,7 +42,7 @@
           <div class="login-form-inner">
             <div class="lg:hidden">
               <div class="brand-mark mb-5">
-                <img src="/icons/android-chrome-192x192.png" alt="PLUSE" />
+                <img :src="brandLogoUrl" alt="PLUSE" />
               </div>
               <p class="login-kicker mb-2">PLUSE</p>
             </div>
@@ -155,6 +153,8 @@ import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import AppIcon from 'src/components/ui/AppIcon.vue'
+
+const brandLogoUrl = `${import.meta.env.BASE_URL}icons/android-chrome-512x512.png`
 
 const router = useRouter()
 const route = useRoute()
@@ -309,11 +309,12 @@ async function onSubmit() {
   box-shadow: 0 12px 28px color-mix(in oklab, var(--primary) 28%, transparent);
   animation: brand-float 5.5s ease-in-out infinite;
 }
+
 .brand-mark img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   display: block;
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
 }
 
 .feature-icon {

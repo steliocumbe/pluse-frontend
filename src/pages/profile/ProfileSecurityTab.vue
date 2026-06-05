@@ -1,5 +1,19 @@
 <template>
   <div class="profile-tab-content">
+    <!-- Banner de mudança obrigatória -->
+    <div v-if="mustChange" class="force-change-banner">
+      <div class="force-change-banner__icon">
+        <AppIcon name="ki-shield" :size="20" />
+      </div>
+      <div class="force-change-banner__body">
+        <strong>Tens de mudar a tua password antes de continuar.</strong>
+        <p>
+          A tua conta foi criada com uma password temporária. Define uma
+          nova password para continuares a usar o sistema.
+        </p>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <section class="detail-section">
         <header class="detail-section__head">
@@ -85,14 +99,22 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useToast } from 'src/composables/useToast'
+import { useAuthStore } from 'src/stores/auth'
 import { useFormErrors } from 'src/composables/useFormErrors'
 import { required, minLength } from 'src/utils/validators'
 import { profileService } from 'src/services/profile.service'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
+const route = useRoute()
+const auth = useAuthStore()
 const toast = useToast()
+
+const mustChange = computed(
+  () => auth.user?.must_change_password || route.query.force === '1',
+)
 const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors, clearField } = useFormErrors()
 
 const formRef = ref(null)
@@ -120,6 +142,14 @@ async function onSubmit() {
       old_password: form.old_password,
       new_password: form.new_password,
     })
+    // Limpar o flag `must_change_password` no store local (o backend já
+    // limpou). Sem isto, o router guard mantinha o user trancado aqui.
+    if (auth.user?.must_change_password) {
+      auth.user = { ...auth.user, must_change_password: false }
+      try {
+        localStorage.setItem('pluse.user', JSON.stringify(auth.user))
+      } catch { /* localStorage indisponível */ }
+    }
     toast.success('Password alterada com sucesso.')
     reset()
   } catch (err) {
@@ -163,5 +193,38 @@ async function onSubmit() {
   top: 0;
   color: var(--primary);
   font-weight: 700;
+}
+
+.force-change-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  border: 1px solid color-mix(in oklab, var(--destructive) 35%, var(--border));
+  background: color-mix(in oklab, var(--destructive) 8%, var(--card));
+  border-radius: 12px;
+}
+.force-change-banner__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--destructive) 18%, transparent);
+  color: var(--destructive);
+}
+.force-change-banner__body strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--destructive);
+  margin-bottom: 4px;
+}
+.force-change-banner__body p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--foreground);
+  line-height: 1.45;
 }
 </style>

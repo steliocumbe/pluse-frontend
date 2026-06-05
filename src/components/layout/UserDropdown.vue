@@ -77,22 +77,6 @@
             Preferências
           </router-link>
         </li>
-        <li v-if="auth.user?.is_staff || auth.user?.is_superuser">
-          <div class="border-t border-border my-1.5" />
-        </li>
-        <li v-if="auth.user?.is_staff || auth.user?.is_superuser">
-          <a
-            :href="adminUrl"
-            target="_blank"
-            rel="noopener"
-            class="kt-dropdown-menu-link"
-            @click="close"
-          >
-            <AppIcon name="ki-shield" :size="16" icon-class="text-muted-foreground" />
-            Django admin
-            <AppIcon name="ki-arrow-right" :size="12" icon-class="ms-auto text-muted-foreground" />
-          </a>
-        </li>
         <li>
           <router-link to="/ajuda/contacto" class="kt-dropdown-menu-link" @click="close">
             <AppIcon name="ki-information-3" :size="16" icon-class="text-muted-foreground" />
@@ -193,9 +177,6 @@ import AppHeading from 'src/components/ui/AppHeading.vue'
 const auth = useAuthStore()
 const router = useRouter()
 const { isDark, toggleDark } = useTheme()
-
-const apiBase = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
-const adminUrl = `${apiBase}/admin/`
 
 // 2-letter initials from full_name or fallback to first letter of email.
 const initials = computed(() => {
