@@ -103,12 +103,14 @@
           :loading="refreshing"
           @click="onRefresh"
         />
-        <q-btn
-          v-if="auth.isAuthenticated"
-          flat no-caps icon="logout" color="negative"
-          label="Terminar sessão"
-          @click="onLogout"
-        />
+        <div class="locked-footer__right">
+          <q-btn
+            v-if="auth.isAuthenticated"
+            flat no-caps icon="logout" color="negative"
+            label="Terminar sessão"
+            @click="onLogout"
+          />
+        </div>
       </footer>
     </div>
   </div>
@@ -438,5 +440,11 @@ onMounted(refresh)
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid #edf2f8;
+}
+.locked-footer__right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 </style>

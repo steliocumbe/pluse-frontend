@@ -1,10 +1,18 @@
 import axios from 'axios'
 
-// VITE_API_URL override (definido em .env do frontend) — útil em dev quando
-// a SPA corre num porto diferente do Django dev server.
-// Em produção (Electron a carregar http://127.0.0.1:PORT/ servido pelo
-// backend) deixamos vazio → axios usa a origem actual da página.
-const baseURL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+// Prioridade da URL do backend:
+//   1. `window.pluseDesktop.backendUrl` — injectado pelo preload do
+//      Electron com a URL do PLUSE-backend.exe local (porto detectado em
+//      runtime).
+//   2. `VITE_API_URL` — definido no .env do frontend (dev local, ou
+//      build web para um servidor remoto).
+//   3. '' — relativo, usa a origem da página (fallback).
+const desktopBackend =
+  typeof window !== 'undefined' ? window.pluseDesktop?.backendUrl : null
+const baseURL = (desktopBackend || import.meta.env.VITE_API_URL || '').replace(
+  /\/+$/,
+  '',
+)
 
 /**
  * Shared axios instance for the PLUSE backend.

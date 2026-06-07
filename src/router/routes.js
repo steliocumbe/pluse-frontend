@@ -1,4 +1,12 @@
 const routes = [
+  // Wizard de primeira execução — escolhe entre backend local e remoto.
+  // Standalone, sem layout, sem auth, sem licença. Apenas em Electron.
+  {
+    path: '/setup',
+    name: 'setup',
+    component: () => import('pages/setup/SetupWizardPage.vue'),
+  },
+
   // Página de bloqueio por licença — standalone, sem layout, sem auth.
   {
     path: '/locked',
@@ -70,6 +78,11 @@ const routes = [
         path: 'admin/license',
         name: 'license-admin',
         component: () => import('pages/admin/LicensePage.vue'),
+      },
+      {
+        path: 'admin/server',
+        name: 'server-config',
+        component: () => import('pages/admin/ServerConfigPage.vue'),
       },
 
       {

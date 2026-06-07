@@ -27,6 +27,18 @@ export default defineRouter((/* { store, ssrContext } */) => {
     const requiresAuth = to.matched.some((r) => r.meta?.requiresAuth)
     const guestOnly = to.matched.some((r) => r.meta?.guestOnly)
 
+    // ── Setup wizard (Electron, primeira execução) ──────────────────
+    // Quando o Electron arranca sem `app-config.json` válido, expõe a
+    // flag `needsSetup`. Redireccionamos para /setup ANTES de tudo —
+    // sem backend não vale a pena tentar login ou verificar licença.
+    const desktop = typeof window !== 'undefined' ? window.pluseDesktop : null
+    if (desktop?.needsSetup && to.name !== 'setup') {
+      return { name: 'setup' }
+    }
+    if (to.name === 'setup') {
+      return true
+    }
+
     if (requiresAuth && !auth.isAuthenticated) {
       return {
         name: 'login',
