@@ -1,0 +1,556 @@
+<template>
+  <AdminPageTemplate
+    eyebrow="Contabilidade e Finanças / Accounting & Finance"
+    title="Documentos de Faturação"
+    description="Faturas, recibos e cotações com integração automática. / Invoices, receipts and quotes with auto-integration."
+  >
+    <template #actions>
+      <!-- Botão Snow White Wave: Arredondado, sem elevação pesada, cor primária -->
+      <q-btn 
+        unelevated 
+        no-caps 
+        class="wave-btn-primary" 
+        icon="add_circle_outline" 
+        label="Novo Documento / New" 
+        @click="openCreate" 
+      />
+    </template>
+
+    <!-- Card Snow White: Sem bordas, sombra suave (soft shadow), cantos arredondados (wave) -->
+    <q-card flat class="pluse-wave-card mt-4">
+      
+      <!-- Tabela Leve (Light Table): Sem bordas, cabeçalho sutil, espaçamento orgânico -->
+      <q-table 
+        :rows="rows" 
+        :columns="columns" 
+        row-key="id" 
+        flat 
+        class="pluse-light-table"
+        :loading="loading" 
+        no-data-label="Nenhum documento encontrado. / No documents found."
+      >
+        <!-- Coluna Documento (Bilingue nas descrições) -->
+        <template #body-cell-document_number="props">
+          <q-td :props="props">
+            <div class="text-mono font-bold text-dark-wave">
+              {{ props.row.document_number || 'A gerar / Pending' }}
+            </div>
+            <div class="text-xs text-snow-muted font-medium mt-1">
+              {{ props.row.client_name }}
+            </div>
+            <div class="text-[10px] text-snow-muted">
+              Serviço: {{ props.row.service_name || '—' }}
+            </div>
+          </q-td>
+        </template>
+
+        <!-- Coluna Estado -->
+        <template #body-cell-status="props">
+          <q-td :props="props">
+            <AppBadge :variant="statusVariant(props.row.status)" class="wave-badge">
+              {{ props.row.status_display }}
+            </AppBadge>
+          </q-td>
+        </template>
+
+        <!-- Coluna Total -->
+        <template #body-cell-total_amount="props">
+          <q-td :props="props">
+            <span class="font-semibold text-dark-wave">{{ money(props.row.total_amount) }}</span>
+          </q-td>
+        </template>
+
+        <!-- Coluna Ações (Ícones limpos com Tooltips para manter a tabela leve) -->
+        <template #body-cell-actions="props">
+          <q-td :props="props" auto-width>
+            <div class="doc-actions">
+              <q-btn v-if="props.row.status === 'pending'" flat dense round color="primary" icon="play_circle" @click="issueDoc(props.row)">
+                <q-tooltip class="wave-tooltip">Emitir / Issue</q-tooltip>
+              </q-btn>
+              
+              <q-btn v-if="props.row.status === 'issued'" flat dense round color="positive" icon="check_circle" @click="markPaid(props.row)">
+                <q-tooltip class="wave-tooltip">Marcar Pago / Mark Paid</q-tooltip>
+              </q-btn>
+              
+              <q-btn v-if="props.row.status !== 'paid' && props.row.status !== 'canceled'" flat dense round color="negative" icon="cancel" @click="cancelDoc(props.row)">
+                <q-tooltip class="wave-tooltip">Anular / Cancel</q-tooltip>
+              </q-btn>
+              
+              <q-btn flat dense round color="grey-7" icon="picture_as_pdf" @click="exportDocumentPdf(props.row)">
+                <q-tooltip class="wave-tooltip">Exportar PDF</q-tooltip>
+              </q-btn>
+              
+              <q-btn flat dense round color="grey-7" icon="print" @click="printDocument(props.row)">
+                <q-tooltip class="wave-tooltip">Imprimir / Print</q-tooltip>
+              </q-btn>
+            </div>
+          </q-td>
+        </template>
+      </q-table>
+    </q-card>
+
+    <!-- Modal Novo Documento (Estilo Wave) -->
+    <AppModal v-model="showCreate" size="md" persistent class="wave-modal">
+      <div class="p-6 bg-white rounded-3xl">
+        <div class="mb-6">
+          <AppHeading :level="3" class="text-xl font-bold text-dark-wave m-0">Novo Documento</AppHeading>
+          <span class="text-xs text-snow-muted">New Financial Document</span>
+        </div>
+
+        <q-form ref="formRef" greedy class="flex flex-col gap-4" @submit="submitCreate">
+          <!-- Inputs com estilo Outlined mas arredondados (rounded) -->
+          <q-select rounded v-model="form.client" :options="clientOptions" emit-value map-options outlined dense label="Cliente / Client *" :rules="[req]" />
+          
+          <q-select rounded v-model="form.service" :options="serviceOptions" emit-value map-options outlined dense label="Serviço / Service *" :rules="[req]" />
+          
+          <q-select rounded v-model="form.document_type" :options="docTypeOptions" emit-value map-options outlined dense label="Tipo de Documento / Type *" :rules="[req]" />
+          
+          <!-- Toggle Box Snow White -->
+          <div class="flex items-center justify-between rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 shadow-sm">
+            <div>
+              <div class="text-sm font-bold text-dark-wave">Isento de IVA / Tax Exempt</div>
+              <div class="text-xs text-snow-muted mt-1">Quando ativo, o imposto fica em 0,00.</div>
+            </div>
+            <q-toggle v-model="form.is_tax_exempt" color="primary" keep-color />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <q-input rounded v-model="form.issue_date" type="date" label="Emissão / Issue Date *" outlined dense stack-label :rules="[req]" />
+            <q-input rounded v-model="form.due_date" type="date" label="Vencimento / Due Date" outlined dense stack-label />
+          </div>
+
+          <!-- Totais com fundo levemente destacado -->
+          <div class="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <q-input rounded v-model.number="form.subtotal" type="number" min="0" step="0.01" outlined dense label="Subtotal *" :rules="[req]" bg-color="white" />
+            <q-input rounded v-model.number="form.tax_amount" type="number" min="0" step="0.01" outlined dense :label="`IVA (${vatRatePercentLabel})`" :rules="[req]" readonly bg-color="white" />
+            <q-input rounded v-model.number="form.total_amount" type="number" min="0" step="0.01" outlined dense label="Total *" :rules="[req]" readonly bg-color="white" class="font-bold" />
+          </div>
+
+          <div class="flex justify-end gap-3 mt-4">
+            <q-btn flat rounded no-caps label="Cancelar / Cancel" color="grey-7" @click="showCreate = false" :disable="saving" />
+            <q-btn unelevated rounded no-caps class="wave-btn-primary px-6" type="submit" label="Guardar / Save" :loading="saving" />
+          </div>
+        </q-form>
+      </div>
+    </AppModal>
+  </AdminPageTemplate>
+</template>
+
+<script setup>
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
+import AppBadge from 'src/components/ui/AppBadge.vue'
+import AppModal from 'src/components/ui/AppModal.vue'
+import AppHeading from 'src/components/ui/AppHeading.vue'
+import { billingDocumentService, financeSystemSettingService } from 'src/services/finance.service'
+import { clientService } from 'src/services/client.service'
+import { serviceCatalogService } from 'src/services/service-catalog.service'
+import { useToast } from 'src/composables/useToast'
+import {
+  buildFinanceDocumentHtml,
+  formatDocumentDate,
+  formatDocumentMoney,
+  openFinancePrintWindow,
+} from 'src/utils/financeDocumentPrint'
+
+const toast = useToast()
+const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório / Required'
+
+const rows = ref([])
+const loading = ref(false)
+const saving = ref(false)
+const clients = ref([])
+const services = ref([])
+const companySettings = ref(null)
+const vatRatePercent = computed(() => {
+  const fromSettings = Number(companySettings.value?.vat_rate_percent)
+  if (Number.isFinite(fromSettings)) return Math.min(100, Math.max(0, fromSettings))
+  return 16
+})
+const vatRatePercentLabel = computed(() => `${vatRatePercent.value.toFixed(2).replace('.', ',')}%`)
+
+const columns = [
+  { name: 'document_number', label: 'Documento / Document', field: 'document_number', align: 'left' },
+  { name: 'document_type_display', label: 'Tipo / Type', field: 'document_type_display', align: 'left' },
+  { name: 'issue_date', label: 'Emissão / Issued', field: 'issue_date', align: 'left' },
+  { name: 'total_amount', label: 'Total', field: 'total_amount', align: 'right' },
+  { name: 'status', label: 'Estado / Status', field: 'status', align: 'center' },
+  { name: 'actions', label: '', field: 'id', align: 'right' },
+]
+
+const showCreate = ref(false)
+const formRef = ref(null)
+const form = reactive({
+  client: null,
+  service: null,
+  document_type: 'invoice',
+  issue_date: new Date().toISOString().slice(0, 10),
+  due_date: '',
+  subtotal: 0,
+  tax_amount: 0,
+  total_amount: 0,
+  is_tax_exempt: false,
+  status: 'pending',
+})
+
+// Adicionado Bilingue nos tipos de documentos
+const docTypeOptions = [
+  { value: 'invoice', label: 'Fatura / Invoice' },
+  { value: 'receipt', label: 'Recibo / Receipt' },
+  { value: 'debit_note', label: 'Nota de Débito / Debit Note' },
+  { value: 'credit_note', label: 'Nota de Crédito / Credit Note' },
+  { value: 'quotation', label: 'Cotação / Quotation' },
+]
+
+const clientOptions = computed(() => clients.value.map((c) => ({ value: c.id, label: c.name })))
+const serviceOptions = computed(() => services.value.map((s) => ({
+  value: s.id,
+  label: `${s.name} (${s.sku})`,
+})))
+const serviceById = computed(() => new Map(services.value.map((s) => [s.id, s])))
+
+function money(v) {
+  return `${Number(v || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })} MZN`
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100
+}
+
+function recalculateBillingTotals(subtotalValue) {
+  const subtotal = Math.max(0, Number(subtotalValue || 0))
+  const taxAmount = form.is_tax_exempt ? 0 : roundMoney(subtotal * (vatRatePercent.value / 100))
+  const totalAmount = roundMoney(subtotal + taxAmount)
+
+  form.tax_amount = taxAmount
+  form.total_amount = totalAmount
+}
+
+function statusVariant(status) {
+  return {
+    pending: 'warning',
+    issued: 'info',
+    paid: 'success',
+    canceled: 'neutral',
+  }[status] || 'neutral'
+}
+
+function paymentMethodLabel(doc) {
+  if (doc.status === 'paid') return 'Liquidado / Paid'
+  if (doc.document_type === 'receipt') return 'Recibo / Receipt'
+  if (doc.document_type === 'credit_note') return 'Nota de crédito / Credit note'
+  if (doc.document_type === 'quotation') return 'Cotação / Quotation'
+  return 'A liquidar / To be paid'
+}
+
+function buildPaymentBlocks(cfg) {
+  const wallets = Array.isArray(cfg.mobile_wallets) ? cfg.mobile_wallets : []
+  const banks = Array.isArray(cfg.bank_accounts) ? cfg.bank_accounts : []
+  const blocks = []
+
+  wallets.forEach((wallet) => {
+    blocks.push({
+      titlePt: `Carteira ${wallet.provider === 'mpesa' ? 'móvel' : 'digital'}`,
+      titleEn: 'Mobile wallet',
+      name: wallet.provider === 'mpesa' ? 'M-Pesa' : 'e-Mola',
+      detail: [wallet.registered_name, wallet.phone_number].filter(Boolean).join(' · '),
+    })
+  })
+
+  banks.forEach((bank) => {
+    blocks.push({
+      titlePt: 'Conta bancária',
+      titleEn: 'Bank account',
+      name: bank.bank_name || 'Banco',
+      detail: [bank.account_holder, bank.account_number, bank.nib ? `NIB ${bank.nib}` : ''].filter(Boolean).join(' · '),
+    })
+  })
+
+  return blocks
+}
+
+function buildBillingDocumentHtml(doc) {
+  const cfg = companySettings.value || {}
+  const docTypeMap = {
+    invoice: ['Fatura', 'Invoice', '#2563eb'],
+    receipt: ['Recibo', 'Receipt', '#10b981'],
+    debit_note: ['Nota de débito', 'Debit note', '#f59e0b'],
+    credit_note: ['Nota de crédito', 'Credit note', '#0f766e'],
+    quotation: ['Cotação', 'Quotation', '#7c3aed'],
+  }
+  const [titlePt, titleEn, accent] = docTypeMap[doc.document_type] || ['Documento', 'Document', '#2563eb']
+  const paymentBlocks = buildPaymentBlocks(cfg)
+  const taxRate = Number(doc.subtotal || 0) > 0 ? `${(((Number(doc.tax_amount || 0) / Number(doc.subtotal || 1)) * 100) || 0).toFixed(0)}%` : '—'
+  const computedTaxRate = doc.is_tax_exempt ? 'Isento' : taxRate
+  const compactContact = [
+    doc.client_contact_name,
+    doc.client_contact_phone,
+    doc.client_contact_email,
+  ].filter(Boolean).join(' | ')
+  const clientDetails = [
+    doc.client_nuit ? `NUIT ${doc.client_nuit}` : '',
+    doc.client_address || '',
+    compactContact ? `Contacto: ${compactContact}` : '',
+  ].filter(Boolean)
+
+  return buildFinanceDocumentHtml({
+    company: cfg,
+    accent,
+    document: {
+      title: `${titlePt} ${doc.document_number || ''}`.trim(),
+      number: doc.document_number || 'A gerar',
+      operator: paymentMethodLabel(doc),
+    },
+    hero: {
+      kickerPt: 'Documento financeiro',
+      kickerEn: 'Financial document',
+      titlePt,
+      titleEn,
+    },
+    counterparty: {
+      labelPt: 'Faturado a',
+      labelEn: 'Billed to',
+      value: doc.client_name || 'Consumidor final',
+      details: clientDetails,
+    },
+    metaCards: [
+      { labelPt: 'Emissão', labelEn: 'Issue date', value: formatDocumentDate(doc.issue_date) },
+      { labelPt: 'Vencimento', labelEn: 'Due date', value: formatDocumentDate(doc.due_date) },
+      { labelPt: 'Estado', labelEn: 'Status', value: doc.status_display || doc.status || '—' },
+    ],
+    lineTable: {
+      columns: [
+        { key: 'qty', labelPt: 'Qtd', labelEn: 'Qty' },
+        { key: 'desc', labelPt: 'Descrição', labelEn: 'Description' },
+        { key: 'tax', labelPt: 'IVA', labelEn: 'VAT', align: 'right' },
+        { key: 'unit', labelPt: 'P. Unit', labelEn: 'Unit price', align: 'right' },
+        { key: 'total', labelPt: 'Total', labelEn: 'Total', align: 'right' },
+      ],
+      rows: [{
+        qty: '1.000',
+        desc: `${titlePt} ${doc.document_number || ''}${doc.service_name ? ` — ${doc.service_name}` : ''}`.trim(),
+        tax: computedTaxRate,
+        unit: formatDocumentMoney(doc.subtotal),
+        total: formatDocumentMoney(doc.total_amount),
+      }],
+    },
+    paymentBlocks,
+    totals: [
+      { labelPt: 'Subtotal', labelEn: 'Subtotal', value: formatDocumentMoney(doc.subtotal) },
+      { labelPt: 'IVA / imposto', labelEn: 'VAT / tax', value: formatDocumentMoney(doc.tax_amount) },
+      { labelPt: 'Total do documento', labelEn: 'Document total', value: formatDocumentMoney(doc.total_amount), highlight: true },
+    ],
+    notes: cfg.payment_instructions ? [cfg.payment_instructions] : [],
+    footerNote: 'Documento emitido pelo PLUSE com identidade corporativa bilingue para impressão, arquivo e partilha com clientes.',
+  })
+}
+
+async function openBillingDocument(row, mode = 'print') {
+  try {
+    const [doc, settingsData] = await Promise.all([
+      billingDocumentService.get(row.id),
+      companySettings.value ? Promise.resolve(companySettings.value) : financeSystemSettingService.get().catch(() => null),
+    ])
+    companySettings.value = settingsData
+    openFinancePrintWindow({
+      title: `${doc.document_type_display || 'Documento'} ${doc.document_number || ''}`.trim(),
+      html: buildBillingDocumentHtml(doc),
+      mode,
+      toast,
+    })
+  } catch (err) {
+    toast.error('Não foi possível gerar o documento.', {
+      caption: err?.response?.data?.detail || err?.message,
+    })
+  }
+}
+
+function exportDocumentPdf(row) {
+  openBillingDocument(row, 'pdf')
+}
+
+function printDocument(row) {
+  openBillingDocument(row, 'print')
+}
+
+function openCreate() {
+  Object.assign(form, {
+    client: null,
+    service: null,
+    document_type: 'invoice',
+    issue_date: new Date().toISOString().slice(0, 10),
+    due_date: '',
+    subtotal: 0,
+    tax_amount: 0,
+    total_amount: 0,
+    is_tax_exempt: false,
+    status: 'pending',
+  })
+  recalculateBillingTotals(form.subtotal)
+  showCreate.value = true
+}
+
+async function fetchRows() {
+  loading.value = true
+  try {
+    const [docsData, clientData, servicesData, settingsData] = await Promise.all([
+      billingDocumentService.list({ page_size: 300 }),
+      clientService.list({ page_size: 300 }),
+      serviceCatalogService.list({ page_size: 300, is_published: true, status: 'active' }),
+      financeSystemSettingService.get().catch(() => null),
+    ])
+    rows.value = docsData?.results ?? docsData ?? []
+    clients.value = clientData?.results ?? clientData ?? []
+    services.value = servicesData?.results ?? servicesData ?? []
+    companySettings.value = settingsData
+  } finally {
+    loading.value = false
+  }
+}
+
+async function submitCreate() {
+  if (!(await formRef.value?.validate())) return
+  recalculateBillingTotals(form.subtotal)
+  if (Number(form.subtotal || 0) + Number(form.tax_amount || 0) !== Number(form.total_amount || 0)) {
+    toast.error('Total deve ser igual a subtotal + imposto.')
+    return
+  }
+  saving.value = true
+  try {
+    await billingDocumentService.create({ ...form })
+    toast.success('Documento criado com sucesso.')
+    showCreate.value = false
+    await fetchRows()
+  } catch (err) {
+    toast.error('Não foi possível criar o documento.', {
+      caption: err?.response?.data?.detail || Object.values(err?.response?.data || {})?.[0],
+    })
+  } finally {
+    saving.value = false
+  }
+}
+
+async function issueDoc(row) {
+  try {
+    await billingDocumentService.issue(row.id)
+    toast.success('Documento emitido e contabilizado.')
+    await fetchRows()
+  } catch (err) {
+    toast.error('Falha ao emitir documento.', { caption: err?.response?.data?.detail })
+  }
+}
+
+async function markPaid(row) {
+  try {
+    await billingDocumentService.markPaid(row.id)
+    toast.success('Documento marcado como pago.')
+    await fetchRows()
+  } catch (err) {
+    toast.error('Falha ao marcar pagamento.', { caption: err?.response?.data?.detail })
+  }
+}
+
+async function cancelDoc(row) {
+  try {
+    await billingDocumentService.cancel(row.id)
+    toast.success('Documento anulado.')
+    await fetchRows()
+  } catch (err) {
+    toast.error('Falha ao anular documento.', { caption: err?.response?.data?.detail })
+  }
+}
+
+onMounted(fetchRows)
+
+watch(() => form.subtotal, (value) => recalculateBillingTotals(value))
+watch(() => form.service, (serviceId) => {
+  if (!serviceId) return
+  const selected = serviceById.value.get(serviceId)
+  if (!selected) return
+  const price = Number(selected.base_price)
+  form.subtotal = Number.isFinite(price) ? roundMoney(price) : 0
+})
+watch(() => form.is_tax_exempt, () => recalculateBillingTotals(form.subtotal))
+watch(vatRatePercent, () => recalculateBillingTotals(form.subtotal))
+</script>
+
+<style scoped>
+/* =========================================
+   ESTILOS SNOW WHITE & WAVE 
+   ========================================= */
+
+/* Variáveis de cor suaves */
+.text-dark-wave { color: #1e293b; } /* Slate 800 */
+.text-snow-muted { color: #64748b; } /* Slate 500 */
+
+/* Card Principal - Efeito Nuvem/Onda */
+.pluse-wave-card {
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05); /* Sombra difusa e elegante */
+  overflow: hidden;
+  border: 1px solid rgba(241, 245, 249, 0.8);
+}
+
+/* Tabela Leve - Sem bordas laterais, hover suave */
+.pluse-light-table {
+  background: transparent;
+}
+:deep(.pluse-light-table thead tr th) {
+  background-color: #f8fafc; /* Fundo cinza ultraleve */
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  border-bottom: none !important;
+  padding: 16px 24px;
+}
+:deep(.pluse-light-table tbody tr td) {
+  border-bottom: 1px solid #f1f5f9 !important; /* Linha divisória quase invisível */
+  padding: 16px 24px;
+  transition: background-color 0.3s ease;
+}
+:deep(.pluse-light-table tbody tr:hover td) {
+  background-color: #f8fafc; /* Efeito Wave ao passar o rato */
+}
+
+/* Botões Globais Wave */
+.wave-btn-primary {
+  background: linear-gradient(135deg, var(--q-primary) 0%, #3b82f6 100%);
+  border-radius: 50px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.wave-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.35);
+}
+
+/* Tooltips */
+.wave-tooltip {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Alinhamento de Ações na tabela */
+.doc-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+.doc-actions .q-btn {
+  background: #f1f5f9; /* Fundo arredondado suave por trás do ícone */
+  transition: all 0.2s;
+}
+.doc-actions .q-btn:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+</style>

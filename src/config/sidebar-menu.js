@@ -21,6 +21,7 @@ export const sidebarMenu = [
   { label: 'Contratos de cliente', icon: 'ki-document', to: '/client-contracts' },
   { label: 'Clientes', icon: 'ki-profile-user', to: '/clients' },
   { label: 'Postos', icon: 'ki-geolocation', to: '/posts' },
+  { label: 'Registo de serviços', icon: 'ki-briefcase', to: '/service-catalog' },
 
   { type: 'heading', label: 'Escalas e assiduidade' },
   { label: 'Escalas', icon: 'ki-calendar', to: '/schedules' },
@@ -32,9 +33,16 @@ export const sidebarMenu = [
   { label: 'Aprovações pendentes', icon: 'ki-check-circle', to: '/employees/approvals' },
   { label: 'Contratos de trabalho', icon: 'ki-document', to: '/employment-contracts' },
   { label: 'Pedidos de férias', icon: 'ki-calendar-tick', to: '/leaves' },
-  { label: 'Faltas e substituições', icon: 'ki-user-cross', to: '/absences' },
-  { label: 'Baixas médicas', icon: 'ki-notepad', to: '/sick-leaves' },
+  { label: 'Planos de férias', icon: 'ki-calendar-tick', to: '/hr/vacation-plans' },
+  { label: 'Saldo de férias', icon: 'ki-chart-simple', to: '/hr/vacation-balances' },
+  { label: 'Faltas e substituições', icon: 'ki-user', to: '/absences' },
+  { label: 'Baixas médicas', icon: 'ki-shield-tick', to: '/sick-leaves' },
   { label: 'Folha de pagamento', icon: 'ki-cheque', to: '/payroll' },
+
+  { type: 'heading', label: 'Contabilidade e finanças' },
+  { label: 'Plano de contas', icon: 'ki-bank', to: '/finance/accounts' },
+  { label: 'Diário contabilístico', icon: 'ki-document', to: '/finance/journal' },
+  { label: 'Faturação', icon: 'ki-cheque', to: '/finance/billing' },
 
   { type: 'heading', label: 'Ativos e equipamento' },
   { label: 'Viaturas', icon: 'ki-setting-2', to: '/assets/vehicles' },
@@ -42,6 +50,7 @@ export const sidebarMenu = [
   { label: 'Atribuições', icon: 'ki-user-tick', to: '/assets/assignments' },
 
   { type: 'heading', label: 'Administração' },
+  { label: 'Configurações', icon: 'ki-setting', to: '/admin/settings' },
   { label: 'Licença do sistema', icon: 'ki-shield-tick', to: '/admin/license' },
 ]
 

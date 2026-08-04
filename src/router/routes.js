@@ -80,6 +80,11 @@ const routes = [
         component: () => import('pages/admin/LicensePage.vue'),
       },
       {
+        path: 'admin/settings',
+        name: 'admin-settings',
+        component: () => import('pages/admin/SettingsPage.vue'),
+      },
+      {
         path: 'admin/server',
         name: 'server-config',
         component: () => import('pages/admin/ServerConfigPage.vue'),
@@ -212,6 +217,11 @@ const routes = [
         name: 'posts-list',
         component: () => import('pages/posts/PostsListPage.vue'),
       },
+      {
+        path: 'service-catalog',
+        name: 'service-catalog',
+        component: () => import('pages/operations/ServiceCatalogPage.vue'),
+      },
 
       {
         path: 'schedules',
@@ -246,6 +256,16 @@ const routes = [
         name: 'absences',
         component: () => import('pages/leaves/AbsencesPage.vue'),
       },
+      {
+        path: 'hr/vacation-plans',
+        name: 'hr-vacation-plans',
+        component: () => import('pages/hr/VacationPlansPage.vue'),
+      },
+      {
+        path: 'hr/vacation-balances',
+        name: 'hr-vacation-balances',
+        component: () => import('pages/hr/VacationBalancesPage.vue'),
+      },
 
       {
         path: 'payroll/categories',
@@ -261,6 +281,21 @@ const routes = [
         path: 'payroll/:id',
         name: 'payroll-run-detail',
         component: () => import('pages/payroll/PayrollRunDetailPage.vue'),
+      },
+      {
+        path: 'finance/accounts',
+        name: 'finance-accounts',
+        component: () => import('pages/finance/FinanceAccountsPage.vue'),
+      },
+      {
+        path: 'finance/journal',
+        name: 'finance-journal',
+        component: () => import('pages/finance/JournalEntriesPage.vue'),
+      },
+      {
+        path: 'finance/billing',
+        name: 'finance-billing',
+        component: () => import('pages/finance/BillingDocumentsPage.vue'),
       },
 
       {
