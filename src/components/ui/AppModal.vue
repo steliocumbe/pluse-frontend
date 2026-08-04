@@ -13,7 +13,7 @@
 <template>
   <Teleport to="body">
     <transition
-      enter-active-class="transition duration-150 ease-out"
+      enter-active-class="transition duration-220 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
       leave-active-class="transition duration-100 ease-in"
@@ -33,8 +33,8 @@
 
         <!-- Modal panel -->
         <transition
-          enter-active-class="transition duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-active-class="transition duration-300 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-4"
           enter-to-class="opacity-100 scale-100 translate-y-0"
           leave-active-class="transition duration-150 ease-in"
           leave-from-class="opacity-100 scale-100"
@@ -49,6 +49,7 @@
             class="relative bg-popover text-popover-foreground rounded-2xl shadow-2xl border border-border w-full flex flex-col max-h-[90vh]"
             :class="sizeClass"
             :tabindex="-1"
+            style="box-shadow: 0 20px 50px color-mix(in oklab, black 35%, transparent), 0 0 28px color-mix(in oklab, white 64%, transparent);"
           >
             <button
               v-if="closable"

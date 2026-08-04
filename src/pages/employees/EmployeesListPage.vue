@@ -165,6 +165,10 @@
                     <q-item-section avatar><q-icon name="block" color="negative" /></q-item-section>
                     <q-item-section>Inactivar</q-item-section>
                   </q-item>
+                  <q-item clickable v-close-popup @click="deleteEmployee(props.row)">
+                    <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
+                    <q-item-section>Apagar</q-item-section>
+                  </q-item>
                 </q-list>
               </q-menu>
             </q-btn>
@@ -181,6 +185,24 @@
           />
         </template>
       </q-table>
+
+      <ModernAlert
+        v-model="confirmState.open"
+        :tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'warning'"
+        :title="confirmState.mode === 'delete' ? 'Apagar colaborador' : confirmState.mode === 'approve' ? 'Aprovar colaborador' : 'Inactivar colaborador'"
+        :message="confirmState.employee
+          ? (confirmState.mode === 'delete'
+            ? `Apagar <b>${confirmState.employee.full_name}</b>? O registo vai desaparecer da lista.`
+            : confirmState.mode === 'approve'
+              ? `Aprovar <b>${confirmState.employee.full_name}</b>? A conta de utilizador (se existir) será activada.`
+              : `Inactivar <b>${confirmState.employee.full_name}</b>? O acesso à plataforma é suspenso.`)
+          : ''"
+        :confirm-label="confirmState.mode === 'delete' ? 'Apagar' : confirmState.mode === 'approve' ? 'Aprovar' : 'Inactivar'"
+        :confirm-icon="confirmState.mode === 'delete' ? 'delete' : confirmState.mode === 'approve' ? 'check_circle' : 'block'"
+        :confirm-tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'negative'"
+        @confirm="runConfirmAction"
+        @cancel="confirmState.open = false"
+      />
     </q-card>
   </AdminPageTemplate>
 </template>
@@ -188,7 +210,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
 import { useEmployeesStore } from 'src/stores/employees'
 import { useToast } from 'src/composables/useToast'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
@@ -196,9 +217,9 @@ import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import ActiveFiltersBar from 'src/components/ui/ActiveFiltersBar.vue'
+import ModernAlert from 'src/components/ui/ModernAlert.vue'
 
 const router = useRouter()
-const $q = useQuasar()
 const store = useEmployeesStore()
 const toast = useToast()
 
@@ -210,6 +231,7 @@ const pagination = ref({
   rowsPerPage: 10,
   rowsNumber: 0,
 })
+const confirmState = ref({ open: false, employee: null, mode: 'inactivate' })
 
 const columns = [
   { name: 'full_name', label: 'Colaborador', field: 'full_name', align: 'left', sortable: true },
@@ -284,37 +306,39 @@ function onRowClick(_evt, row) {
 }
 
 async function approve(employee) {
-  $q.dialog({
-    title: 'Aprovar colaborador',
-    message: `Aprovar <b>${employee.full_name}</b>? A conta de utilizador (se existir) será activada.`,
-    html: true,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Aprovar', color: 'positive', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await store.approve(employee.id)
-      toast.success(`${employee.full_name} foi aprovado.`)
-    } catch (err) {
-      toast.error('Não foi possível aprovar.', { caption: err?.response?.data?.detail })
-    }
-  })
+  confirmState.value = { open: true, employee, mode: 'approve' }
 }
 
 async function inactivate(employee) {
-  $q.dialog({
-    title: 'Inactivar colaborador',
-    message: `Inactivar <b>${employee.full_name}</b>? O acesso à plataforma é suspenso.`,
-    html: true,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Inactivar', color: 'negative', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await store.inactivate(employee.id)
-      toast.success(`${employee.full_name} foi inactivado.`)
-    } catch (err) {
-      toast.error('Não foi possível inactivar.', { caption: err?.response?.data?.detail })
+  confirmState.value = { open: true, employee, mode: 'inactivate' }
+}
+
+function deleteEmployee(employee) {
+  confirmState.value = { open: true, employee, mode: 'delete' }
+}
+
+async function runConfirmAction() {
+  const { employee, mode } = confirmState.value
+  confirmState.value.open = false
+  if (!employee) return
+
+  try {
+    if (mode === 'approve') {
+      await store.approve(employee.id)
+      toast.success(`${employee.full_name} foi aprovado.`)
+      return
     }
-  })
+    if (mode === 'delete') {
+      await store.remove(employee.id)
+      toast.success(`${employee.full_name} foi apagado.`)
+      await fetchPage()
+      return
+    }
+    await store.inactivate(employee.id)
+    toast.success(`${employee.full_name} foi inactivado.`)
+  } catch (err) {
+    toast.error('Não foi possível concluir a acção.', { caption: err?.response?.data?.detail })
+  }
 }
 
 onMounted(fetchPage)

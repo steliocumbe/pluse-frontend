@@ -336,28 +336,39 @@
 
     <!-- ─────────────── Navigation ─────────────── -->
     <template #navigation>
-      <q-stepper-navigation class="flex flex-wrap items-center justify-between gap-2">
-        <q-btn
-          flat no-caps label="Voltar"
-          icon="arrow_back"
-          :disable="step === 1 || submitting"
-          @click="back"
-        />
-        <div class="flex items-center gap-2">
-          <q-btn flat no-caps label="Cancelar" :disable="submitting" @click="$emit('cancel')" />
+      <q-stepper-navigation class="employee-stepper-nav">
+        <div class="step-status" :class="{ 'step-status--blocked': isCurrentStepBlocked }">
+          <div class="step-status__meta">Passo {{ step }} de {{ lastStep }}</div>
+          <div class="step-status__message">
+            {{ currentStepBlockReason || 'Todos os campos obrigatórios deste passo estão preenchidos.' }}
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <q-btn
-            v-if="step < lastStep"
-            no-caps unelevated color="primary"
-            label="Continuar" icon-right="arrow_forward"
-            @click="next"
+            flat no-caps label="Voltar"
+            icon="arrow_back"
+            :disable="step === 1 || submitting"
+            @click="back"
           />
-          <q-btn
-            v-else
-            no-caps unelevated color="primary"
-            :label="submitLabel"
-            :loading="submitting"
-            @click="onSubmit"
-          />
+          <div class="flex items-center gap-2">
+            <q-btn flat no-caps label="Cancelar" :disable="submitting" @click="$emit('cancel')" />
+            <q-btn
+              v-if="step < lastStep"
+              no-caps unelevated color="primary"
+              label="Continuar" icon-right="arrow_forward"
+              :disable="submitting || isCurrentStepBlocked"
+              @click="next"
+            />
+            <q-btn
+              v-else
+              no-caps unelevated color="primary"
+              :label="submitLabel"
+              :loading="submitting"
+              :disable="submitting"
+              @click="onSubmit"
+            />
+          </div>
         </div>
       </q-stepper-navigation>
     </template>
@@ -612,6 +623,63 @@ const submitLabel = computed(() =>
   props.mode === 'create' ? 'Guardar (pendente)' : 'Guardar alterações',
 )
 
+function isBlank(v) {
+  if (v === null || v === undefined) return true
+  if (Array.isArray(v)) return v.length === 0
+  if (typeof v === 'string') return v.trim() === ''
+  return false
+}
+
+function getStepBlockReason(stepNumber) {
+  if (stepNumber === 1) {
+    if (isBlank(form.full_name)) return 'Preencha o campo obrigatório: Nome completo.'
+    if (isBlank(form.birth_date)) return 'Preencha o campo obrigatório: Data de nascimento.'
+    if (isBlank(form.gender)) return 'Preencha o campo obrigatório: Género.'
+    if (isBlank(form.document_type)) return 'Preencha o campo obrigatório: Tipo de documento.'
+    if (isBlank(form.document_number)) return 'Preencha o campo obrigatório: Número do documento.'
+    if (isBlank(form.phone)) return 'Preencha o campo obrigatório: Telefone.'
+    return ''
+  }
+
+  if (stepNumber === 2) {
+    if (isBlank(form.department)) return 'Selecione o Departamento.'
+    if (form.department === 'operations' && isBlank(form.client)) {
+      return 'Para Operações, selecione o Cliente.'
+    }
+    if (form.department === 'support' && isBlank(form.support_unit)) {
+      return 'Para Suporte, selecione a Unidade de suporte.'
+    }
+    if (isBlank(form.types)) return 'Selecione pelo menos um Tipo de função.'
+    if (isBlank(form.hire_date)) return 'Preencha a Data de admissão.'
+    return ''
+  }
+
+  if (stepNumber === 3) {
+    if (form.create_account && isBlank(form.email)) {
+      return 'E-mail é obrigatório quando criar conta de utilizador.'
+    }
+    return ''
+  }
+
+  if (stepNumber === 5) {
+    if (isBlank(contract.contract_type)) return 'Selecione o Tipo de contrato.'
+    if (isBlank(contract.job_title)) return 'Preencha o Cargo.'
+    if (isBlank(contract.start_date)) return 'Preencha o Início do contrato.'
+    if (contractNeedsEnd.value && isBlank(contract.end_date)) {
+      return 'Preencha o Fim do contrato para o tipo selecionado.'
+    }
+    if (!contract.salary_category && isBlank(contract.base_salary)) {
+      return 'Indique o Salário do contrato ou escolha uma Categoria salarial.'
+    }
+    return ''
+  }
+
+  return ''
+}
+
+const currentStepBlockReason = computed(() => getStepBlockReason(step.value))
+const isCurrentStepBlocked = computed(() => Boolean(currentStepBlockReason.value))
+
 async function validateStep(n) {
   const formRef = stepForms[n]?.value
   if (!formRef) return true // steps without a form (e.g. documents) always pass
@@ -620,19 +688,25 @@ async function validateStep(n) {
 }
 
 async function next() {
-  if (await validateStep(step.value)) {
-    maxStepReached.value = Math.min(
-      lastStep.value,
-      Math.max(maxStepReached.value, step.value + 1),
-    )
-    stepperRef.value?.next()
-  } else {
-    toast.warning('Há campos por preencher neste passo.')
+  try {
+    if (!(await validateStep(step.value))) {
+      toast.warning('Há campos por preencher neste passo.')
+      return
+    }
+
+    const targetStep = Math.min(lastStep.value, step.value + 1)
+    maxStepReached.value = Math.max(maxStepReached.value, targetStep)
+
+    // Use direct model update instead of `stepperRef.next()` because the
+    // next step's `:disable` flag may still be true in the same tick.
+    step.value = targetStep
+  } catch {
+    toast.error('Não foi possível avançar. Tente novamente.')
   }
 }
 
 function back() {
-  stepperRef.value?.previous()
+  step.value = Math.max(1, step.value - 1)
 }
 
 function isStepDisabled(n) {
@@ -683,6 +757,64 @@ defineExpose({
 .employee-stepper {
   background: transparent;
 }
+
+.employee-stepper-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  backdrop-filter: blur(4px);
+  padding-top: 0.75rem;
+}
+
+.step-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--pluse-emerald-500, #10b981) 28%, var(--border));
+  border-radius: 0.625rem;
+  padding: 0.55rem 0.7rem;
+  background: color-mix(in oklab, var(--pluse-emerald-500, #10b981) 8%, var(--card));
+}
+
+.step-status--blocked {
+  border-color: color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 40%, var(--border));
+  background: color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 10%, var(--card));
+}
+
+.step-status__meta {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.step-status__message {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--foreground);
+  text-align: right;
+}
+
+@media (max-width: 820px) {
+  .step-status {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .step-status__message {
+    text-align: left;
+  }
+}
+
 /* Light section label inside a step — separates sub-groups without the
    weight of a full collapsible AppFormSection. */
 .form-group-label {

@@ -26,7 +26,7 @@
       />
     </template>
 
-    <q-card flat bordered class="pluse-card">
+    <q-card flat bordered class="pluse-card relative">
       <q-card-section>
         <EmployeeForm
           ref="formRef"
@@ -37,52 +37,41 @@
           @cancel="onCancel"
         />
       </q-card-section>
+
+      <q-inner-loading :showing="store.submitting" label="A gravar colaborador...">
+        <q-spinner size="42px" color="primary" />
+      </q-inner-loading>
     </q-card>
 
-    <!-- Temporary password modal (shown once after create with create_account) -->
-    <AppModal v-model="showTempPassword" size="md" :persistent="true">
-      <div class="p-6 flex flex-col items-center text-center">
-        <span class="size-12 rounded-full bg-positive/10 flex items-center justify-center mb-4">
-          <AppIcon name="ki-key" :size="24" icon-class="text-positive" />
-        </span>
-        <AppHeading :level="2" class="text-lg font-semibold text-mono leading-tight mb-1.5">
-          Colaborador criado
-        </AppHeading>
-        <p class="text-sm text-muted-foreground leading-relaxed max-w-[360px] mb-4">
-          A conta de acesso foi gerada com a palavra-passe abaixo.
-          <strong class="text-foreground">Copie-a agora</strong> — não é possível recuperá-la depois.
-        </p>
-        <div class="w-full">
-          <div class="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">
-            Palavra-passe temporária
-          </div>
-          <div class="temp-pwd-box">
-            <code class="grow font-mono text-base tracking-wider">{{ tempPassword }}</code>
-            <q-btn flat dense round icon="content_copy" size="sm" @click="copyPassword" />
-          </div>
-          <div class="text-xs text-muted-foreground mt-1.5">
-            O colaborador só pode iniciar sessão depois de ser aprovado.
-          </div>
+    <ModernAlert
+      v-model="feedback.open"
+      :tone="feedback.tone"
+      :title="feedback.title"
+      :message="feedback.message"
+      :confirm-label="feedback.confirmLabel"
+      :confirm-icon="feedback.confirmIcon"
+      :confirm-tone="feedback.confirmTone"
+      :secondary-label="feedback.secondaryLabel"
+      :secondary-icon="feedback.secondaryIcon"
+      :secondary-tone="feedback.secondaryTone"
+      :show-secondary="feedback.showSecondary"
+      @confirm="onFeedbackConfirm"
+      @secondary="goToList"
+      @cancel="feedback.open = false"
+    >
+      <div v-if="feedback.password" class="w-full mt-4">
+        <div class="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">
+          Palavra-passe temporária
+        </div>
+        <div class="temp-pwd-box">
+          <code class="grow font-mono text-base tracking-wider">{{ feedback.password }}</code>
+          <q-btn flat dense round icon="content_copy" size="sm" @click="copyPassword" />
+        </div>
+        <div class="text-xs text-muted-foreground mt-1.5">
+          O colaborador só pode iniciar sessão depois de ser aprovado.
         </div>
       </div>
-      <div class="px-6 pb-6 flex gap-2.5">
-        <q-btn
-          flat
-          no-caps
-          label="Ir para a lista"
-          class="flex-1"
-          @click="goToList"
-        />
-        <q-btn
-          color="primary"
-          unelevated
-          no-caps
-          label="Ver detalhe"
-          class="flex-1"
-          @click="goToDetail"
-        />
-      </div>
-    </AppModal>
+    </ModernAlert>
   </AdminPageTemplate>
 </template>
 
@@ -93,9 +82,7 @@ import { copyToClipboard } from 'quasar'
 import { useEmployeesStore } from 'src/stores/employees'
 import { useToast } from 'src/composables/useToast'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
-import AppModal from 'src/components/ui/AppModal.vue'
-import AppHeading from 'src/components/ui/AppHeading.vue'
-import AppIcon from 'src/components/ui/AppIcon.vue'
+import ModernAlert from 'src/components/ui/ModernAlert.vue'
 import EmployeeForm from 'src/components/employees/EmployeeForm.vue'
 
 const route = useRoute()
@@ -112,9 +99,21 @@ const initialFromQuery = computed(() => {
 })
 
 const formRef = ref(null)
-const showTempPassword = ref(false)
-const tempPassword = ref('')
 const createdId = ref(null)
+const feedback = ref({
+  open: false,
+  tone: 'primary',
+  title: '',
+  message: '',
+  confirmLabel: 'Fechar',
+  confirmIcon: 'check_circle',
+  confirmTone: 'positive',
+  secondaryLabel: 'Ir para a lista',
+  secondaryIcon: 'arrow_right_alt',
+  secondaryTone: 'primary',
+  showSecondary: false,
+  password: '',
+})
 
 async function onSubmit({ payload, initialDocuments = [], initialContract = null }) {
   formRef.value?.clearErrors?.()
@@ -125,17 +124,71 @@ async function onSubmit({ payload, initialDocuments = [], initialContract = null
       ? ` (${initialDocuments.length} documento${initialDocuments.length === 1 ? '' : 's'} anexado${initialDocuments.length === 1 ? '' : 's'})`
       : ''
     if (created?.user?.temporary_password) {
-      tempPassword.value = created.user.temporary_password
-      showTempPassword.value = true
-      toast.success(`Colaborador criado e conta gerada${docsHint}.`)
+      feedback.value = {
+        open: true,
+        tone: 'positive',
+        title: 'Colaborador criado',
+        message: `A conta de acesso foi gerada${docsHint}.`,
+        confirmLabel: 'Ver detalhe',
+        confirmIcon: 'visibility',
+        confirmTone: 'positive',
+        secondaryLabel: 'Ir para a lista',
+        secondaryIcon: 'list',
+        secondaryTone: 'primary',
+        showSecondary: true,
+        password: created.user.temporary_password,
+      }
     } else {
-      toast.success(`${created.full_name} foi criado como pendente${docsHint}.`)
-      router.push(`/employees/${created.id}`)
+      feedback.value = {
+        open: true,
+        tone: 'positive',
+        title: 'Colaborador criado',
+        message: `${created.full_name} foi criado como pendente${docsHint}.`,
+        confirmLabel: 'Ver detalhe',
+        confirmIcon: 'visibility',
+        confirmTone: 'positive',
+        secondaryLabel: 'Ir para a lista',
+        secondaryIcon: 'list',
+        secondaryTone: 'primary',
+        showSecondary: true,
+        password: '',
+      }
     }
   } catch (err) {
     formRef.value?.setFromResponse?.(err.response)
-    toast.error('Verifique os campos assinalados.')
+    const detail = extractFirstError(err?.response?.data)
+    feedback.value = {
+      open: true,
+      tone: 'negative',
+      title: 'Erro ao criar colaborador',
+      message: detail || 'Verifique os campos assinalados.',
+      confirmLabel: 'Fechar',
+      confirmIcon: 'close',
+      confirmTone: 'negative',
+      secondaryLabel: '',
+      secondaryIcon: '',
+      secondaryTone: 'primary',
+      showSecondary: false,
+      password: '',
+    }
   }
+}
+
+function extractFirstError(data) {
+  if (!data) return ''
+  if (typeof data === 'string') return data
+  if (Array.isArray(data)) {
+    const first = data.find(Boolean)
+    return typeof first === 'string' ? first : extractFirstError(first)
+  }
+  if (typeof data === 'object') {
+    if (typeof data.detail === 'string') return data.detail
+    for (const value of Object.values(data)) {
+      const nested = extractFirstError(value)
+      if (nested) return nested
+    }
+  }
+  return ''
 }
 
 function onCancel() {
@@ -144,7 +197,7 @@ function onCancel() {
 
 async function copyPassword() {
   try {
-    await copyToClipboard(tempPassword.value)
+    await copyToClipboard(feedback.value.password)
     toast.success('Palavra-passe copiada.')
   } catch {
     toast.error('Não foi possível copiar. Selecione manualmente.')
@@ -152,13 +205,21 @@ async function copyPassword() {
 }
 
 function goToList() {
-  showTempPassword.value = false
+  feedback.value.open = false
   router.push('/employees')
 }
 
 function goToDetail() {
-  showTempPassword.value = false
+  feedback.value.open = false
   router.push(`/employees/${createdId.value}`)
+}
+
+function onFeedbackConfirm() {
+  if (feedback.value.tone === 'negative') {
+    feedback.value.open = false
+    return
+  }
+  goToDetail()
 }
 </script>
 

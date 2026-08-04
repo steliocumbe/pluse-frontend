@@ -79,6 +79,11 @@ export const employeeService = {
     return api.post(`/employees/${id}/inactivate/`).then((r) => r.data)
   },
 
+  // In admissions workflow, rejecting an employee is mapped to inactivation.
+  reject(id) {
+    return api.post(`/employees/${id}/inactivate/`).then((r) => r.data)
+  },
+
   // Documents
   listDocuments(employeeId) {
     return api.get(`/employees/${employeeId}/documents/`).then((r) => r.data)

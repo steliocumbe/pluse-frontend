@@ -119,6 +119,14 @@ export const useEmployeesStore = defineStore('employees', {
       return updated
     },
 
+    async remove(id) {
+      const result = await employeeService.remove(id)
+      this.items = this.items.filter((employee) => employee.id !== id)
+      if (this.current?.id === id) this.current = null
+      if (this.count > 0) this.count -= 1
+      return result
+    },
+
     _mergeUpdated(updated) {
       const idx = this.items.findIndex((e) => e.id === updated.id)
       if (idx >= 0) this.items[idx] = updated

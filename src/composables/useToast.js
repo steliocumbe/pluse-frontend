@@ -21,13 +21,20 @@ const COMMON = {
   classes: 'pluse-toast',
 }
 
+function withSignature(caption) {
+  const base = (caption || '').trim()
+  if (!base) return 'MIGUEL M.C ERP'
+  if (base.includes('MIGUEL M.C ERP')) return base
+  return `${base} | MIGUEL M.C ERP`
+}
+
 function notify(level, message, opts = {}) {
   return Notify.create({
     ...COMMON,
     type: level,
     message,
     timeout: opts.timeout ?? (level === 'negative' ? 6000 : 3500),
-    caption: opts.caption,
+    caption: withSignature(opts.caption),
     icon: opts.icon,
     ...opts.raw, // escape hatch for Quasar-native props
   })

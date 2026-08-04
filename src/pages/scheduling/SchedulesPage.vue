@@ -41,6 +41,12 @@
           label="Posto" style="min-width: 240px"
           @update:model-value="fetchWeek"
         />
+        <q-select
+          v-model="filters.department" :options="departmentOptions"
+          outlined dense emit-value map-options clearable
+          label="Departamento" style="min-width: 220px"
+          @update:model-value="fetchWeek"
+        />
       </q-card-section>
     </q-card>
 
@@ -111,8 +117,10 @@
           Atribuir turno
         </AppHeading>
         <q-form ref="assignForm" greedy class="flex flex-col gap-4" @submit="submitAssign">
-          <q-select v-model="assign.post" :options="postOptions" label="Posto *"
-                    outlined dense emit-value map-options :rules="[req]" />
+          <q-select v-model="assign.post" :options="postOptions" label="Posto"
+                    outlined dense emit-value map-options clearable />
+          <q-select v-model="assign.department" :options="departmentOptions" label="Departamento"
+                    outlined dense emit-value map-options clearable />
           <q-select v-model="assign.employee" :options="employeeOptions" label="Vigilante *"
                     outlined dense emit-value map-options use-input input-debounce="200"
                     @filter="filterEmployees" :rules="[req]" />
@@ -176,6 +184,7 @@ import { useQuasar } from 'quasar'
 import { shiftService } from 'src/services/scheduling.service'
 import { postService } from 'src/services/post.service'
 import { employeeService } from 'src/services/employee.service'
+import { departmentService } from 'src/services/hr.service'
 import { periodOptions, periodLabel, attendanceVariant } from 'src/config/scheduling'
 import { periodsForRegime } from 'src/config/posts'
 import { useToast } from 'src/composables/useToast'
@@ -227,7 +236,7 @@ const weekRangeLabel = computed(() => {
 const shifts = ref([])
 const loading = ref(false)
 const saving = ref(false)
-const filters = reactive({ post: '' })
+const filters = reactive({ post: '', department: '' })
 
 function guardName(s) {
   return s.attendance_status === 'substituted' && s.substitute_name
@@ -239,10 +248,16 @@ function guardName(s) {
 const board = computed(() => {
   const byPost = new Map()
   for (const s of shifts.value) {
-    if (!byPost.has(s.post)) {
-      byPost.set(s.post, { id: s.post, name: s.post_name, periods: new Map() })
+    const key = s.post ? `post-${s.post}` : (s.department ? `department-${s.department}` : 'unassigned')
+    if (!byPost.has(key)) {
+      byPost.set(key, {
+        id: s.post || s.department,
+        targetType: s.post ? 'post' : 'department',
+        name: s.post_name || s.department_name || 'Sem alocação',
+        periods: new Map(),
+      })
     }
-    const post = byPost.get(s.post)
+    const post = byPost.get(key)
     if (!post.periods.has(s.period)) post.periods.set(s.period, {})
     const cells = post.periods.get(s.period)
     ;(cells[s.date] ||= []).push(s)
@@ -250,17 +265,38 @@ const board = computed(() => {
 
   // Posto filtrado sem turnos — mostra a grelha vazia para se poder preencher.
   if (filters.post) {
-    if (!byPost.has(filters.post)) {
+    const key = `post-${filters.post}`
+    if (!byPost.has(key)) {
       const opt = postOptions.value.find((o) => o.value === filters.post)
-      byPost.set(filters.post, {
-        id: filters.post, name: opt?.label || 'Posto', periods: new Map(),
+      byPost.set(key, {
+        id: filters.post,
+        targetType: 'post',
+        name: opt?.label || 'Posto',
+        periods: new Map(),
       })
     }
     const opt = postOptions.value.find((o) => o.value === filters.post)
     const regime = periodsForRegime(opt?.shiftHours)
-    const post = byPost.get(filters.post)
+    const post = byPost.get(key)
     for (const p of (regime.length ? regime : ['day', 'night'])) {
       if (!post.periods.has(p)) post.periods.set(p, {})
+    }
+  }
+
+  if (filters.department) {
+    const key = `department-${filters.department}`
+    if (!byPost.has(key)) {
+      const opt = departmentOptions.value.find((o) => o.value === filters.department)
+      byPost.set(key, {
+        id: filters.department,
+        targetType: 'department',
+        name: opt?.label || 'Departamento',
+        periods: new Map(),
+      })
+    }
+    const department = byPost.get(key)
+    for (const p of ['day', 'night']) {
+      if (!department.periods.has(p)) department.periods.set(p, {})
     }
   }
 
@@ -275,6 +311,7 @@ const board = computed(() => {
 
 // ── Opções de referência ────────────────────────────────────────────────
 const postOptions = ref([])
+const departmentOptions = ref([])
 const allEmployees = ref([])
 const employeeOptions = ref([])
 
@@ -289,9 +326,10 @@ function filterEmployees(needle, update) {
 
 async function loadRefs() {
   try {
-    const [posts, emps] = await Promise.all([
+    const [posts, emps, departments] = await Promise.all([
       postService.list({ page_size: 200 }),
       employeeService.list({ page_size: 300, status: 'active' }),
+      departmentService.list({ page_size: 200, is_active: true }),
     ])
     postOptions.value = (posts?.results ?? posts ?? []).map((p) => ({
       label: p.client_name ? `${p.name} — ${p.client_name}` : p.name,
@@ -301,6 +339,10 @@ async function loadRefs() {
     allEmployees.value = (emps?.results ?? emps ?? []).map((e) => ({
       label: `${e.full_name} (${e.employee_number})`,
       value: e.id,
+    }))
+    departmentOptions.value = (departments?.results ?? departments ?? []).map((d) => ({
+      label: d.name,
+      value: d.id,
     }))
     employeeOptions.value = allEmployees.value
   } catch { /* interceptor toasts */ }
@@ -315,6 +357,7 @@ async function fetchWeek() {
       page_size: 500,
     }
     if (filters.post) params.post = filters.post
+    if (filters.department) params.department = filters.department
     const data = await shiftService.list(params)
     shifts.value = data?.results ?? data ?? []
   } finally {
@@ -353,11 +396,12 @@ function cancelShift(shift) {
 // ── Atribuir turno ───────────────────────────────────────────────────────
 const showAssign = ref(false)
 const assignForm = ref(null)
-const assign = reactive({ post: '', employee: '', date: '', period: 'day', is_double: false })
+const assign = reactive({ post: '', department: '', employee: '', date: '', period: 'day', is_double: false })
 
 function openAssign(prefill = {}) {
   Object.assign(assign, {
     post: prefill.post || filters.post || '',
+    department: prefill.department || filters.department || '',
     employee: '',
     date: prefill.date || weekDays.value[0].iso,
     period: prefill.period || 'day',
@@ -367,11 +411,20 @@ function openAssign(prefill = {}) {
 }
 function onCellClick(post, periodKey, dateIso, existing) {
   if (existing && existing.length) return // chip handles its own click
-  openAssign({ post: post.id, period: periodKey, date: dateIso })
+  openAssign({
+    post: post.targetType === 'post' ? post.id : '',
+    department: post.targetType === 'department' ? post.id : '',
+    period: periodKey,
+    date: dateIso,
+  })
 }
 
 async function submitAssign() {
   if (!(await assignForm.value?.validate())) return
+  if (!assign.post && !assign.department) {
+    toast.error('Informe um posto ou departamento para atribuir o turno.')
+    return
+  }
   saving.value = true
   try {
     await shiftService.create({ ...assign })

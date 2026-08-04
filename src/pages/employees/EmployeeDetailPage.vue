@@ -74,6 +74,20 @@
         label="Editar"
         :to="`/employees/${employee.id}/edit`"
       />
+      <q-btn flat round dense icon="more_vert" size="sm">
+        <q-menu>
+          <q-list dense style="min-width: 180px">
+            <q-item clickable v-close-popup @click="inactivate">
+              <q-item-section avatar><q-icon name="block" color="negative" /></q-item-section>
+              <q-item-section>Inactivar</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="deleteEmployee">
+              <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
+              <q-item-section>Apagar</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
     </template>
 
     <!-- Quick summary cards (above tabs) -->
@@ -575,13 +589,44 @@
         </div>
       </div>
     </AppModal>
+
+    <ModernAlert
+      v-model="confirmState.open"
+      :tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'warning'"
+      :title="confirmState.mode === 'delete' ? 'Apagar colaborador' : confirmState.mode === 'approve' ? 'Aprovar colaborador' : 'Inactivar colaborador'"
+      :message="employee
+        ? (confirmState.mode === 'delete'
+          ? `Apagar <b>${employee.full_name}</b>? Esta acção remove o registo da lista.`
+          : confirmState.mode === 'approve'
+            ? `Aprovar <b>${employee.full_name}</b>?`
+            : `Inactivar <b>${employee.full_name}</b>?`)
+        : ''"
+      :confirm-label="confirmState.mode === 'delete' ? 'Apagar' : confirmState.mode === 'approve' ? 'Aprovar' : 'Inactivar'"
+      :confirm-icon="confirmState.mode === 'delete' ? 'delete' : confirmState.mode === 'approve' ? 'check_circle' : 'block'"
+      :confirm-tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'negative'"
+      @confirm="runConfirmAction"
+      @cancel="confirmState.open = false"
+    />
+
+    <ModernAlert
+      v-model="deleteDocState.open"
+      tone="negative"
+      title="Eliminar documento"
+      :message="deleteDocState.doc
+        ? `Eliminar <b>${documentTypeLabel(deleteDocState.doc.type)}</b>?`
+        : ''"
+      confirm-label="Eliminar"
+      confirm-icon="delete"
+      confirm-tone="negative"
+      @confirm="runDeleteDocument"
+      @cancel="deleteDocState.open = false"
+    />
   </AdminPageTemplate>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
 import { useEmployeesStore } from 'src/stores/employees'
 import { employeeService } from 'src/services/employee.service'
 import { useToast } from 'src/composables/useToast'
@@ -590,6 +635,7 @@ import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
+import ModernAlert from 'src/components/ui/ModernAlert.vue'
 import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
 import EmployeeContractsTab from 'src/components/employment/EmployeeContractsTab.vue'
 import EmployeeDisciplinaryTab from 'src/components/employment/EmployeeDisciplinaryTab.vue'
@@ -600,7 +646,6 @@ import { documentCategories, documentTypeMap, documentTypeLabel } from 'src/conf
 
 const route = useRoute()
 const router = useRouter()
-const $q = useQuasar()
 const store = useEmployeesStore()
 const toast = useToast()
 
@@ -620,6 +665,8 @@ const loadingDocs = ref(false)
 const uploading = ref(false)
 const showDocModal = ref(false)
 const pendingDocs = ref([])
+const confirmState = ref({ open: false, mode: 'inactivate' })
+const deleteDocState = ref({ open: false, doc: null })
 
 /* Documents grouped by their config category — empty categories are hidden. */
 const categoriesWithDocs = computed(() =>
@@ -699,37 +746,38 @@ function initialsOf(name) {
 }
 
 async function approve() {
-  $q.dialog({
-    title: 'Aprovar colaborador',
-    message: `Aprovar <b>${employee.value.full_name}</b>?`,
-    html: true,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Aprovar', color: 'positive', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await store.approve(employee.value.id)
-      toast.success('Aprovado.')
-    } catch (err) {
-      toast.error('Não foi possível aprovar.', { caption: err?.response?.data?.detail })
-    }
-  })
+  confirmState.value = { open: true, mode: 'approve' }
 }
 
 async function inactivate() {
-  $q.dialog({
-    title: 'Inactivar colaborador',
-    message: `Inactivar <b>${employee.value.full_name}</b>?`,
-    html: true,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Inactivar', color: 'negative', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await store.inactivate(employee.value.id)
-      toast.success('Inactivado.')
-    } catch (err) {
-      toast.error('Não foi possível inactivar.', { caption: err?.response?.data?.detail })
+  confirmState.value = { open: true, mode: 'inactivate' }
+}
+
+function deleteEmployee() {
+  confirmState.value = { open: true, mode: 'delete' }
+}
+
+async function runConfirmAction() {
+  const mode = confirmState.value.mode
+  confirmState.value.open = false
+
+  try {
+    if (mode === 'approve') {
+      await store.approve(employee.value.id)
+      toast.success('Aprovado.')
+      return
     }
-  })
+    if (mode === 'delete') {
+      await store.remove(employee.value.id)
+      toast.success('Colaborador apagado.')
+      await router.push('/employees')
+      return
+    }
+    await store.inactivate(employee.value.id)
+    toast.success('Inactivado.')
+  } catch (err) {
+    toast.error('Não foi possível concluir a acção.', { caption: err?.response?.data?.detail })
+  }
 }
 
 /* Re-fetch the employee — used after a transfer is approved (placement changes). */
@@ -790,20 +838,21 @@ async function uploadAll() {
 }
 
 async function deleteDocument(doc) {
-  $q.dialog({
-    title: 'Eliminar documento',
-    message: `Tem a certeza?`,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Eliminar', color: 'negative', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await employeeService.deleteDocument(employee.value.id, doc.id)
-      toast.success('Documento eliminado.')
-      await fetchDocuments()
-    } catch (err) {
-      toast.error('Não foi possível eliminar.', { caption: err?.response?.data?.detail })
-    }
-  })
+  deleteDocState.value = { open: true, doc }
+}
+
+async function runDeleteDocument() {
+  const doc = deleteDocState.value.doc
+  deleteDocState.value.open = false
+  if (!doc) return
+
+  try {
+    await employeeService.deleteDocument(employee.value.id, doc.id)
+    toast.success('Documento eliminado.')
+    await fetchDocuments()
+  } catch (err) {
+    toast.error('Não foi possível eliminar.', { caption: err?.response?.data?.detail })
+  }
 }
 
 onMounted(async () => {

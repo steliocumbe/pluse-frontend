@@ -116,14 +116,13 @@
                     outline no-caps icon="visibility" label="Ver" :to="item.to"
                   />
                   <q-btn
-                    v-if="group.key !== 'employees'"
                     outline no-caps color="negative" icon="cancel" label="Rejeitar"
-                    @click="reject(group, item)"
+                    @click="openDecision(group, item)"
                   />
                   <q-btn
                     color="positive" unelevated no-caps
                     icon="check_circle" label="Aprovar"
-                    @click="approve(group, item)"
+                    @click="openDecision(group, item)"
                   />
                 </div>
               </div>
@@ -200,14 +199,57 @@
           <q-btn
             v-if="detailItem.raw?.status === 'pending'"
             outline no-caps color="negative" icon="cancel" label="Rejeitar"
-            @click="showDetail = false; reject(detailGroup, detailItem)"
+            @click="showDetail = false; openDecision(detailGroup, detailItem)"
           />
           <q-btn
             v-if="detailItem.raw?.status === 'pending'"
             unelevated no-caps color="positive" icon="check_circle" label="Aprovar"
-            @click="showDetail = false; approve(detailGroup, detailItem)"
+            @click="showDetail = false; openDecision(detailGroup, detailItem)"
           />
         </div>
+      </div>
+    </AppModal>
+
+    <AppModal v-model="showDecision" size="md" :persistent="true">
+      <div v-if="decisionItem && decisionGroup" class="decision-modal">
+        <header class="decision-modal__head">
+          <span class="decision-modal__icon">
+            <AppIcon name="ki-warning-2" :size="18" />
+          </span>
+          <div>
+            <h3>Confirmar decisão</h3>
+            <p>{{ decisionItem.title }}</p>
+          </div>
+        </header>
+
+        <p class="decision-modal__body">
+          Escolha se pretende aprovar ou rejeitar este registo. A ação remove o item da caixa de pendentes.
+        </p>
+
+        <footer class="decision-modal__footer">
+          <span class="decision-signature">MIGUEL M.C ERP</span>
+          <div class="decision-modal__actions">
+            <q-btn flat no-caps label="Cancelar" @click="showDecision = false" :disable="decisionLoading" />
+            <q-btn
+              outline
+              no-caps
+              color="negative"
+              icon="cancel"
+              label="Rejeitar"
+              :loading="decisionLoading && decisionAction === 'reject'"
+              @click="submitDecision('reject')"
+            />
+            <q-btn
+              unelevated
+              no-caps
+              color="positive"
+              icon="check_circle"
+              label="Aprovar"
+              :loading="decisionLoading && decisionAction === 'approve'"
+              @click="submitDecision('approve')"
+            />
+          </div>
+        </footer>
       </div>
     </AppModal>
   </AdminPageTemplate>
@@ -215,7 +257,6 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useQuasar } from 'quasar'
 import { employeeService } from 'src/services/employee.service'
 import {
   contractService,
@@ -234,7 +275,6 @@ import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
 
-const $q = useQuasar()
 const toast = useToast()
 
 const loading = ref(false)
@@ -252,6 +292,11 @@ const activeTab = ref('employees')
 const showDetail = ref(false)
 const detailItem = ref(null)
 const detailGroup = ref(null)
+const showDecision = ref(false)
+const decisionItem = ref(null)
+const decisionGroup = ref(null)
+const decisionLoading = ref(false)
+const decisionAction = ref('approve')
 
 function openDetail(group, item) {
   detailGroup.value = group
@@ -495,42 +540,37 @@ async function loadAll() {
   }
 }
 
-function approve(group, item) {
-  $q.dialog({
-    title: 'Aprovar',
-    message: `Aprovar <b>${item.title}</b>?`,
-    html: true,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Aprovar', color: 'positive', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await group.service.approve(item.id)
-      toast.success('Aprovado.')
-      await loadAll()
-      refreshPendingCounts()
-    } catch (err) {
-      toast.error('Não foi possível aprovar.', { caption: err?.response?.data?.detail })
-    }
-  })
+function openDecision(group, item) {
+  decisionGroup.value = group
+  decisionItem.value = item
+  showDecision.value = true
 }
 
-function reject(group, item) {
-  $q.dialog({
-    title: 'Rejeitar',
-    message: `Rejeitar <b>${item.title}</b>?`,
-    html: true,
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Rejeitar', color: 'negative', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await group.service.reject(item.id)
-      toast.success('Rejeitado.')
-      await loadAll()
-      refreshPendingCounts()
-    } catch (err) {
+async function submitDecision(action) {
+  if (!decisionGroup.value || !decisionItem.value || decisionLoading.value) return
+
+  decisionAction.value = action
+  decisionLoading.value = true
+  try {
+    if (action === 'approve') {
+      await decisionGroup.value.service.approve(decisionItem.value.id)
+      toast.success('Aprovado.', { caption: decisionItem.value.title })
+    } else {
+      await decisionGroup.value.service.reject(decisionItem.value.id)
+      toast.success('Rejeitado.', { caption: decisionItem.value.title })
+    }
+    showDecision.value = false
+    await loadAll()
+    refreshPendingCounts()
+  } catch (err) {
+    if (action === 'approve') {
+      toast.error('Não foi possível aprovar.', { caption: err?.response?.data?.detail })
+    } else {
       toast.error('Não foi possível rejeitar.', { caption: err?.response?.data?.detail })
     }
-  })
+  } finally {
+    decisionLoading.value = false
+  }
 }
 
 onMounted(loadAll)
@@ -768,6 +808,71 @@ onMounted(loadAll)
   text-decoration: none;
 }
 .file-link:hover { text-decoration: underline; }
+
+.decision-modal {
+  padding: 20px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 92%, white), var(--card));
+}
+
+.decision-modal__head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.decision-modal__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  background: color-mix(in oklab, white 72%, var(--primary) 28%);
+  box-shadow: 0 0 24px color-mix(in oklab, white 70%, var(--primary) 30%);
+}
+
+.decision-modal__head h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 760;
+  color: var(--mono);
+}
+
+.decision-modal__head p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.decision-modal__body {
+  margin: 14px 0 0;
+  color: var(--foreground);
+  line-height: 1.45;
+}
+
+.decision-modal__footer {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.decision-signature {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: color-mix(in oklab, var(--foreground) 74%, white 26%);
+}
+
+.decision-modal__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 /* ── Detalhes estruturados (origem/destino/motivo/etc) ───────────────── */
 .approval-details {
