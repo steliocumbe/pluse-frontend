@@ -248,6 +248,19 @@ function isLeafActive(isActive, isExactActive) {
     transform 160ms ease;
 }
 
+.sidebar-menu-link :deep(.kt-menu-title) {
+  color: var(--pluse-sidebar-item-text) !important;
+}
+
+.sidebar-menu-link :deep(.kt-menu-icon),
+.sidebar-menu-link :deep(.kt-menu-arrow) {
+  color: var(--pluse-sidebar-item-icon) !important;
+}
+
+:deep(.kt-menu-heading) {
+  color: var(--pluse-sidebar-item-heading) !important;
+}
+
 .sidebar-menu-link .kt-menu-title {
   display: block;
   flex: 1 1 auto;
@@ -280,15 +293,19 @@ function isLeafActive(isActive, isExactActive) {
 }
 
 .sidebar-menu-link:hover {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--pluse-sidebar-item-hover-border);
+  background: var(--pluse-sidebar-item-hover-bg);
   transform: translateX(2px);
 }
 
 .sidebar-menu-link-active {
-  border-color: rgba(255, 255, 255, 0.12);
-  background:
-    linear-gradient(90deg, color-mix(in oklab, var(--primary) 34%, transparent), rgba(255, 255, 255, 0.08));
+  border-color: var(--pluse-sidebar-item-active-border);
+  background: var(--pluse-sidebar-item-active-bg);
   box-shadow: inset 3px 0 0 var(--pluse-cyan-500);
+}
+
+.sidebar-menu-link-active :deep(.kt-menu-title),
+.sidebar-menu-link-active :deep(.kt-menu-icon) {
+  color: var(--pluse-sidebar-item-active-text) !important;
 }
 </style>

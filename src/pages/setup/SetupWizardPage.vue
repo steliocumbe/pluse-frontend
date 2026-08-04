@@ -120,6 +120,8 @@
           @click="onSave"
         />
       </footer>
+
+      <div class="setup-signature">MIGUEL M.C ERP</div>
     </div>
   </div>
 </template>
@@ -241,6 +243,16 @@ async function onSave() {
   display: flex;
   flex-direction: column;
   gap: 22px;
+}
+
+.setup-signature {
+  padding-top: 4px;
+  color: #2563eb;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
 }
 .setup-header { text-align: center; }
 .setup-icon {

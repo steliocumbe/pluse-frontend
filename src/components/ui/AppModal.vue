@@ -46,15 +46,14 @@
             ref="panelRef"
             role="dialog"
             aria-modal="true"
-            class="relative bg-popover text-popover-foreground rounded-2xl shadow-2xl border border-border w-full flex flex-col max-h-[90vh]"
+            class="app-modal-panel relative bg-popover text-popover-foreground rounded-[28px] shadow-2xl border border-border/80 w-full flex flex-col max-h-[90vh] overflow-hidden"
             :class="sizeClass"
             :tabindex="-1"
-            style="box-shadow: 0 20px 50px color-mix(in oklab, black 35%, transparent), 0 0 28px color-mix(in oklab, white 64%, transparent);"
           >
             <button
               v-if="closable"
               type="button"
-              class="absolute top-3 end-3 size-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors z-10 bg-popover/80 backdrop-blur-sm"
+              class="absolute top-3 end-3 size-9 inline-flex items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors z-10 bg-popover/85 backdrop-blur-sm border border-border/70"
               aria-label="Fechar"
               @click="close"
             >
@@ -64,6 +63,11 @@
             <div class="overflow-y-auto min-h-0 flex-1">
               <slot :close="close" />
             </div>
+
+            <footer class="app-modal-signature">
+              <span class="app-modal-signature__mark">MIGUEL M.C ERP</span>
+              <span class="app-modal-signature__copy">Janela do sistema.</span>
+            </footer>
           </div>
         </transition>
       </div>
@@ -130,3 +134,58 @@ onBeforeUnmount(() => {
   document.body.style.overflow = prevOverflow
 })
 </script>
+
+<style scoped>
+.app-modal-panel {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 96%, white 4%), var(--card));
+  box-shadow:
+    0 22px 56px color-mix(in oklab, black 28%, transparent),
+    0 0 36px color-mix(in oklab, white 74%, transparent);
+}
+
+.app-modal-signature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid color-mix(in oklab, var(--border) 85%, white 15%);
+  background: linear-gradient(180deg, transparent, color-mix(in oklab, white 90%, var(--card) 10%));
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+
+.app-modal-signature__mark {
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.app-modal-signature__copy {
+  text-align: right;
+}
+
+:global(.dark) .app-modal-panel {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 92%, #0d1d33 8%), var(--card));
+  box-shadow:
+    0 22px 56px color-mix(in oklab, black 56%, transparent),
+    0 0 28px color-mix(in oklab, #38bdf8 12%, transparent);
+}
+
+:global(.dark) .app-modal-signature {
+  border-top: 1px solid color-mix(in oklab, var(--border) 90%, #0b1728 10%);
+  background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--card) 94%, #0d1d33 6%));
+}
+
+@media (max-width: 640px) {
+  .app-modal-signature {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-modal-signature__copy {
+    text-align: left;
+  }
+}
+</style>

@@ -1,5 +1,5 @@
 <template>
-  <section class="login-shell w-full max-w-[1080px]" aria-labelledby="login-title">
+  <section class="login-shell w-full" aria-labelledby="login-title">
     <div class="kt-card login-card overflow-hidden">
       <div class="grid min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
         <aside class="login-intro hidden lg:flex flex-col justify-between gap-8 p-12">
@@ -30,6 +30,34 @@
                 <AppIcon name="ki-chart-simple" :size="18" />
               </span>
               <span>Informação pronta para decisão</span>
+            </div>
+          </div>
+
+          <div class="login-support-card">
+            <p class="login-support-card__title">Assistência técnica</p>
+            <div class="login-support-item">
+              <span class="login-support-item__icon">
+                <AppIcon name="ki-whatsapp" :size="16" />
+              </span>
+              <span>+258 873404155</span>
+            </div>
+            <div class="login-support-item">
+              <span class="login-support-item__icon">
+                <AppIcon name="ki-sms" :size="16" />
+              </span>
+              <span>reanecaetano@gmail.com</span>
+            </div>
+            <div class="login-support-item">
+              <span class="login-support-item__icon">
+                <AppIcon name="ki-bank" :size="16" />
+              </span>
+              <span>NUIT 402158042</span>
+            </div>
+            <div class="login-support-item login-support-item--start">
+              <span class="login-support-item__icon">
+                <AppIcon name="ki-geolocation" :size="16" />
+              </span>
+              <span>Rua da amizade Nº46, Maputo</span>
             </div>
           </div>
         </aside>
@@ -141,7 +169,7 @@
 
             <button
               type="submit"
-              class="kt-btn kt-btn-primary flex justify-center w-full"
+              class="kt-btn kt-btn-primary login-submit flex justify-center w-full"
               :disabled="auth.loading || !canSubmit"
             >
               <span v-if="auth.loading" class="flex items-center gap-2">
@@ -208,9 +236,13 @@ async function onSubmit() {
 
 <style scoped>
 .login-card {
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  border-radius: 30px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
   animation: login-card-in 520ms ease-out both;
   box-shadow:
     0 24px 70px color-mix(in oklab, var(--foreground) 8%, transparent),
+    0 0 34px color-mix(in oklab, white 72%, transparent),
     0 1px 0 color-mix(in oklab, var(--border) 80%, transparent);
 }
 
@@ -218,6 +250,7 @@ async function onSubmit() {
   position: relative;
   overflow: hidden;
   background:
+    radial-gradient(circle at top left, color-mix(in oklab, white 80%, var(--primary) 20%), transparent 40%),
     linear-gradient(180deg, color-mix(in oklab, var(--muted) 54%, transparent), var(--background)),
     linear-gradient(135deg, color-mix(in oklab, var(--primary) 16%, transparent), transparent 60%);
   border-inline-end: 1px solid var(--border);
@@ -286,8 +319,54 @@ async function onSubmit() {
   font-size: 0.9rem;
 }
 
+.login-support-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in oklab, var(--border) 76%, white 24%);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.96));
+  box-shadow: 0 14px 30px -20px rgba(15, 23, 42, 0.24);
+}
+
+.login-support-card__title {
+  margin: 0 0 2px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-support-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--secondary-foreground);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.login-support-item--start {
+  align-items: flex-start;
+}
+
+.login-support-item__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--primary) 10%, white);
+  color: var(--primary);
+}
+
 .login-form {
   background:
+    radial-gradient(circle at top right, color-mix(in oklab, white 82%, var(--primary) 18%), transparent 28%),
     linear-gradient(180deg, color-mix(in oklab, var(--primary) 4%, transparent), transparent 34%),
     var(--background);
 }
@@ -363,6 +442,20 @@ async function onSubmit() {
   color: var(--primary);
 }
 
+.login-submit {
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--pluse-blue-500) 100%) !important;
+  border: 1px solid color-mix(in oklab, var(--primary) 72%, white 28%) !important;
+  box-shadow: 0 10px 24px -10px rgba(59, 130, 246, 0.38);
+}
+
+.login-form :deep(.kt-input),
+.login-form :deep(select.kt-input) {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  border-color: color-mix(in oklab, var(--border) 88%, white 12%);
+}
+
 .login-form :deep(.kt-input:focus-within),
 .login-form :deep(input.kt-input:focus) {
   border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
@@ -417,6 +510,10 @@ async function onSubmit() {
 @media (max-width: 640px) {
   .login-card {
     box-shadow: 0 16px 48px color-mix(in oklab, var(--foreground) 8%, transparent);
+  }
+
+  .login-support-card {
+    padding: 14px;
   }
 
   .login-form-title {

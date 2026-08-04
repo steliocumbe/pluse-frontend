@@ -91,7 +91,7 @@
 
     <!-- Modal Novo Documento (Estilo Wave) -->
     <AppModal v-model="showCreate" size="md" persistent class="wave-modal">
-      <div class="p-6 bg-white rounded-3xl">
+      <div class="p-6 wave-modal-surface rounded-3xl">
         <div class="mb-6">
           <AppHeading :level="3" class="text-xl font-bold text-dark-wave m-0">Novo Documento</AppHeading>
           <span class="text-xs text-snow-muted">New Financial Document</span>
@@ -106,7 +106,7 @@
           <q-select rounded v-model="form.document_type" :options="docTypeOptions" emit-value map-options outlined dense label="Tipo de Documento / Type *" :rules="[req]" />
           
           <!-- Toggle Box Snow White -->
-          <div class="flex items-center justify-between rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 shadow-sm">
+          <div class="wave-soft-surface flex items-center justify-between rounded-2xl px-4 py-3 shadow-sm">
             <div>
               <div class="text-sm font-bold text-dark-wave">Isento de IVA / Tax Exempt</div>
               <div class="text-xs text-snow-muted mt-1">Quando ativo, o imposto fica em 0,00.</div>
@@ -120,10 +120,10 @@
           </div>
 
           <!-- Totais com fundo levemente destacado -->
-          <div class="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <q-input rounded v-model.number="form.subtotal" type="number" min="0" step="0.01" outlined dense label="Subtotal *" :rules="[req]" bg-color="white" />
-            <q-input rounded v-model.number="form.tax_amount" type="number" min="0" step="0.01" outlined dense :label="`IVA (${vatRatePercentLabel})`" :rules="[req]" readonly bg-color="white" />
-            <q-input rounded v-model.number="form.total_amount" type="number" min="0" step="0.01" outlined dense label="Total *" :rules="[req]" readonly bg-color="white" class="font-bold" />
+          <div class="wave-soft-surface grid grid-cols-3 gap-3 p-4 rounded-2xl">
+            <q-input rounded v-model.number="form.subtotal" type="number" min="0" step="0.01" outlined dense label="Subtotal *" :rules="[req]" />
+            <q-input rounded v-model.number="form.tax_amount" type="number" min="0" step="0.01" outlined dense :label="`IVA (${vatRatePercentLabel})`" :rules="[req]" readonly />
+            <q-input rounded v-model.number="form.total_amount" type="number" min="0" step="0.01" outlined dense label="Total *" :rules="[req]" readonly class="font-bold" />
           </div>
 
           <div class="flex justify-end gap-3 mt-4">
@@ -480,16 +480,25 @@ watch(vatRatePercent, () => recalculateBillingTotals(form.subtotal))
    ========================================= */
 
 /* Variáveis de cor suaves */
-.text-dark-wave { color: #1e293b; } /* Slate 800 */
-.text-snow-muted { color: #64748b; } /* Slate 500 */
+.text-dark-wave { color: var(--pluse-table-text); } /* Adapta por tema */
+.text-snow-muted { color: var(--pluse-table-muted); } /* Adapta por tema */
+
+.wave-modal-surface {
+  background: transparent;
+}
+
+.wave-soft-surface {
+  border: 1px solid var(--pluse-wave-soft-border);
+  background: color-mix(in oklab, var(--card) 94%, var(--muted) 6%);
+}
 
 /* Card Principal - Efeito Nuvem/Onda */
 .pluse-wave-card {
-  background: #ffffff;
+  background: var(--pluse-wave-card-bg);
   border-radius: 24px;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05); /* Sombra difusa e elegante */
+  box-shadow: var(--pluse-wave-shadow); /* Sombra difusa e elegante */
   overflow: hidden;
-  border: 1px solid rgba(241, 245, 249, 0.8);
+  border: 1px solid var(--pluse-wave-soft-border);
 }
 
 /* Tabela Leve - Sem bordas laterais, hover suave */
@@ -497,8 +506,8 @@ watch(vatRatePercent, () => recalculateBillingTotals(form.subtotal))
   background: transparent;
 }
 :deep(.pluse-light-table thead tr th) {
-  background-color: #f8fafc; /* Fundo cinza ultraleve */
-  color: #64748b;
+  background-color: color-mix(in oklab, var(--pluse-table-head-bg) 86%, transparent); /* Fundo cinza ultraleve */
+  color: var(--pluse-table-muted);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -507,12 +516,12 @@ watch(vatRatePercent, () => recalculateBillingTotals(form.subtotal))
   padding: 16px 24px;
 }
 :deep(.pluse-light-table tbody tr td) {
-  border-bottom: 1px solid #f1f5f9 !important; /* Linha divisória quase invisível */
+  border-bottom: 1px solid var(--pluse-table-row-border) !important; /* Linha divisória quase invisível */
   padding: 16px 24px;
   transition: background-color 0.3s ease;
 }
 :deep(.pluse-light-table tbody tr:hover td) {
-  background-color: #f8fafc; /* Efeito Wave ao passar o rato */
+  background-color: var(--pluse-table-row-hover); /* Efeito Wave ao passar o rato */
 }
 
 /* Botões Globais Wave */
@@ -546,11 +555,11 @@ watch(vatRatePercent, () => recalculateBillingTotals(form.subtotal))
   align-items: center;
 }
 .doc-actions .q-btn {
-  background: #f1f5f9; /* Fundo arredondado suave por trás do ícone */
+  background: var(--pluse-action-bg); /* Fundo arredondado suave por trás do ícone */
   transition: all 0.2s;
 }
 .doc-actions .q-btn:hover {
-  background: #e2e8f0;
+  background: var(--pluse-action-bg-hover);
   transform: scale(1.05);
 }
 </style>

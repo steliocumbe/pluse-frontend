@@ -788,9 +788,9 @@ function coverageLabel(c) {
   border: 1px solid color-mix(in oklab, var(--pluse-tone) 22%, var(--border));
   border-radius: 16px;
   background:
-    linear-gradient(135deg, color-mix(in oklab, var(--pluse-tone) 9%, #ffffff), #ffffff 58%);
+    linear-gradient(135deg, color-mix(in oklab, var(--pluse-tone) 10%, var(--card)), color-mix(in oklab, var(--card) 94%, var(--muted) 6%) 58%);
   padding: 14px;
-  box-shadow: 0 14px 32px rgba(15, 37, 68, 0.06);
+  box-shadow: 0 14px 32px color-mix(in oklab, black 14%, transparent);
 }
 
 .cco-command-card__icon {
@@ -820,7 +820,7 @@ function coverageLabel(c) {
 .cco-command-card__button {
   border: 1px solid color-mix(in oklab, var(--pluse-tone) 30%, transparent);
   border-radius: 999px;
-  background: #ffffff;
+  background: color-mix(in oklab, var(--card) 92%, var(--muted) 8%);
   color: var(--pluse-tone);
   cursor: pointer;
   font-size: 0.78rem;

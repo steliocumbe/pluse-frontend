@@ -214,25 +214,25 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 }
 
 .pluse-dashboard-hero-action {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  border-color: var(--pluse-demo-hero-action-border);
+  background: var(--pluse-demo-hero-action-bg);
+  color: var(--pluse-demo-hero-action-text);
 }
 
 .pluse-dashboard-hero-primary {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #0f2544;
+  border-color: var(--pluse-demo-hero-primary-border);
+  background: var(--pluse-demo-hero-primary-bg);
+  color: var(--pluse-demo-hero-primary-text);
 }
 
 .pluse-dashboard-meta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--pluse-demo-meta-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.88);
+  background: var(--pluse-demo-meta-bg);
+  color: var(--pluse-demo-meta-text);
   padding: 8px 11px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -249,20 +249,20 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
   align-items: center;
   justify-content: space-between;
   min-height: 56px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--pluse-demo-meta-border);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--pluse-demo-meta-bg);
   padding: 14px 16px;
 }
 
 .pluse-dashboard-hero-stat span {
-  color: rgba(255, 255, 255, 0.8);
+  color: color-mix(in oklab, var(--pluse-demo-meta-text) 90%, transparent);
   font-size: 0.9rem;
   font-weight: 700;
 }
 
 .pluse-dashboard-hero-stat strong {
-  color: #ffffff;
+  color: var(--pluse-demo-hero-action-text);
   font-size: 1.45rem;
   font-weight: 800;
 }
@@ -288,10 +288,10 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-panel,
 .pluse-dashboard-kpi {
-  border: 1px solid #dce5f1;
+  border: 1px solid color-mix(in oklab, var(--border) 86%, transparent);
   border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 16px 38px rgba(15, 37, 68, 0.07);
+  background: color-mix(in oklab, var(--card) 96%, white 4%);
+  box-shadow: 0 16px 38px color-mix(in oklab, black 14%, transparent);
 }
 
 .pluse-dashboard-kpi {
@@ -342,7 +342,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-kpi-label {
   margin-top: 14px;
-  color: #58708e;
+  color: var(--muted-foreground);
   font-size: 0.9rem;
   font-weight: 750;
 }
@@ -352,7 +352,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
   z-index: 1;
   display: block;
   margin-top: 4px;
-  color: #07111f;
+  color: var(--foreground);
   font-size: 1.85rem;
   font-weight: 850;
   line-height: 1;
@@ -360,7 +360,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-kpi-caption {
   margin-top: 14px;
-  color: #60758f;
+  color: var(--muted-foreground);
   font-size: 0.88rem;
 }
 
@@ -394,7 +394,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-panel-head span {
   display: block;
-  color: #60758f;
+  color: var(--muted-foreground);
   font-size: 0.84rem;
   font-weight: 800;
 }
@@ -402,7 +402,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 .pluse-dashboard-panel-head strong {
   display: block;
   margin-top: 4px;
-  color: #07111f;
+  color: var(--foreground);
   font-size: 1.05rem;
   font-weight: 850;
 }
@@ -455,9 +455,9 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
   display: flex;
   min-width: 0;
   gap: 12px;
-  border: 1px solid #e4ebf5;
+  border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
   border-radius: 14px;
-  background: #fbfdff;
+  background: color-mix(in oklab, var(--card) 92%, var(--muted) 8%);
   color: inherit;
   padding: 13px;
   text-decoration: none;
@@ -468,8 +468,8 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 }
 
 .pluse-dashboard-flow-step:hover {
-  border-color: color-mix(in oklab, var(--pluse-tone) 32%, #dce5f1);
-  box-shadow: 0 14px 30px rgba(15, 37, 68, 0.08);
+  border-color: color-mix(in oklab, var(--pluse-tone) 38%, var(--border));
+  box-shadow: 0 14px 30px color-mix(in oklab, black 16%, transparent);
   transform: translateY(-1px);
 }
 
@@ -486,14 +486,14 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-flow-step strong {
   display: block;
-  color: #07111f;
+  color: var(--foreground);
   font-size: 0.95rem;
   font-weight: 850;
 }
 
 .pluse-dashboard-flow-step p {
   margin: 4px 0 0;
-  color: #60758f;
+  color: var(--muted-foreground);
   font-size: 0.82rem;
   line-height: 1.42;
 }
@@ -506,9 +506,9 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  border: 1px solid #e4ebf5;
+  border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
   border-radius: 13px;
-  background: #fbfdff;
+  background: color-mix(in oklab, var(--card) 92%, var(--muted) 8%);
   padding: 12px;
 }
 
@@ -529,7 +529,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 .pluse-dashboard-task strong,
 .pluse-dashboard-billing-row strong,
 .pluse-dashboard-event strong {
-  color: #07111f;
+  color: var(--foreground);
   font-size: 0.95rem;
   font-weight: 800;
 }
@@ -539,7 +539,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 .pluse-dashboard-billing-row p,
 .pluse-dashboard-event p {
   margin: 4px 0 0;
-  color: #60758f;
+  color: var(--muted-foreground);
   font-size: 0.87rem;
   line-height: 1.45;
 }
@@ -555,7 +555,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-billing-row > span,
 .pluse-dashboard-compact-row > span {
-  color: #047857;
+  color: color-mix(in oklab, var(--pluse-emerald-500) 82%, var(--foreground));
   font-size: 0.95rem;
   font-weight: 850;
 }
@@ -581,7 +581,7 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 
 .pluse-dashboard-event time {
   margin-left: auto;
-  color: #60758f;
+  color: var(--muted-foreground);
   font-size: 0.82rem;
   font-weight: 850;
 }
@@ -594,25 +594,25 @@ const totalBilling = computed(() => billingByClient.value.reduce((sum, item) => 
 .pluse-dashboard .is-blue,
 .pluse-dashboard-kpi.is-blue {
   --pluse-tone: #3f6df6;
-  --pluse-soft: #e4ebff;
+  --pluse-soft: color-mix(in oklab, var(--pluse-tone) 17%, var(--card));
 }
 
 .pluse-dashboard .is-green,
 .pluse-dashboard-kpi.is-green {
   --pluse-tone: #10b981;
-  --pluse-soft: #dcfce7;
+  --pluse-soft: color-mix(in oklab, var(--pluse-tone) 16%, var(--card));
 }
 
 .pluse-dashboard .is-amber,
 .pluse-dashboard-kpi.is-amber {
   --pluse-tone: #f59e0b;
-  --pluse-soft: #fff3d7;
+  --pluse-soft: color-mix(in oklab, var(--pluse-tone) 15%, var(--card));
 }
 
 .pluse-dashboard .is-red,
 .pluse-dashboard-kpi.is-red {
   --pluse-tone: #ef4444;
-  --pluse-soft: #fee2e2;
+  --pluse-soft: color-mix(in oklab, var(--pluse-tone) 16%, var(--card));
 }
 
 @media (max-width: 1390px) {

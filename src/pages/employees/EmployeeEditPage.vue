@@ -88,9 +88,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.pluse-card {
-  background: var(--card);
-}
 .loading-state {
   display: flex;
   align-items: center;

@@ -45,6 +45,11 @@
       <router-view />
     </main>
 
+    <footer class="shell-footer">
+      <span class="shell-footer__mark">MIGUEL M.C ERP</span>
+      <span class="shell-footer__copy">Janela operacional unificada do sistema PLUSE.</span>
+    </footer>
+
     <LicenseExpiryModal />
   </div>
 </template>
@@ -132,5 +137,38 @@ onMounted(async () => {
   transform: translateY(-1px);
   box-shadow: 0 16px 28px color-mix(in oklab, var(--primary) 30%, transparent);
   background: color-mix(in oklab, var(--primary) 8%, var(--card));
+}
+
+.shell-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 28px 16px;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+
+.shell-footer__mark {
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.shell-footer__copy {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .shell-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-inline: 18px;
+  }
+
+  .shell-footer__copy {
+    text-align: left;
+  }
 }
 </style>

@@ -5,7 +5,7 @@
     description="Direito anual, dias gozados e saldo remanescente por colaborador."
   >
     <q-card flat bordered class="pluse-card">
-      <q-table :rows="rows" :columns="columns" row-key="id" flat bordered :loading="loading" no-data-label="Sem saldos disponíveis.">
+      <q-table :rows="rows" :columns="columns" row-key="id" flat class="pluse-light-table" :loading="loading" no-data-label="Sem saldos disponíveis.">
         <template #body-cell-employee="props">
           <q-td :props="props">
             <div class="font-semibold">{{ props.row.employee_name }}</div>
@@ -113,4 +113,9 @@ onMounted(fetchRows)
 
 <style scoped>
 .pluse-card { background: var(--card); }
+
+.pluse-light-table :deep(.q-table__middle),
+.pluse-light-table :deep(.q-table) {
+  background: transparent;
+}
 </style>

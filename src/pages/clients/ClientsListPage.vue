@@ -213,6 +213,4 @@ onMounted(fetchPage)
 </script>
 
 <style scoped>
-.pluse-card { background: var(--card); }
-.pluse-table :deep(.q-table__top) { display: none; }
 </style>

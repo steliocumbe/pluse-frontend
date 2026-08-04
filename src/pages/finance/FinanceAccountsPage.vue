@@ -14,7 +14,7 @@
         :columns="columns"
         row-key="id"
         flat
-        bordered
+        class="pluse-light-table"
         :loading="loading"
         no-data-label="Sem contas registadas."
       >
@@ -145,4 +145,9 @@ onMounted(fetchRows)
 
 <style scoped>
 .pluse-card { background: var(--card); }
+
+.pluse-light-table :deep(.q-table__middle),
+.pluse-light-table :deep(.q-table) {
+  background: transparent;
+}
 </style>

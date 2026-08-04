@@ -35,6 +35,11 @@
     <div class="admin-page-content">
       <slot />
     </div>
+
+    <footer class="admin-page-footer">
+      <span class="admin-page-footer__mark">MIGUEL M.C ERP</span>
+      <span class="admin-page-footer__copy">Rodapé padrão da aba administrativa.</span>
+    </footer>
   </section>
 </template>
 
@@ -76,32 +81,32 @@ defineProps({
 .admin-page-hero {
   position: relative;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--primary) 18%, transparent);
-  border-radius: 18px;
-  background: var(--pluse-page-hero);
-  color: white;
-  box-shadow: 0 22px 60px color-mix(in oklab, var(--pluse-navy-950) 14%, transparent);
+  border: 1px solid var(--pluse-admin-hero-border);
+  border-radius: 28px;
+  background: var(--pluse-admin-hero-bg);
+  color: var(--pluse-admin-hero-fg);
+  box-shadow: var(--pluse-admin-hero-shadow);
 }
 
 .admin-page-hero::before {
   position: absolute;
-  inset: auto 4% -42% auto;
-  width: 320px;
-  height: 320px;
+  inset: auto 4% -34% auto;
+  width: 280px;
+  height: 280px;
   content: '';
   border-radius: 999px;
-  background: color-mix(in oklab, var(--pluse-cyan-500) 22%, transparent);
-  filter: blur(10px);
+  background: var(--pluse-admin-hero-orb);
+  filter: blur(18px);
 }
 
 .admin-page-hero::after {
   position: absolute;
-  inset: -30% auto auto 46%;
-  width: 220px;
-  height: 220px;
+  inset: -16% auto auto 52%;
+  width: 190px;
+  height: 190px;
   content: '';
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 32px;
+  border: 1px solid var(--pluse-admin-hero-accent-border);
+  border-radius: 40px;
   transform: rotate(18deg);
 }
 
@@ -125,10 +130,10 @@ defineProps({
 
 .admin-page-eyebrow {
   margin: 0 0 10px;
-  color: color-mix(in oklab, white 78%, var(--pluse-cyan-500));
+  color: var(--primary);
   font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   line-height: 1.2;
   text-transform: uppercase;
 }
@@ -144,9 +149,9 @@ defineProps({
 .admin-page-description {
   max-width: 760px;
   margin: 12px 0 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--pluse-admin-hero-muted);
   font-size: 1.02rem;
-  line-height: 1.72;
+  line-height: 1.65;
 }
 
 .admin-page-meta {
@@ -180,6 +185,27 @@ defineProps({
   gap: 26px;
 }
 
+.admin-page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 4px 0;
+  color: var(--muted-foreground);
+  font-size: 0.73rem;
+}
+
+.admin-page-footer__mark {
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.admin-page-footer__copy {
+  text-align: right;
+}
+
 @media (max-width: 768px) {
   .admin-page-hero-content {
     flex-direction: column;
@@ -197,6 +223,15 @@ defineProps({
 
   .admin-page-hero-extra {
     padding: 0 24px 24px;
+  }
+
+  .admin-page-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-page-footer__copy {
+    text-align: left;
   }
 }
 </style>

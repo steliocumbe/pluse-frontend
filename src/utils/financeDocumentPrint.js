@@ -78,7 +78,7 @@ export function buildFinanceDocumentHtml({
   const stampUrl = resolveDocumentAssetUrl(company.stamp_file)
   
   // Identidade Rica com Fallbacks
-  const companyName = company.trade_name || company.legal_name || 'MIGUEL M.C.'
+  const companyName = company.trade_name || company.legal_name || 'MIGUEL M.C ERP'
   const slogan = company.slogan || 'Onde estiveres, estamos contigo'
   const contactLine = [company.phone_1, company.official_email].filter(Boolean).join(' • ')
   const companyLine2 = [company.address, contactLine].filter(Boolean).join(' | ')
@@ -386,7 +386,7 @@ export function buildFinanceDocumentHtml({
           </div>
           <div class="footer-slogan">
             <strong>${escapeHtml(slogan)}</strong>
-            <span>PLUSE SOFTWARE ERP</span>
+            <span>MIGUEL M.C ERP</span>
           </div>
         </footer>
       </div>

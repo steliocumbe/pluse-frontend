@@ -244,7 +244,7 @@
             <p>Dados de recebimento para clientes e instruções de pagamento.</p>
           </header>
 
-          <q-card flat bordered class="bank-card">
+          <q-card flat bordered class="bank-card pluse-card">
             <div class="bank-card-head">
               <h3>Contas bancárias</h3>
               <q-btn unelevated color="primary" no-caps icon="add" label="Adicionar conta" @click="showBankModal = true" />
@@ -252,6 +252,7 @@
             <q-table
               flat
               dense
+              class="pluse-light-table"
               :rows="bankRows"
               :columns="bankColumns"
               row-key="id"
@@ -260,7 +261,7 @@
           </q-card>
 
           <div class="wallet-grid">
-            <q-card flat bordered class="wallet-card">
+            <q-card flat bordered class="wallet-card pluse-card">
               <div class="wallet-title">
                 <q-icon name="smartphone" />
                 <strong>M-Pesa</strong>
@@ -269,7 +270,7 @@
               <q-input v-model="form.mpesaNumber" outlined dense label="Número do telemóvel" />
             </q-card>
 
-            <q-card flat bordered class="wallet-card">
+            <q-card flat bordered class="wallet-card pluse-card">
               <div class="wallet-title">
                 <q-icon name="account_balance_wallet" />
                 <strong>e-Mola</strong>
@@ -359,13 +360,14 @@
             </p>
           </header>
 
-          <q-card flat bordered class="security-levels-card">
+          <q-card flat bordered class="security-levels-card pluse-card">
             <q-table
               :rows="securityTabRows"
               :columns="securityTabColumns"
               row-key="tabKey"
               flat
               dense
+              class="pluse-light-table"
               :pagination="{ rowsPerPage: 0 }"
               no-data-label="Sem abas configuráveis."
             >
@@ -415,7 +417,7 @@
     </div>
 
     <q-dialog v-model="showBankModal">
-      <q-card style="width: 560px; max-width: 95vw">
+      <q-card class="pluse-card" style="width: 560px; max-width: 95vw">
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">Adicionar conta bancária</div>
           <q-space />
@@ -683,17 +685,34 @@ function hydrateUploadsFromSnapshot(saved = {}) {
 
 function getAllSidebarTabs() {
   const tabs = []
+  const forcedTabs = [
+    { to: '/service-catalog', label: 'Serviços (Catálogo)' },
+  ]
+
   for (const item of sidebarMenu) {
     if (!item || item.type === 'heading' || !item.to) continue
     tabs.push({
       tabKey: item.to,
-      tabLabel: item.label,
+      tabLabel: item.to === '/service-catalog' ? 'Serviços (Catálogo)' : item.label,
       tabRoute: item.to,
       operationalEnabled: true,
       tacticalEnabled: true,
       strategicEnabled: true,
     })
   }
+
+  for (const forced of forcedTabs) {
+    if (tabs.some((tab) => tab.tabKey === forced.to)) continue
+    tabs.push({
+      tabKey: forced.to,
+      tabLabel: forced.label,
+      tabRoute: forced.to,
+      operationalEnabled: true,
+      tacticalEnabled: true,
+      strategicEnabled: true,
+    })
+  }
+
   return tabs
 }
 
@@ -1158,6 +1177,15 @@ onBeforeUnmount(() => {
 
 .bank-card {
   border-radius: 12px;
+}
+
+.pluse-card {
+  background: var(--card);
+}
+
+.pluse-light-table :deep(.q-table__middle),
+.pluse-light-table :deep(.q-table) {
+  background: transparent;
 }
 
 .bank-card-head {

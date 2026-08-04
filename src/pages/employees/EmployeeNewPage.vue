@@ -224,9 +224,6 @@ function onFeedbackConfirm() {
 </script>
 
 <style scoped>
-.pluse-card {
-  background: var(--card);
-}
 .temp-pwd-box {
   display: flex;
   align-items: center;

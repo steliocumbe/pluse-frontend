@@ -39,10 +39,10 @@ const variantClasses = computed(() => {
   min-width: 1.25rem;
   max-width: 4.8rem;
   min-height: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid color-mix(in oklab, var(--pluse-sidebar-item-icon) 45%, transparent);
   border-radius: 999px;
   padding: 0 0.42rem;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 18px color-mix(in oklab, var(--pluse-sidebar-shadow) 100%, transparent);
   font-size: 0.68rem;
   font-weight: 850;
   line-height: 1;
@@ -52,22 +52,22 @@ const variantClasses = computed(() => {
 }
 
 .sidebar-badge--primary {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: color-mix(in oklab, var(--primary) 18%, var(--card));
+  color: color-mix(in oklab, var(--primary) 84%, var(--foreground));
 }
 
 .sidebar-badge--danger {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: color-mix(in oklab, var(--destructive) 16%, var(--card));
+  color: color-mix(in oklab, var(--destructive) 86%, var(--foreground));
 }
 
 .sidebar-badge--warning {
-  background: #fef3c7;
-  color: #92400e;
+  background: color-mix(in oklab, var(--pluse-amber-500) 14%, var(--card));
+  color: color-mix(in oklab, var(--pluse-amber-500) 84%, var(--foreground));
 }
 
 .sidebar-badge--muted {
-  background: rgba(255, 255, 255, 0.92);
-  color: #334155;
+  background: color-mix(in oklab, var(--muted) 88%, var(--card));
+  color: var(--muted-foreground);
 }
 </style>

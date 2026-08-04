@@ -209,7 +209,6 @@ async function onSubmit() {
 </script>
 
 <style scoped>
-.pluse-card { background: var(--card); }
 .form-group-label {
   font-size: 0.7rem;
   font-weight: 700;

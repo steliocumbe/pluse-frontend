@@ -21,8 +21,8 @@
         <span class="default-logo min-w-0 flex items-center gap-3">
           <img src="/icons/android-chrome-192x192.png" alt="" class="sidebar-logo-mark" />
           <span class="min-w-0 flex flex-col leading-none">
-            <span class="text-base font-bold text-white whitespace-nowrap">PLUSE</span>
-            <span class="mt-1 text-[12px] font-medium text-white/58 whitespace-nowrap">Admin Console</span>
+            <span class="sidebar-brand-title text-base font-bold whitespace-nowrap">PLUSE</span>
+            <span class="sidebar-brand-subtitle mt-1 text-[12px] font-medium whitespace-nowrap">Admin Console</span>
           </span>
         </span>
       </router-link>
@@ -182,7 +182,7 @@ watch(
 .pluse-sidebar {
   border-inline-end: 1px solid var(--pluse-sidebar-border);
   background: var(--pluse-sidebar-bg);
-  box-shadow: 18px 0 48px color-mix(in oklab, var(--pluse-navy-950) 18%, transparent);
+  box-shadow: 18px 0 48px color-mix(in oklab, var(--pluse-sidebar-shadow) 100%, transparent);
   transition:
     transform 180ms ease,
     opacity 140ms ease;
@@ -194,7 +194,15 @@ watch(
   height: 180px;
   pointer-events: none;
   content: '';
-  background: radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--primary) 25%, transparent), transparent 70%);
+  background: radial-gradient(circle at 50% 0%, var(--pluse-sidebar-glow), transparent 70%);
+}
+
+.sidebar-brand-title {
+  color: var(--pluse-sidebar-brand-title);
+}
+
+.sidebar-brand-subtitle {
+  color: var(--pluse-sidebar-brand-subtitle);
 }
 
 .sidebar-logo-mark {
@@ -202,10 +210,12 @@ watch(
   height: 40px;
   flex: none;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--pluse-sidebar-logo-border);
   border-radius: 12px;
-  background: white;
-  box-shadow: 0 12px 30px color-mix(in oklab, var(--primary) 32%, transparent);
+  background: var(--pluse-sidebar-logo-bg);
+  box-shadow:
+    0 12px 30px color-mix(in oklab, var(--pluse-sidebar-logo-shadow) 100%, transparent),
+    0 0 18px color-mix(in oklab, var(--pluse-sidebar-glow) 56%, transparent);
 }
 
 @media (max-width: 1023.98px) {
@@ -219,7 +229,7 @@ watch(
 .kt-scroll {
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-color: color-mix(in oklab, var(--pluse-sidebar-item-icon) 65%, transparent) transparent;
 }
 
 .kt-scroll::-webkit-scrollbar {
@@ -227,7 +237,7 @@ watch(
 }
 
 .kt-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
+  background: color-mix(in oklab, var(--pluse-sidebar-item-icon) 65%, transparent);
   border-radius: 999px;
 }
 

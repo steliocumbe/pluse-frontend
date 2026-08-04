@@ -514,8 +514,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.pluse-card { background: var(--card); }
-.pluse-table :deep(.q-table__top) { display: none; }
 .pluse-table :deep(tbody tr) { cursor: pointer; }
 
 .part-detail {
