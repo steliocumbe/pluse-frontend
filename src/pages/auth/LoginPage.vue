@@ -68,20 +68,29 @@
 
             <div class="flex flex-col gap-1.5">
               <label class="kt-form-label !w-auto font-normal text-mono" for="identifier">
-                Utilizador ou telefone
+                Operador
               </label>
-              <input
+              <select
                 id="identifier"
                 v-model="form.identifier"
                 class="kt-input"
-                type="text"
-                placeholder="exemplo@empresa.co.mz"
-                autocomplete="username"
-                inputmode="email"
-                :disabled="auth.loading"
-                autofocus
+                :disabled="auth.loading || loadingOperators"
                 required
-              />
+              >
+                <option value="" disabled>
+                  {{ loadingOperators ? 'A carregar operadores...' : 'Selecione o operador' }}
+                </option>
+                <option
+                  v-for="operator in operators"
+                  :key="operator.id"
+                  :value="operator.identifier"
+                >
+                  {{ operator.label }}
+                </option>
+              </select>
+              <p class="login-field-help">
+                Selecione o operador e introduza apenas a palavra-passe.
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -149,9 +158,10 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
+import { authService } from 'src/services/auth.service'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
 const brandLogoUrl = `${import.meta.env.BASE_URL}icons/android-chrome-512x512.png`
@@ -162,9 +172,27 @@ const auth = useAuthStore()
 
 const form = reactive({ identifier: '', password: '', rememberMe: false })
 const showPassword = ref(false)
+const operators = ref([])
+const loadingOperators = ref(false)
 
 const errorMessage = computed(() => auth.error)
 const canSubmit = computed(() => Boolean(form.identifier.trim() && form.password))
+
+async function loadOperators() {
+  loadingOperators.value = true
+  try {
+    const payload = await authService.loginOperators()
+    operators.value = payload?.results || []
+  } catch {
+    operators.value = []
+  } finally {
+    loadingOperators.value = false
+  }
+}
+
+onMounted(() => {
+  loadOperators()
+})
 
 async function onSubmit() {
   if (!canSubmit.value) return
@@ -292,6 +320,13 @@ async function onSubmit() {
   color: var(--secondary-foreground);
   font-size: 0.9rem;
   line-height: 1.65;
+}
+
+.login-field-help {
+  margin: 2px 2px 0;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  line-height: 1.35;
 }
 
 .brand-mark {

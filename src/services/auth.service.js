@@ -1,6 +1,10 @@
 import { api } from './api'
 
 export const authService = {
+  loginOperators() {
+    return api.get('/auth/login-operators/').then((r) => r.data)
+  },
+
   login(identifier, password) {
     return api.post('/auth/login/', { identifier, password }).then((r) => r.data)
   },

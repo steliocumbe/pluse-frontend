@@ -43,7 +43,16 @@
       </div>
 
       <!-- Page title slot for breadcrumbs etc. (left/centre on lg+) -->
-      <div class="hidden lg:flex items-center grow">
+      <div class="hidden lg:flex items-center grow gap-2.5">
+        <button
+          type="button"
+          class="group kt-btn kt-btn-ghost kt-btn-icon size-9 rounded-full header-icon-button"
+          :aria-label="sidebarHidden ? 'Abrir menu lateral' : 'Fechar menu lateral'"
+          :title="sidebarHidden ? 'Abrir menu lateral' : 'Fechar menu lateral'"
+          @click="emit('toggleSidebar')"
+        >
+          <AppIcon name="ki-menu" :size="18" icon-class="group-hover:text-primary" />
+        </button>
         <slot name="left" />
       </div>
 
@@ -85,6 +94,15 @@
 import { ref } from 'vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import UserDropdown from 'src/components/layout/UserDropdown.vue'
+
+defineProps({
+  sidebarHidden: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const emit = defineEmits(['toggleSidebar'])
 
 // Placeholder counter — replace with real notifications store when the
 // backend endpoint exists.

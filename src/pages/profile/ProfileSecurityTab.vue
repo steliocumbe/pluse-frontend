@@ -29,9 +29,10 @@
           <q-input
             v-model="form.old_password"
             label="Password actual *"
+            name="old_password"
             :type="showOld ? 'text' : 'password'"
             outlined dense stack-label autocomplete="current-password"
-            :rules="[required()]"
+            :rules="[required(), oldPasswordLooksValid]"
             :error="!!fieldErrors.old_password"
             :error-message="fieldErrors.old_password"
             @update:model-value="() => clearField('old_password')"
@@ -43,10 +44,14 @@
               />
             </template>
           </q-input>
+          <p class="field-help">
+            Introduza a sua palavra-passe actual da conta (não o email nem o username).
+          </p>
 
           <q-input
             v-model="form.new_password"
             label="Nova password *"
+            name="new_password"
             :type="showNew ? 'text' : 'password'"
             outlined dense stack-label autocomplete="new-password"
             hint="Mínimo 8 caracteres, pelo menos uma letra e um número."
@@ -66,6 +71,7 @@
           <q-input
             v-model="form.confirm_password"
             label="Confirmar nova password *"
+            name="confirm_password"
             :type="showNew ? 'text' : 'password'"
             outlined dense stack-label autocomplete="new-password"
             :rules="[required(), matchesNew]"
@@ -126,6 +132,24 @@ const form = reactive({ old_password: '', new_password: '', confirm_password: ''
 
 const matchesNew = (v) => v === form.new_password || 'As passwords não coincidem.'
 
+function oldPasswordLooksValid(v) {
+  const typed = String(v || '').trim().toLowerCase()
+  if (!typed) return true
+  const email = String(auth.user?.email || '').trim().toLowerCase()
+  const username = String(auth.user?.username || '').trim().toLowerCase()
+  const phone = String(auth.user?.phone || '').replace(/\D/g, '')
+  const typedDigits = typed.replace(/\D/g, '')
+  const phoneNoPrefix = phone.startsWith('258') ? phone.slice(3) : phone
+
+  const seemsIdentifier = (
+    typed === email
+    || typed === username
+    || (phone && (typedDigits === phone || typedDigits === phoneNoPrefix))
+  )
+
+  return seemsIdentifier ? 'Digite a sua password actual, não email/username.' : true
+}
+
 function reset() {
   form.old_password = ''
   form.new_password = ''
@@ -169,6 +193,13 @@ async function onSubmit() {
   flex-direction: column;
   gap: 14px;
   padding: 18px;
+}
+
+.field-help {
+  margin: -8px 0 2px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: color-mix(in oklab, var(--foreground) 80%, var(--muted-foreground));
 }
 
 .security-tips {

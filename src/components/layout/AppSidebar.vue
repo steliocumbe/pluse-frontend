@@ -45,14 +45,16 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from 'src/stores/auth'
 import { sidebarMenu, filterMenuByGroups } from 'src/config/sidebar-menu'
 import { usePendingCounts } from 'src/composables/usePendingCounts'
+import { financeSystemSettingService } from 'src/services/finance.service'
 import SidebarMenuItem from 'src/components/layout/SidebarMenuItem.vue'
 
 const auth = useAuthStore()
 const { counts } = usePendingCounts()
+const accessMap = ref(new Map())
 
 /**
  * Mapa: rota → chave em `counts`.
@@ -88,20 +90,87 @@ function injectBadges(items) {
   })
 }
 
+function deriveSecurityLevel(groups = []) {
+  const normalized = (groups || []).map((g) => String(g || '').trim().toLowerCase())
+
+  if (normalized.some((g) => ['estrategico', 'estratégico', 'direcao', 'admin', 'administrador'].includes(g))) {
+    return 'strategic'
+  }
+  if (normalized.some((g) => ['tatico', 'tático', 'supervisor', 'financeiro', 'rh', 'cco'].includes(g))) {
+    return 'tactical'
+  }
+  return 'operational'
+}
+
+function isRouteAllowed(route, level) {
+  if (!route) return true
+  const rule = accessMap.value.get(route)
+  if (!rule) return true
+  if (level === 'strategic') return !!rule.strategic_enabled
+  if (level === 'tactical') return !!rule.tactical_enabled
+  return !!rule.operational_enabled
+}
+
+function filterBySecurityLevel(menu, level) {
+  const result = []
+
+  for (let i = 0; i < menu.length; i += 1) {
+    const item = menu[i]
+    if (item?.type === 'heading') {
+      const sectionItems = []
+      for (let j = i + 1; j < menu.length; j += 1) {
+        if (menu[j]?.type === 'heading') break
+        sectionItems.push(menu[j])
+      }
+
+      const visibleAny = sectionItems.some((next) => {
+        if (!next) return false
+        return isRouteAllowed(next.to, level)
+      })
+      if (visibleAny) result.push(item)
+      continue
+    }
+
+    if (isRouteAllowed(item?.to, level)) {
+      result.push(item)
+    }
+  }
+
+  return result
+}
+
+async function loadSecurityMatrix() {
+  if (!auth.isAuthenticated) return
+  try {
+    const data = await financeSystemSettingService.get()
+    const tabs = Array.isArray(data?.security_tabs) ? data.security_tabs : []
+    accessMap.value = new Map(
+      tabs
+        .filter((row) => row?.tab_route)
+        .map((row) => [row.tab_route, row]),
+    )
+  } catch {
+    accessMap.value = new Map()
+  }
+}
+
 const visibleMenu = computed(() => {
   const base = auth.user?.is_superuser
     ? sidebarMenu
     : filterMenuByGroups(sidebarMenu, auth.user?.groups || [])
-  return injectBadges(base)
+  const level = deriveSecurityLevel(auth.user?.groups || [])
+  const filtered = filterBySecurityLevel(base, level)
+  return injectBadges(filtered)
 })
 
-function clearCollapseState() {
-  document.body.classList.remove('kt-sidebar-collapse')
-  document.body.classList.remove('pluse-sidebar-collapsed')
-}
+onMounted(loadSecurityMatrix)
 
-onMounted(clearCollapseState)
-onBeforeUnmount(clearCollapseState)
+watch(
+  () => auth.user?.id,
+  () => {
+    loadSecurityMatrix()
+  },
+)
 </script>
 
 <style scoped>
@@ -114,6 +183,9 @@ onBeforeUnmount(clearCollapseState)
   border-inline-end: 1px solid var(--pluse-sidebar-border);
   background: var(--pluse-sidebar-bg);
   box-shadow: 18px 0 48px color-mix(in oklab, var(--pluse-navy-950) 18%, transparent);
+  transition:
+    transform 180ms ease,
+    opacity 140ms ease;
 }
 
 .pluse-sidebar::before {
