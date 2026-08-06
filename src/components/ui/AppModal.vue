@@ -137,6 +137,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .app-modal-panel {
+  width: min(100%, calc(100vw - 32px));
+  min-width: 0;
   background: linear-gradient(180deg, color-mix(in oklab, var(--card) 96%, white 4%), var(--card));
   box-shadow:
     0 22px 56px color-mix(in oklab, black 28%, transparent),
@@ -179,6 +181,12 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
+  .app-modal-panel {
+    width: min(100%, calc(100vw - 20px));
+    max-height: min(92vh, 100dvh - 20px);
+    border-radius: 22px;
+  }
+
   .app-modal-signature {
     flex-direction: column;
     align-items: flex-start;

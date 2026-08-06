@@ -6,7 +6,7 @@
           <router-view />
           <footer class="auth-page-footer">
             <span class="auth-page-footer__mark">MIGUEL M.C ERP</span>
-            <span class="auth-page-footer__copy">Acesso, bloqueio e configuração do sistema.</span>
+            <!-- <span class="auth-page-footer__copy">Acesso, bloqueio e configuração do sistema.</span> -->
           </footer>
         </div>
       </main>

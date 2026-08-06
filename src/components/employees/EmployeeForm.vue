@@ -1,12 +1,13 @@
 <!--
   EmployeeForm — shared stepper form for creating / editing colaboradores (RH-1).
 
-  4 steps on create, 3 on edit (Documentos step is create-only — in edit mode
+  5 steps on create, 3 on edit (Documentos step is create-only — in edit mode
   documents are managed from the detail page's Documentos tab):
     1. Dados pessoais   — identificação + contactos + família
-    2. Função e posto   — departamento/posto + função/salário
+    2. Função e enquadramento — área, função e eventual alocação operacional
     3. Pagamento e acesso — banca/M-pesa + conta de acesso
     4. Documentos        — documentos iniciais (create only)
+    5. Contrato inicial — contrato de trabalho inicial
 
   Each step is its own <q-form> so "Continuar" validates only the current
   step. Emits `submit` with { payload, initialDocuments }.
@@ -130,24 +131,24 @@
       </q-form>
     </q-step>
 
-    <!-- ─────────────── Step 2 — Função e posto ─────────────── -->
+    <!-- ─────────────── Step 2 — Função e enquadramento ─────────────── -->
     <q-step
       :name="2"
-      title="Função e posto"
+      title="Função e enquadramento"
       icon="badge"
       :done="maxStepReached > 2"
       :disable="isStepDisabled(2)"
     >
       <q-form ref="form2" greedy class="flex flex-col gap-5">
-        <div class="form-group-label">Departamento e posto</div>
+        <div class="form-group-label">Área de trabalho</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-select v-model="form.department" :options="departmentOptions"
-                    label="Departamento *" outlined dense emit-value map-options
+                    label="Área de trabalho *" outlined dense emit-value map-options
                     :rules="[req]"
                     :error="!!fieldErrors.department" :error-message="fieldErrors.department"
                     @update:model-value="() => clearField('department')" />
           <q-select v-if="form.department === 'operations'" v-model="form.client"
-                    :options="clientOptions" label="Cliente *" outlined dense
+                    :options="clientOptions" label="Cliente ou carteira operacional *" outlined dense
                     emit-value map-options :loading="loadingClients"
                     :rules="[(v) => !!v || 'Obrigatório para Operações']"
                     :error="!!fieldErrors.client" :error-message="fieldErrors.client"
@@ -158,14 +159,17 @@
                     :rules="[(v) => !!v || 'Obrigatório para Suporte']"
                     :error="!!fieldErrors.support_unit" :error-message="fieldErrors.support_unit"
                     @update:model-value="() => clearField('support_unit')" />
-          <q-select v-model="form.post" :options="postOptions" label="Posto"
-                    outlined dense emit-value map-options clearable :loading="loadingPosts"
-                    :error="!!fieldErrors.post" :error-message="fieldErrors.post"
-                    @update:model-value="() => clearField('post')" />
-          <q-input v-model="form.shift" label="Turno" outlined dense class="md:col-span-2"
-                   hint="Padrão livre nesta fase (ex: 12h trabalho / 24h descanso). Formalizado nas Escalas."
-                   :error="!!fieldErrors.shift" :error-message="fieldErrors.shift"
-                   @update:model-value="() => clearField('shift')" />
+          <template v-if="requiresFieldAssignment">
+            <q-select v-model="form.post" :options="postOptions" label="Posto base"
+                      outlined dense emit-value map-options clearable :loading="loadingPosts"
+                      hint="Opcional no registo. A alocação definitiva pode ser feita nas escalas."
+                      :error="!!fieldErrors.post" :error-message="fieldErrors.post"
+                      @update:model-value="() => clearField('post')" />
+            <q-input v-model="form.shift" label="Turno base" outlined dense class="md:col-span-2"
+                     hint="Opcional. Ex.: 12h trabalho / 24h descanso. Formalizado nas escalas."
+                     :error="!!fieldErrors.shift" :error-message="fieldErrors.shift"
+                     @update:model-value="() => clearField('shift')" />
+          </template>
         </div>
 
         <div class="form-group-label">Função e admissão</div>
@@ -212,8 +216,7 @@
                    :error="!!fieldErrors.bank" :error-message="fieldErrors.bank"
                    @update:model-value="() => clearField('bank')" />
           <q-input v-model="form.bank_account_number" label="Número de conta" outlined dense
-                   :rules="[ibanMz()]"
-                   hint="IBAN moçambicano (MZ59 + 21 dígitos), se aplicável"
+                   hint="Opcional. Pode ser preenchido ou corrigido depois pelo RH."
                    :error="!!fieldErrors.bank_account_number" :error-message="fieldErrors.bank_account_number"
                    @update:model-value="() => clearField('bank_account_number')" />
           <q-input v-model="form.nib" label="NIB" outlined dense
@@ -306,10 +309,11 @@
                    :error="!!fieldErrors['initial_contract.weekly_hours']"
                    :error-message="fieldErrors['initial_contract.weekly_hours']"
                    @update:model-value="() => clearField('initial_contract.weekly_hours')" />
-          <q-select v-model="contract.salary_category" :options="salaryCategoryOptions"
+          <q-select v-if="isSalaryCategoryApplicable"
+                    v-model="contract.salary_category" :options="salaryCategoryOptions"
                     label="Categoria salarial" outlined dense emit-value map-options
                     clearable :loading="loadingSalary"
-                    hint="Aplicável a vigilantes (4 escalões fixos)"
+                    hint="Aplicável a vigilantes e funções equivalentes de campo"
                     :error="!!fieldErrors['initial_contract.salary_category']"
                     :error-message="fieldErrors['initial_contract.salary_category']"
                     @update:model-value="() => clearField('initial_contract.salary_category')" />
@@ -317,10 +321,10 @@
                    type="number" outlined dense step="0.01"
                    :disable="!!contract.salary_category"
                    :rules="[(v) => !!contract.salary_category || !!v
-                     || 'Indique o salário ou escolha uma categoria', decimalAmount()]"
+                     || salaryRequiredMessage, decimalAmount()]"
                    :hint="contract.salary_category
                      ? 'Definido pela categoria salarial'
-                     : 'Salário livre acordado (MZN)'"
+                     : salaryHint"
                    :error="!!fieldErrors['initial_contract.base_salary']"
                    :error-message="fieldErrors['initial_contract.base_salary']"
                    @update:model-value="() => clearField('initial_contract.base_salary')" />
@@ -331,6 +335,7 @@
                    :error-message="fieldErrors['initial_contract.workplace']"
                    @update:model-value="() => clearField('initial_contract.workplace')" />
         </div>
+
       </q-form>
     </q-step>
 
@@ -380,8 +385,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useToast } from 'src/composables/useToast'
 import { useFormErrors } from 'src/composables/useFormErrors'
 import {
-  mozambicanPhone, nuit, email, bilheteIdentidade, mpesa, nib, ibanMz, inss,
-  dateNotFuture, dateAfter,
+  mozambicanPhone, nuit, email, bilheteIdentidade, mpesa, nib, inss,
+  dateNotFuture, dateAfter, decimalAmount,
 } from 'src/utils/validators'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
@@ -416,7 +421,7 @@ const form3 = ref(null)
 const form5 = ref(null)
 const stepForms = { 1: form1, 2: form2, 3: form3, 5: form5 }
 
-// Last step depends on mode — documents + contract steps are create-only.
+// Last step depends on mode — documents + initial contract are create-only.
 const lastStep = computed(() => (props.mode === 'create' ? 5 : 3))
 
 const blank = {
@@ -507,7 +512,11 @@ watch(
   () => form.department,
   (dep) => {
     if (dep === 'operations') form.support_unit = null
-    if (dep === 'support') form.client = null
+    if (dep === 'support') {
+      form.client = null
+      form.post = null
+      form.shift = ''
+    }
   },
 )
 
@@ -548,6 +557,65 @@ const salaryCategoryOptions = ref([])
 const loadingClients = ref(false)
 const loadingPosts = ref(false)
 const loadingSalary = ref(false)
+
+function normalizeText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+}
+
+const selectedRoleNames = computed(() => {
+  const selected = Array.isArray(form.types) ? form.types : []
+  return selected
+    .map((value) => {
+      if (value && typeof value === 'object') return value.label || value.name || ''
+      return groupOptions.value.find((option) => option.value === value)?.label || ''
+    })
+    .map(normalizeText)
+    .filter(Boolean)
+})
+
+const requiresFieldAssignment = computed(
+  () => form.department === 'operations'
+    && selectedRoleNames.value.some((name) => (
+      name.includes('vigilante') ||
+      name.includes('guarda') ||
+      name.includes('seguranca')
+    )),
+)
+
+const isSalaryCategoryApplicable = computed(
+  () => selectedRoleNames.value.some((name) => (
+    name.includes('vigilante') ||
+    name.includes('guarda') ||
+    name.includes('seguranca')
+  )),
+)
+
+const salaryRequiredMessage = computed(() => (
+  isSalaryCategoryApplicable.value
+    ? 'Indique o salário ou escolha uma categoria salarial.'
+    : 'Indique o salário acordado no contrato.'
+))
+
+const salaryHint = computed(() => (
+  isSalaryCategoryApplicable.value
+    ? 'Pode indicar um salário livre ou escolher uma categoria salarial.'
+    : 'Salário livre acordado para esta função.'
+))
+
+watch(requiresFieldAssignment, (required) => {
+  if (required) return
+  form.post = null
+  form.shift = ''
+})
+
+watch(isSalaryCategoryApplicable, (applicable) => {
+  if (applicable) return
+  contract.salary_category = null
+  clearField('initial_contract.salary_category')
+})
 
 // Cargos — lista gerida com texto livre permitido.
 const allJobTitles = ref([])
@@ -642,7 +710,7 @@ function getStepBlockReason(stepNumber) {
   }
 
   if (stepNumber === 2) {
-    if (isBlank(form.department)) return 'Selecione o Departamento.'
+    if (isBlank(form.department)) return 'Selecione a Área de trabalho.'
     if (form.department === 'operations' && isBlank(form.client)) {
       return 'Para Operações, selecione o Cliente.'
     }
@@ -669,7 +737,7 @@ function getStepBlockReason(stepNumber) {
       return 'Preencha o Fim do contrato para o tipo selecionado.'
     }
     if (!contract.salary_category && isBlank(contract.base_salary)) {
-      return 'Indique o Salário do contrato ou escolha uma Categoria salarial.'
+      return salaryRequiredMessage.value
     }
     return ''
   }

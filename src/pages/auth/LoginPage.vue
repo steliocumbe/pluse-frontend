@@ -119,6 +119,15 @@
               <p class="login-field-help">
                 Selecione o operador e introduza apenas a palavra-passe.
               </p>
+              <p v-if="operatorsError" class="login-field-help login-field-help--error">
+                {{ operatorsError }}
+              </p>
+              <p
+                v-else-if="!loadingOperators && operators.length === 0"
+                class="login-field-help login-field-help--warning"
+              >
+                Nenhum operador disponível para iniciar sessão.
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -202,17 +211,82 @@ const form = reactive({ identifier: '', password: '', rememberMe: false })
 const showPassword = ref(false)
 const operators = ref([])
 const loadingOperators = ref(false)
+const operatorsError = ref(null)
 
 const errorMessage = computed(() => auth.error)
 const canSubmit = computed(() => Boolean(form.identifier.trim() && form.password))
 
+function getOperatorIdentifier(operator) {
+  return String(
+    operator?.identifier ||
+      operator?.username ||
+      operator?.email ||
+      operator?.phone ||
+      operator?.telephone ||
+      operator?.value ||
+      operator?.id ||
+      '',
+  ).trim()
+}
+
+function getOperatorLabel(operator, identifier) {
+  const primary =
+    operator?.label ||
+    operator?.full_name ||
+    operator?.name ||
+    operator?.display_name ||
+    operator?.username ||
+    operator?.email ||
+    identifier
+
+  const secondary = [operator?.email, operator?.username, operator?.phone, operator?.telephone]
+    .filter(Boolean)
+    .find((value) => value !== primary)
+
+  return secondary ? `${primary} · ${secondary}` : primary
+}
+
+function normalizeOperatorsPayload(payload) {
+  const rawOperators = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.results)
+      ? payload.results
+      : Array.isArray(payload?.operators)
+        ? payload.operators
+        : Array.isArray(payload?.users)
+          ? payload.users
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : []
+
+  return rawOperators
+    .map((operator) => {
+      const identifier = getOperatorIdentifier(operator)
+      return {
+        ...operator,
+        id: operator?.id || identifier,
+        identifier,
+        label: getOperatorLabel(operator, identifier),
+      }
+    })
+    .filter((operator) => operator.identifier)
+}
+
 async function loadOperators() {
   loadingOperators.value = true
+  operatorsError.value = null
   try {
     const payload = await authService.loginOperators()
-    operators.value = payload?.results || []
-  } catch {
+    operators.value = normalizeOperatorsPayload(payload)
+
+    if (!form.identifier && operators.value.length === 1) {
+      form.identifier = operators.value[0].identifier
+    }
+  } catch (error) {
     operators.value = []
+    operatorsError.value =
+      error?.response?.data?.detail ||
+      'Não foi possível carregar os operadores. Verifique se o backend está activo.'
   } finally {
     loadingOperators.value = false
   }
@@ -406,6 +480,14 @@ async function onSubmit() {
   color: var(--muted-foreground);
   font-size: 0.76rem;
   line-height: 1.35;
+}
+
+.login-field-help--error {
+  color: var(--destructive);
+}
+
+.login-field-help--warning {
+  color: #b45309;
 }
 
 .brand-mark {

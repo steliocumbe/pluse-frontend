@@ -111,27 +111,30 @@
     </div>
 
     <!-- Atribuir turno -->
-    <AppModal v-model="showAssign" size="md" persistent>
-      <div class="p-5">
+    <AppModal v-model="showAssign" size="lg" persistent>
+      <div class="schedule-dialog">
         <AppHeading :level="3" class="text-base font-semibold text-mono mb-4">
           Atribuir turno
         </AppHeading>
         <q-form ref="assignForm" greedy class="flex flex-col gap-4" @submit="submitAssign">
           <q-select v-model="assign.post" :options="postOptions" label="Posto"
+                    class="schedule-dialog__field"
                     outlined dense emit-value map-options clearable />
           <q-select v-model="assign.department" :options="departmentOptions" label="Departamento"
+                    class="schedule-dialog__field"
                     outlined dense emit-value map-options clearable />
           <q-select v-model="assign.employee" :options="employeeOptions" label="Vigilante *"
+                    class="schedule-dialog__field"
                     outlined dense emit-value map-options use-input input-debounce="200"
                     @filter="filterEmployees" :rules="[req]" />
-          <div class="grid grid-cols-2 gap-3">
+          <div class="schedule-dialog__grid">
             <q-input v-model="assign.date" label="Data *" type="date" outlined dense
                      stack-label :rules="[req]" />
             <q-select v-model="assign.period" :options="periodOptions" label="Período *"
                       outlined dense emit-value map-options :rules="[req]" />
           </div>
           <q-checkbox v-model="assign.is_double" label="É uma dobra (turno extra)" />
-          <div class="flex justify-end gap-2">
+          <div class="schedule-dialog__actions">
             <q-btn flat no-caps label="Cancelar" :disable="saving" @click="showAssign = false" />
             <q-btn unelevated no-caps color="primary" type="submit" label="Atribuir"
                    :loading="saving" />
@@ -142,7 +145,7 @@
 
     <!-- Gerar escala -->
     <AppModal v-model="showGenerate" size="md" persistent>
-      <div class="p-5">
+      <div class="schedule-dialog">
         <AppHeading :level="3" class="text-base font-semibold text-mono mb-1">
           Gerar escala
         </AppHeading>
@@ -153,7 +156,7 @@
         <q-form ref="generateForm" greedy class="flex flex-col gap-4" @submit="submitGenerate">
           <q-select v-model="gen.post" :options="postOptions" label="Posto *"
                     outlined dense emit-value map-options :rules="[req]" />
-          <div class="grid grid-cols-2 gap-3">
+          <div class="schedule-dialog__grid">
             <q-input v-model="gen.start_date" label="Início *" type="date" outlined dense
                      stack-label :rules="[req]" />
             <q-input v-model="gen.end_date" label="Fim *" type="date" outlined dense
@@ -167,7 +170,7 @@
                     outlined dense emit-value map-options multiple use-chips use-input
                     input-debounce="200" @filter="filterEmployees"
                     :rules="[(v) => (v && v.length > 0) || 'Escolha pelo menos um']" />
-          <div class="flex justify-end gap-2">
+          <div class="schedule-dialog__actions">
             <q-btn flat no-caps label="Cancelar" :disable="saving" @click="showGenerate = false" />
             <q-btn unelevated no-caps color="primary" type="submit" label="Gerar"
                    :loading="saving" />
@@ -503,6 +506,54 @@ onMounted(async () => {
   color: var(--mono);
   min-width: 190px;
   text-align: center;
+}
+
+/* ── Modais de escala ──────────────────────────────────────────────── */
+.schedule-dialog {
+  width: 100%;
+  min-width: 0;
+  padding: 20px;
+}
+
+.schedule-dialog__field {
+  min-width: 0;
+}
+
+.schedule-dialog__field :deep(.q-field__native),
+.schedule-dialog__field :deep(.q-field__input) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule-dialog__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.schedule-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .schedule-dialog {
+    padding: 18px 16px;
+  }
+
+  .schedule-dialog__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-dialog__actions {
+    flex-direction: column-reverse;
+  }
+
+  .schedule-dialog__actions :deep(.q-btn) {
+    width: 100%;
+  }
 }
 
 /* ── Cartão de escala por posto ─────────────────────────────────────── */

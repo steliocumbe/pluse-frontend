@@ -38,7 +38,7 @@
 
     <footer class="admin-page-footer">
       <span class="admin-page-footer__mark">MIGUEL M.C ERP</span>
-      <span class="admin-page-footer__copy">Rodapé padrão da aba administrativa.</span>
+      <!-- <span class="admin-page-footer__copy">Rodapé padrão da aba administrativa.</span> -->
     </footer>
   </section>
 </template>
