@@ -17,7 +17,7 @@ export const riskLevelOptions = [
 export const clientStageOptions = [
   { value: 'prospecting', label: 'Prospeção' },
   { value: 'risk_review', label: 'Análise de risco em aprovação' },
-  { value: 'approved', label: 'Onboarding concluído' },
+  { value: 'approved', label: 'Admissão concluída' },
 ]
 
 function labelFrom(list, value) {

@@ -43,7 +43,7 @@
         <q-btn
           v-if="client.stage === 'risk_review' && canApprove"
           unelevated no-caps class="admin-hero-primary"
-          icon="check_circle" label="Aprovar onboarding"
+          icon="check_circle" label="Aprovar admissão"
           @click="approve"
         />
         <q-btn
@@ -528,7 +528,7 @@ const canApprove = computed(
 const stages = [
   { value: 'prospecting', label: 'Prospeção', icon: 'person_search' },
   { value: 'risk_review', label: 'Análise em aprovação', icon: 'fact_check' },
-  { value: 'approved', label: 'Onboarding concluído', icon: 'verified' },
+  { value: 'approved', label: 'Admissão concluída', icon: 'verified' },
 ]
 const stageIndex = computed(
   () => stages.findIndex((s) => s.value === client.value?.stage),
@@ -614,15 +614,15 @@ function submitRisk() {
 
 function approve() {
   $q.dialog({
-    title: 'Aprovar onboarding',
-    message: `Concluir o onboarding de <b>${client.value.name}</b>? O cliente fica operacional.`,
+    title: 'Aprovar admissão do cliente',
+    message: `Aprovar a admissão de <b>${client.value.name}</b>? O cliente fica operacional e os postos poderão ser activados.`,
     html: true,
     cancel: { label: 'Cancelar', flat: true, noCaps: true },
     ok: { label: 'Aprovar', color: 'positive', unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       client.value = await clientService.approveOnboarding(client.value.id)
-      toast.success('Onboarding concluído.')
+      toast.success('Cliente aprovado — admissão concluída.')
     } catch (err) {
       toast.error('Não foi possível aprovar.', { caption: err?.response?.data?.detail })
     }

@@ -6,7 +6,7 @@
   <AdminPageTemplate
     eyebrow="Cadastros"
     title="Clientes"
-    description="Entidades a quem prestamos serviços de segurança. Cada cliente passa por um onboarding com análise de risco antes de ficar operacional."
+    description="Entidades a quem prestamos serviços de segurança. Cada cliente passa por um processo de admissão com análise de risco antes de ficar operacional."
   >
     <template #meta>
       <span class="admin-meta-chip">
@@ -145,7 +145,7 @@ const pagination = ref({
 const columns = [
   { name: 'name', label: 'Cliente', field: 'name', align: 'left', sortable: true },
   { name: 'client_type_display', label: 'Tipo', field: 'client_type_display', align: 'left' },
-  { name: 'stage', label: 'Onboarding', field: 'stage', align: 'left' },
+  { name: 'stage', label: 'Etapa', field: 'stage', align: 'left' },
   { name: 'risk_level', label: 'Risco', field: 'risk_level', align: 'center' },
 ]
 

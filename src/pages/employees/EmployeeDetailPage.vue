@@ -57,6 +57,15 @@
         @click="approve"
       />
       <q-btn
+        v-if="employee && employee.status === 'inactive'"
+        unelevated
+        no-caps
+        class="admin-hero-primary"
+        icon="play_circle"
+        label="Activar vigilante"
+        @click="activate"
+      />
+      <q-btn
         v-if="employee && employee.status === 'active'"
         outline
         no-caps
@@ -592,18 +601,20 @@
 
     <ModernAlert
       v-model="confirmState.open"
-      :tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'warning'"
-      :title="confirmState.mode === 'delete' ? 'Apagar colaborador' : confirmState.mode === 'approve' ? 'Aprovar colaborador' : 'Inactivar colaborador'"
+      :tone="confirmState.mode === 'delete' ? 'negative' : (confirmState.mode === 'approve' || confirmState.mode === 'activate') ? 'positive' : 'warning'"
+      :title="confirmState.mode === 'delete' ? 'Apagar colaborador' : confirmState.mode === 'approve' ? 'Aprovar colaborador' : confirmState.mode === 'activate' ? 'Activar vigilante' : 'Inactivar colaborador'"
       :message="employee
         ? (confirmState.mode === 'delete'
           ? `Apagar <b>${employee.full_name}</b>? Esta acção remove o registo da lista.`
           : confirmState.mode === 'approve'
             ? `Aprovar <b>${employee.full_name}</b>?`
-            : `Inactivar <b>${employee.full_name}</b>?`)
+            : confirmState.mode === 'activate'
+              ? `Activar <b>${employee.full_name}</b>? A conta de utilizador (se existir) será reactivada.`
+              : `Inactivar <b>${employee.full_name}</b>?`)
         : ''"
-      :confirm-label="confirmState.mode === 'delete' ? 'Apagar' : confirmState.mode === 'approve' ? 'Aprovar' : 'Inactivar'"
-      :confirm-icon="confirmState.mode === 'delete' ? 'delete' : confirmState.mode === 'approve' ? 'check_circle' : 'block'"
-      :confirm-tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'negative'"
+      :confirm-label="confirmState.mode === 'delete' ? 'Apagar' : confirmState.mode === 'approve' ? 'Aprovar' : confirmState.mode === 'activate' ? 'Activar' : 'Inactivar'"
+      :confirm-icon="confirmState.mode === 'delete' ? 'delete' : (confirmState.mode === 'approve' || confirmState.mode === 'activate') ? 'check_circle' : 'block'"
+      :confirm-tone="confirmState.mode === 'delete' ? 'negative' : (confirmState.mode === 'approve' || confirmState.mode === 'activate') ? 'positive' : 'negative'"
       @confirm="runConfirmAction"
       @cancel="confirmState.open = false"
     />
@@ -749,6 +760,10 @@ async function approve() {
   confirmState.value = { open: true, mode: 'approve' }
 }
 
+async function activate() {
+  confirmState.value = { open: true, mode: 'activate' }
+}
+
 async function inactivate() {
   confirmState.value = { open: true, mode: 'inactivate' }
 }
@@ -762,9 +777,9 @@ async function runConfirmAction() {
   confirmState.value.open = false
 
   try {
-    if (mode === 'approve') {
+    if (mode === 'approve' || mode === 'activate') {
       await store.approve(employee.value.id)
-      toast.success('Aprovado.')
+      toast.success(mode === 'activate' ? 'Vigilante activado.' : 'Aprovado.')
       return
     }
     if (mode === 'delete') {

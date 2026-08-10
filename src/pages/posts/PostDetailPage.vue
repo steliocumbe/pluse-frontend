@@ -58,7 +58,7 @@
         rounded class="bg-orange-1 text-orange-9 q-mb-md"
       >
         <template #avatar><q-icon name="warning" /></template>
-        O cliente ainda não concluiu o onboarding — o posto não pode ser activado.
+        O cliente ainda não foi aprovado pela direcção — complete o processo de admissão do cliente antes de activar este posto.
       </q-banner>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -224,6 +224,7 @@ import { absoluteFileUrl } from 'src/utils/file-url'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
+import PostActivateDialog from 'src/components/posts/PostActivateDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -285,17 +286,13 @@ function marginClass(v) {
 
 function activate() {
   $q.dialog({
-    title: 'Activar posto',
-    message: 'Activar este posto? Exige cliente com onboarding concluído e formulário de abertura anexado.',
-    cancel: { label: 'Cancelar', flat: true, noCaps: true },
-    ok: { label: 'Activar', color: 'positive', unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      post.value = await postService.activate(post.value.id)
-      toast.success('Posto activado.')
-    } catch (err) {
-      toast.error('Não foi possível activar.', { caption: err?.response?.data?.detail })
-    }
+    component: PostActivateDialog,
+    componentProps: { post: post.value },
+  }).onOk((updatedPost) => {
+    post.value = updatedPost
+    toast.success('Posto activado com sucesso.')
+    // Recarrega a lista de contratos para reflectir qualquer activação
+    loadContractsForPost()
   })
 }
 

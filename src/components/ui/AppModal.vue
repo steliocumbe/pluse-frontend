@@ -81,7 +81,7 @@ import AppIcon from 'src/components/ui/AppIcon.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  // 'sm' (max-w-sm) | 'md' (default, max-w-md) | 'lg' (max-w-lg) | 'xl' (max-w-2xl)
+  // 'sm' (max-w-sm) | 'md' (default, max-w-md) | 'lg' (max-w-lg) | 'xl' (max-w-2xl) | '2xl' (max-w-4xl) | '3xl' (max-w-6xl)
   size: { type: String, default: 'md' },
   // When true, clicking the backdrop or pressing Esc does NOT close.
   persistent: { type: Boolean, default: false },
@@ -98,6 +98,8 @@ const sizeClass = computed(
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-2xl',
+    '2xl': 'max-w-4xl',
+    '3xl': 'max-w-6xl',
   })[props.size] || 'max-w-md',
 )
 

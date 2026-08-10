@@ -43,6 +43,7 @@ export const KI_TO_LUCIDE = {
 
   // Communication
   'sms': 'Mail',
+  'whatsapp': 'MessageCircle',
   'message-text': 'MessageSquare',
   'phone': 'Phone',
   'notification': 'Bell',
