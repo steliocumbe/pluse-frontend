@@ -146,7 +146,7 @@
                     <q-item-section avatar><q-icon name="edit" /></q-item-section>
                     <q-item-section>Editar</q-item-section>
                   </q-item>
-                  <q-separator v-if="props.row.status === 'pending'" />
+                  <q-separator v-if="props.row.status === 'pending' || props.row.status === 'inactive'" />
                   <q-item
                     v-if="props.row.status === 'pending'"
                     clickable
@@ -155,6 +155,15 @@
                   >
                     <q-item-section avatar><q-icon name="check_circle" color="positive" /></q-item-section>
                     <q-item-section>Aprovar</q-item-section>
+                  </q-item>
+                  <q-item
+                    v-if="props.row.status === 'inactive'"
+                    clickable
+                    v-close-popup
+                    @click="activate(props.row)"
+                  >
+                    <q-item-section avatar><q-icon name="play_circle" color="positive" /></q-item-section>
+                    <q-item-section>Activar vigilante</q-item-section>
                   </q-item>
                   <q-item
                     v-if="props.row.status === 'active'"
@@ -188,18 +197,20 @@
 
       <ModernAlert
         v-model="confirmState.open"
-        :tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'warning'"
-        :title="confirmState.mode === 'delete' ? 'Apagar colaborador' : confirmState.mode === 'approve' ? 'Aprovar colaborador' : 'Inactivar colaborador'"
+        :tone="confirmState.mode === 'delete' ? 'negative' : (confirmState.mode === 'approve' || confirmState.mode === 'activate') ? 'positive' : 'warning'"
+        :title="confirmState.mode === 'delete' ? 'Apagar colaborador' : confirmState.mode === 'approve' ? 'Aprovar colaborador' : confirmState.mode === 'activate' ? 'Activar vigilante' : 'Inactivar colaborador'"
         :message="confirmState.employee
           ? (confirmState.mode === 'delete'
             ? `Apagar <b>${confirmState.employee.full_name}</b>? O registo vai desaparecer da lista.`
             : confirmState.mode === 'approve'
               ? `Aprovar <b>${confirmState.employee.full_name}</b>? A conta de utilizador (se existir) será activada.`
-              : `Inactivar <b>${confirmState.employee.full_name}</b>? O acesso à plataforma é suspenso.`)
+              : confirmState.mode === 'activate'
+                ? `Activar <b>${confirmState.employee.full_name}</b>? A conta de utilizador (se existir) será reactivada.`
+                : `Inactivar <b>${confirmState.employee.full_name}</b>? O acesso à plataforma é suspenso.`)
           : ''"
-        :confirm-label="confirmState.mode === 'delete' ? 'Apagar' : confirmState.mode === 'approve' ? 'Aprovar' : 'Inactivar'"
-        :confirm-icon="confirmState.mode === 'delete' ? 'delete' : confirmState.mode === 'approve' ? 'check_circle' : 'block'"
-        :confirm-tone="confirmState.mode === 'delete' ? 'negative' : confirmState.mode === 'approve' ? 'positive' : 'negative'"
+        :confirm-label="confirmState.mode === 'delete' ? 'Apagar' : confirmState.mode === 'approve' ? 'Aprovar' : confirmState.mode === 'activate' ? 'Activar' : 'Inactivar'"
+        :confirm-icon="confirmState.mode === 'delete' ? 'delete' : (confirmState.mode === 'approve' || confirmState.mode === 'activate') ? 'check_circle' : 'block'"
+        :confirm-tone="confirmState.mode === 'delete' ? 'negative' : (confirmState.mode === 'approve' || confirmState.mode === 'activate') ? 'positive' : 'negative'"
         @confirm="runConfirmAction"
         @cancel="confirmState.open = false"
       />
@@ -309,6 +320,10 @@ async function approve(employee) {
   confirmState.value = { open: true, employee, mode: 'approve' }
 }
 
+async function activate(employee) {
+  confirmState.value = { open: true, employee, mode: 'activate' }
+}
+
 async function inactivate(employee) {
   confirmState.value = { open: true, employee, mode: 'inactivate' }
 }
@@ -323,9 +338,9 @@ async function runConfirmAction() {
   if (!employee) return
 
   try {
-    if (mode === 'approve') {
+    if (mode === 'approve' || mode === 'activate') {
       await store.approve(employee.id)
-      toast.success(`${employee.full_name} foi aprovado.`)
+      toast.success(mode === 'activate' ? `${employee.full_name} foi activado.` : `${employee.full_name} foi aprovado.`)
       return
     }
     if (mode === 'delete') {

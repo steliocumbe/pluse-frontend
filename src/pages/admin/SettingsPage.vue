@@ -302,6 +302,37 @@
             label="Instruções de pagamento"
             placeholder="Os pagamentos devem ser efetuados até ao dia 5 de cada mês..."
           />
+
+          <q-card flat bordered class="pluse-card">
+            <div class="bank-card-head">
+              <h3>Envio de faturas por e-mail e WhatsApp</h3>
+            </div>
+            <div class="settings-grid two-col px-3 pb-3">
+              <q-input v-model="form.smtpHost" outlined dense label="Servidor SMTP" placeholder="smtp.gmail.com" />
+              <q-input v-model.number="form.smtpPort" type="number" outlined dense label="Porta SMTP" />
+              <q-input v-model="form.smtpUsername" outlined dense label="Utilizador SMTP" placeholder="empresa@dominio.com" />
+              <q-input
+                v-model="form.smtpAppPassword"
+                outlined
+                dense
+                type="password"
+                autocomplete="new-password"
+                label="Senha de app (SMTP)"
+                :hint="form.smtpAppPasswordConfigured ? 'Senha já configurada. Preencha apenas se quiser atualizar.' : 'Obrigatório para envio de e-mail.'"
+              />
+              <q-input
+                v-model="form.whatsappDefaultCountryCode"
+                outlined
+                dense
+                label="Código país WhatsApp"
+                placeholder="258"
+              />
+              <div class="theme-toggle justify-between rounded-xl border border-[var(--border)] px-3 py-2">
+                <span>Usar TLS no SMTP</span>
+                <AppSwitch v-model="form.smtpUseTls" aria-label="Alternar TLS SMTP" />
+              </div>
+            </div>
+          </q-card>
         </div>
 
         <div v-show="activeSection === 'security'" class="settings-panel">
@@ -514,6 +545,13 @@ const form = reactive({
   emolaNumber: '',
   vatRatePercent: 16,
   paymentInstructions: '',
+  smtpHost: '',
+  smtpPort: 587,
+  smtpUsername: '',
+  smtpAppPassword: '',
+  smtpAppPasswordConfigured: false,
+  smtpUseTls: true,
+  whatsappDefaultCountryCode: '258',
   autoLogoutMinutes: 15,
   require2fa: false,
 })
@@ -856,6 +894,11 @@ async function onSave() {
       thermal_paper_width: form.thermalPaper,
       vat_rate_percent: form.vatRatePercent,
       payment_instructions: form.paymentInstructions,
+      smtp_host: form.smtpHost,
+      smtp_port: Number(form.smtpPort || 587),
+      smtp_username: form.smtpUsername,
+      smtp_use_tls: !!form.smtpUseTls,
+      whatsapp_default_country_code: form.whatsappDefaultCountryCode,
       auto_logout_minutes: form.autoLogoutMinutes,
       require_2fa_for_sensitive_roles: form.require2fa,
       bank_accounts: bankRows.value.map((row) => ({
@@ -877,6 +920,10 @@ async function onSave() {
       })),
     }
 
+    if (form.smtpAppPassword) {
+      payload.smtp_app_password = form.smtpAppPassword
+    }
+
     if (uploads.logo.file) payload.logo_file = uploads.logo.file
     if (uploads.logo.markedForRemoval) payload.clear_logo_file = true
     if (uploads.stamp.file) payload.stamp_file = uploads.stamp.file
@@ -886,6 +933,8 @@ async function onSave() {
 
     const savedSettings = await financeSystemSettingService.update(payload)
     hydrateUploadsFromServer(savedSettings)
+    form.smtpAppPassword = ''
+    form.smtpAppPasswordConfigured = !!savedSettings.smtp_app_password_configured
 
     if (desktop?.saveSettings) {
       const res = await desktop.saveSettings({
@@ -947,6 +996,13 @@ onMounted(async () => {
       thermalPaper: data.thermal_paper_width || '80mm',
       vatRatePercent: Number(data.vat_rate_percent ?? 16),
       paymentInstructions: data.payment_instructions || '',
+      smtpHost: data.smtp_host || '',
+      smtpPort: Number(data.smtp_port ?? 587),
+      smtpUsername: data.smtp_username || '',
+      smtpAppPassword: '',
+      smtpAppPasswordConfigured: !!data.smtp_app_password_configured,
+      smtpUseTls: data.smtp_use_tls !== false,
+      whatsappDefaultCountryCode: data.whatsapp_default_country_code || '258',
       autoLogoutMinutes: data.auto_logout_minutes || 15,
       require2fa: !!data.require_2fa_for_sensitive_roles,
     })

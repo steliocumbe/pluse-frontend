@@ -57,6 +57,9 @@ export const journalEntryService = {
   list(params = {}) {
     return api.get('/finance/journal-entries/', { params }).then((r) => r.data)
   },
+  nextReference(entryType = 'expense') {
+    return api.get('/finance/journal-entries/next-reference/', { params: { entry_type: entryType } }).then((r) => r.data)
+  },
   get(id) {
     return api.get(`/finance/journal-entries/${id}/`).then((r) => r.data)
   },
@@ -95,6 +98,21 @@ export const billingDocumentService = {
   },
   cancel(id) {
     return api.post(`/finance/billing-documents/${id}/cancel/`).then((r) => r.data)
+  },
+  sendEmail(id, payload = {}) {
+    return api.post(`/finance/billing-documents/${id}/send-email/`, payload).then((r) => r.data)
+  },
+  sendWhatsApp(id, payload = {}) {
+    return api.post(`/finance/billing-documents/${id}/send-whatsapp/`, payload).then((r) => r.data)
+  },
+  configureReceiptPlan(id, payload = {}) {
+    return api.patch(`/finance/billing-documents/${id}/configure-receipt-plan/`, payload).then((r) => r.data)
+  },
+  testAutoEmail(id, payload = {}) {
+    return api.post(`/finance/billing-documents/${id}/test-auto-email/`, payload).then((r) => r.data)
+  },
+  dispatchAutoEmails() {
+    return api.post('/finance/billing-documents/dispatch-auto-emails/').then((r) => r.data)
   },
 }
 

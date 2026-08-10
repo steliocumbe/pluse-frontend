@@ -30,8 +30,8 @@ export function formatDocumentDate(value) {
   }
 }
 
-export function openFinancePrintWindow({ title, html, mode = 'print', toast }) {
-  const printWindow = window.open('', '_blank', 'width=1160,height=860')
+export function openFinancePrintWindow({ title, html, mode = 'print', toast, existingWindow = null }) {
+  const printWindow = existingWindow || window.open('', '_blank', 'width=1160,height=860')
   if (!printWindow) {
     toast?.error?.('Não foi possível abrir a janela de impressão.')
     return false
