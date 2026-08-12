@@ -56,7 +56,7 @@
         <article class="pluse-dashboard-panel">
           <div class="pluse-dashboard-panel-head compact">
             <div><span>Acções prioritárias</span><strong>O que precisa de decisão</strong></div>
-            <router-link :to="{ name: 'cco' }" class="kt-btn kt-btn-outline kt-btn-sm">Abrir CCO</router-link>
+            <router-link :to="{ name: 'cco' }" class="kt-btn kt-btn-outline kt-btn-sm">Abrir Operações</router-link>
           </div>
           <div class="pluse-dashboard-tasks">
             <div v-for="task in tasks" :key="task.title" class="pluse-dashboard-task">

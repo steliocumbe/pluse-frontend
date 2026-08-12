@@ -109,17 +109,11 @@
             />
             <q-select
               v-model="form.new_department" :options="departmentOptions"
-              label="Novo departamento" outlined dense emit-value map-options clearable
+              label="Nova Área de Trabalho / Departamento" outlined dense emit-value map-options clearable
             />
             <q-select
-              v-if="form.new_department === 'support'"
-              v-model="form.new_support_unit" :options="supportUnitOptions"
-              label="Nova unidade *" outlined dense emit-value map-options
-            />
-            <q-select
-              v-if="form.new_department === 'operations'"
               v-model="form.new_client" :options="clientOptions"
-              label="Novo cliente *" outlined dense emit-value map-options
+              label="Novo cliente" outlined dense emit-value map-options clearable
               :loading="loadingRefs"
             />
             <q-select
@@ -148,7 +142,7 @@ import { useQuasar } from 'quasar'
 import { transferService } from 'src/services/employment.service'
 import { clientService } from 'src/services/client.service'
 import { postService } from 'src/services/post.service'
-import { departmentOptions, supportUnitOptions } from 'src/config/employment'
+import { departmentOptions } from 'src/config/employment'
 import { useAuthStore } from 'src/stores/auth'
 import { useToast } from 'src/composables/useToast'
 import AppHeading from 'src/components/ui/AppHeading.vue'

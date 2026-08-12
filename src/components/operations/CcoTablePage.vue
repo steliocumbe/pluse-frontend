@@ -93,7 +93,7 @@ import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 
 defineProps({
-  eyebrow: { type: String, default: 'Centro de Controlo Operacional' },
+  eyebrow: { type: String, default: 'Base de Operações' },
   title: { type: String, required: true },
   description: { type: String, required: true },
   metaIcon: { type: String, default: 'ki-chart-line' },

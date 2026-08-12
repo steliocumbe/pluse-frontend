@@ -194,6 +194,10 @@
                 ? `${termination.final_settlement_amount} MZN` : '—' }}
             </span>
           </div>
+          <div v-if="termination.notice_of_fault" class="field-row field-row--wide">
+            <span class="field-row__label">Nota de culpa</span>
+            <span class="field-row__value whitespace-pre-line">{{ termination.notice_of_fault }}</span>
+          </div>
         </div>
         <div
           v-if="termination.status === 'pending' && canApprove"
@@ -249,6 +253,12 @@
           >
             <template #prepend><q-icon name="attach_file" /></template>
           </q-file>
+          <q-input
+            v-if="termForm.reason === 'dismissal_with_cause'"
+            v-model="termForm.notice_of_fault"
+            label="Nota de culpa *"
+            type="textarea" outlined dense autogrow :rules="[req]"
+          />
           <q-input v-model="termForm.notes" label="Notas" type="textarea" outlined dense autogrow />
           <div class="flex justify-end gap-2">
             <q-btn flat no-caps label="Cancelar" :disable="submitting"
@@ -308,6 +318,7 @@ const termForm = reactive({
   notice_date: '',
   final_settlement_amount: '',
   file: null,
+  notice_of_fault: '',
   notes: '',
 })
 
@@ -480,6 +491,9 @@ onMounted(async () => {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+.field-row--wide {
+  grid-column: 1 / -1;
 }
 .field-row__label {
   font-size: 0.7rem;

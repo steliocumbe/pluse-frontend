@@ -46,3 +46,15 @@ export const payrollService = {
       })
   },
 }
+
+export const payrollDoubleRuleService = {
+  list(params = {}) {
+    return api.get('/payroll-double-rules/', { params }).then((r) => r.data)
+  },
+  create(payload) {
+    return api.post('/payroll-double-rules/', payload).then((r) => r.data)
+  },
+  update(id, payload) {
+    return api.patch(`/payroll-double-rules/${id}/`, payload).then((r) => r.data)
+  },
+}

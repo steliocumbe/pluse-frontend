@@ -1,13 +1,13 @@
 <!--
   /employees/approvals — Caixa de aprovações (unificada, RH-2).
-  Junta tudo o que aguarda o Diretor Financeiro: colaboradores, contratos,
-  cessações e transferências pendentes, num só sítio.
+  Junta tudo o que aguarda o Diretor Financeiro: clientes, colaboradores,
+  contratos, cessações e transferências pendentes, num só sítio.
 -->
 <template>
   <AdminPageTemplate
     eyebrow="Recursos Humanos"
     title="Aprovações pendentes"
-    description="Triagem de tudo o que aguarda decisão do Diretor Financeiro — admissões, contratos, cessações e transferências."
+    description="Triagem de tudo o que aguarda decisão do Diretor Financeiro — clientes, admissões, contratos, cessações e transferências."
   >
     <template #meta>
       <span class="admin-meta-chip admin-meta-chip--accent">
@@ -257,6 +257,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { clientService } from 'src/services/client.service'
 import { employeeService } from 'src/services/employee.service'
 import {
   contractService,
@@ -278,6 +279,7 @@ import AppBadge from 'src/components/ui/AppBadge.vue'
 const toast = useToast()
 
 const loading = ref(false)
+const clientApprovals = ref([])
 const employees = ref([])
 const contracts = ref([])
 const terminations = ref([])
@@ -285,8 +287,8 @@ const transfers = ref([])
 const leaves = ref([])
 const justifications = ref([])
 
-// Tab actual — começa na primeira com items, fallback para 'employees'
-const activeTab = ref('employees')
+// Tab actual — começa na primeira com items, fallback para 'clients'
+const activeTab = ref('clients')
 
 // ── Modal de detalhe (usado para Ausências e Justificações) ───────────
 const showDetail = ref(false)
@@ -317,6 +319,37 @@ function rows(data) {
 function formatDate(s) {
   if (!s) return ''
   try { return new Date(s).toLocaleDateString('pt-PT') } catch { return s }
+}
+
+function riskLabel(value) {
+  return {
+    low: 'Baixo',
+    medium: 'Médio',
+    high: 'Alto',
+  }[value] || value || 'Não definido'
+}
+
+function buildClientDetails(c) {
+  const details = [
+    {
+      icon: 'ki-warning-2',
+      label: 'Etapa',
+      value: c.stage_display || 'Análise de risco em aprovação',
+      tone: 'accent',
+    },
+    {
+      icon: 'ki-document',
+      label: 'Risco',
+      value: riskLabel(c.risk_level),
+    },
+  ]
+  if (c.client_type_display) {
+    details.push({ icon: 'ki-briefcase', label: 'Tipo', value: c.client_type_display })
+  }
+  if (c.nuit) {
+    details.push({ icon: 'ki-bank', label: 'NUIT', value: c.nuit, tone: 'subtle' })
+  }
+  return details
 }
 
 /**
@@ -413,6 +446,21 @@ function buildTransferDetails(t) {
 }
 
 const groups = computed(() => [
+  {
+    key: 'clients',
+    title: 'Clientes em aprovação',
+    shortTitle: 'Clientes',
+    icon: 'ki-profile-user',
+    tone: 'info',
+    service: clientService,
+    items: clientApprovals.value.map((c) => ({
+      id: c.id,
+      title: c.short_name ? `${c.name} (${c.short_name})` : c.name,
+      subtitle: c.stage_display || 'Análise de risco em aprovação',
+      details: buildClientDetails(c),
+      to: { name: 'clients-detail', params: { id: c.id } },
+    })),
+  },
   {
     key: 'employees',
     title: 'Admissões de colaboradores',
@@ -513,7 +561,8 @@ const totalPending = computed(
 async function loadAll() {
   loading.value = true
   try {
-    const [emp, con, ter, tra, lvs, jst] = await Promise.all([
+    const [cli, emp, con, ter, tra, lvs, jst] = await Promise.all([
+      clientService.list({ stage: 'risk_review', page_size: 100 }),
       employeeService.list({ status: 'pending', page_size: 100 }),
       contractService.list({ status: 'pending', page_size: 100 }),
       terminationService.list({ status: 'pending', page_size: 100 }),
@@ -521,6 +570,7 @@ async function loadAll() {
       leaveRequestService.list({ status: 'pending', page_size: 100 }),
       absenceJustificationService.list({ status: 'pending', page_size: 100 }),
     ])
+    clientApprovals.value = rows(cli)
     employees.value = rows(emp)
     contracts.value = rows(con)
     terminations.value = rows(ter)

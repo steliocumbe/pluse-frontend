@@ -1,135 +1,142 @@
 <!--
-  Inline documents section used inside EmployeeForm during creation.
+  Inline document slots used during employee creation and batch uploads.
 
-  Instead of an "add one row at a time" flow, this lays out EVERY known
-  document type upfront, grouped by category. The user sees the full
-  checklist at a glance and simply attaches a file to whichever documents
-  they have on hand — no repeated "add" clicks.
-
-  - Fixed types (23) → one row each, pre-rendered.
-  - "Outros" → free rows the user can add (custom title + file).
-
-  Types come from the shared `document-types` config, so this list never
-  drifts from the backend.
-
-  Emits `update:modelValue` an array of { type, title, file, issue_date,
-  expiry_date } — only rows that actually have a file are emitted.
+  The default view stays intentionally small: four mandatory HR slots plus a
+  flexible "extra document" list for special cases.
 -->
 <template>
-  <div class="flex flex-col gap-4">
-    <!-- Summary -->
+  <div class="employee-docs">
     <div class="docs-summary">
       <AppIcon name="ki-document" :size="18" icon-class="text-primary" />
       <span class="docs-summary__text">
-        <strong>{{ attachedCount }}</strong> de {{ fixedCount }} documentos anexados
-        <template v-if="others.length">
-          · <strong>{{ otherAttachedCount }}</strong> outro(s)
+        <strong>{{ attachedRequiredCount }}</strong> de {{ requiredDocuments.length }} obrigatórios anexados
+        <template v-if="extraAttachedCount">
+          · <strong>{{ extraAttachedCount }}</strong> extra{{ extraAttachedCount === 1 ? '' : 's' }}
         </template>
       </span>
-      <span class="docs-summary__hint">Anexe os que tiver agora — os restantes podem ser adicionados mais tarde.</span>
     </div>
 
-    <!-- Fixed categories -->
-    <section v-for="cat in fixedCategories" :key="cat.key" class="doc-cat">
-      <header class="doc-cat__head">
-        <span class="doc-cat__icon"><AppIcon :name="cat.icon" :size="15" /></span>
-        <span class="doc-cat__title">{{ cat.label }}</span>
-        <span class="doc-cat__count">{{ catAttached(cat) }} / {{ cat.types.length }}</span>
+    <section class="doc-section">
+      <header class="doc-section__head">
+        <div>
+          <h4>Documentação Obrigatória</h4>
+          <p>BI, NUIT, NIB Bancário e Contrato Assinado.</p>
+        </div>
+        <span class="doc-section__count">{{ attachedRequiredCount }} / {{ requiredDocuments.length }}</span>
       </header>
 
-      <div class="doc-cat__body">
-        <div
-          v-for="t in cat.types"
-          :key="t.value"
-          class="doc-line"
-          :class="{ 'doc-line--filled': !!slots[t.value].file }"
+      <div class="required-grid">
+        <article
+          v-for="doc in requiredDocuments"
+          :key="doc.value"
+          class="required-slot"
+          :class="{ 'required-slot--filled': !!slots[doc.value].file }"
         >
-          <div class="doc-line__top">
-            <span class="doc-line__state" :class="{ 'doc-line__state--on': !!slots[t.value].file }">
-              <q-icon :name="slots[t.value].file ? 'check' : 'attach_file'" size="13px" />
+          <div class="required-slot__head">
+            <span class="required-slot__icon">
+              <q-icon :name="slots[doc.value].file ? 'check' : 'upload_file'" size="16px" />
             </span>
-            <div class="doc-line__label">
-              <span class="doc-line__name">{{ t.label }}</span>
-              <span v-if="t.expirable" class="doc-line__tag">tem validade</span>
+            <div class="required-slot__label">
+              <strong>{{ doc.label }}</strong>
+              <span v-if="doc.expirable">Tem validade</span>
             </div>
-            <q-file
-              v-model="slots[t.value].file"
-              dense
-              outlined
-              clearable
-              class="doc-line__file"
-              :label="slots[t.value].file ? '' : 'Anexar ficheiro'"
-              max-file-size="10485760"
-              accept=".pdf,.jpg,.jpeg,.png"
-            >
-              <template #prepend><q-icon name="upload_file" size="18px" /></template>
-            </q-file>
           </div>
 
-          <div v-if="slots[t.value].file" class="doc-line__dates">
+          <q-file
+            v-model="slots[doc.value].file"
+            dense
+            outlined
+            clearable
+            :label="slots[doc.value].file ? '' : 'Anexar ficheiro'"
+            max-file-size="10485760"
+            accept=".pdf,.jpg,.jpeg,.png"
+          >
+            <template #prepend><q-icon name="upload_file" size="18px" /></template>
+          </q-file>
+
+          <div v-if="slots[doc.value].file" class="doc-dates">
             <q-input
-              v-model="slots[t.value].issue_date"
+              v-model="slots[doc.value].issue_date"
               label="Data de emissão"
-              type="date" outlined dense stack-label
+              type="date"
+              outlined
+              dense
+              stack-label
             />
             <q-input
-              v-model="slots[t.value].expiry_date"
-              :label="t.expirable ? 'Validade (recomendado)' : 'Validade'"
-              type="date" outlined dense stack-label
+              v-model="slots[doc.value].expiry_date"
+              :label="doc.expirable ? 'Validade' : 'Validade opcional'"
+              type="date"
+              outlined
+              dense
+              stack-label
             />
           </div>
-        </div>
+
+          <span
+            v-if="slots[doc.value].file && expiryStatus(slots[doc.value]).tone !== 'neutral'"
+            class="doc-alert"
+            :class="`doc-alert--${expiryStatus(slots[doc.value]).tone}`"
+          >
+            <q-icon :name="expiryStatus(slots[doc.value]).icon" size="13px" />
+            {{ expiryStatus(slots[doc.value]).label }}
+          </span>
+        </article>
       </div>
     </section>
 
-    <!-- Outros documentos -->
-    <section class="doc-cat">
-      <header class="doc-cat__head">
-        <span class="doc-cat__icon"><AppIcon name="ki-document" :size="15" /></span>
-        <span class="doc-cat__title">Outros documentos</span>
-        <span class="doc-cat__count">{{ otherAttachedCount }}</span>
+    <section class="doc-section">
+      <header class="doc-section__head">
+        <div>
+          <h4>Documentos Extras</h4>
+          <p>Registo criminal, aptidão física, certificados ou outros anexos específicos.</p>
+        </div>
+        <q-btn
+          outline
+          no-caps
+          color="primary"
+          icon="add"
+          size="sm"
+          label="Adicionar Documento Extra"
+          @click="addExtra"
+        />
       </header>
 
-      <div class="doc-cat__body">
-        <div
-          v-for="(o, index) in others"
-          :key="o._localId"
-          class="doc-line doc-line--other"
-          :class="{ 'doc-line--filled': !!o.file }"
+      <div v-if="extras.length" class="extra-list">
+        <article
+          v-for="(doc, index) in extras"
+          :key="doc._localId"
+          class="extra-doc"
+          :class="{ 'extra-doc--filled': !!doc.file }"
         >
-          <div class="doc-line__top">
+          <div class="extra-doc__top">
             <q-input
-              v-model="o.title"
-              label="Descrição *"
-              outlined dense
-              class="doc-line__title"
+              v-model="doc.title"
+              label="Nome do documento *"
+              outlined
+              dense
+              class="extra-doc__title"
               :rules="[(v) => !!v || 'Obrigatório']"
             />
             <q-file
-              v-model="o.file"
-              dense outlined clearable
-              class="doc-line__file"
-              :label="o.file ? '' : 'Anexar ficheiro'"
+              v-model="doc.file"
+              dense
+              outlined
+              clearable
+              class="extra-doc__file"
+              :label="doc.file ? '' : 'Anexar ficheiro'"
               max-file-size="10485760"
               accept=".pdf,.jpg,.jpeg,.png"
             >
               <template #prepend><q-icon name="upload_file" size="18px" /></template>
             </q-file>
-            <q-btn flat round dense color="negative" icon="delete" size="sm"
-                   @click="removeOther(index)" />
+            <q-btn flat round dense color="negative" icon="delete" size="sm" @click="removeExtra(index)" />
           </div>
-          <div v-if="o.file" class="doc-line__dates">
-            <q-input v-model="o.issue_date" label="Data de emissão"
-                     type="date" outlined dense stack-label />
-            <q-input v-model="o.expiry_date" label="Validade"
-                     type="date" outlined dense stack-label />
+          <div v-if="doc.file" class="doc-dates">
+            <q-input v-model="doc.issue_date" label="Data de emissão" type="date" outlined dense stack-label />
+            <q-input v-model="doc.expiry_date" label="Validade" type="date" outlined dense stack-label />
           </div>
-        </div>
-
-        <div>
-          <q-btn outline no-caps color="primary" icon="add" size="sm"
-                 label="Adicionar outro documento" @click="addOther" />
-        </div>
+        </article>
       </div>
     </section>
   </div>
@@ -138,92 +145,91 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
-import { documentCategories } from 'src/config/document-types'
+import { requiredDocumentTypes, requiredDocumentTypeValues } from 'src/config/document-types'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['update:modelValue'])
 
-// Every category except the catch-all "other" — those get fixed rows.
-const fixedCategories = documentCategories.filter((c) => c.key !== 'other')
-const fixedCount = fixedCategories.reduce((n, c) => n + c.types.length, 0)
-
-// One reactive slot per fixed type: { file, issue_date, expiry_date }.
-const slots = reactive({})
-for (const cat of fixedCategories) {
-  for (const t of cat.types) {
-    slots[t.value] = { file: null, issue_date: '', expiry_date: '' }
-  }
-}
+const requiredDocuments = requiredDocumentTypes
+const requiredSet = new Set(requiredDocumentTypeValues)
+const slots = reactive(Object.fromEntries(
+  requiredDocuments.map((doc) => [doc.value, { file: null, issue_date: '', expiry_date: '' }]),
+))
 
 let counter = 0
-const blankOther = () => ({
+const blankExtra = () => ({
   _localId: ++counter,
   title: '',
   file: null,
   issue_date: '',
   expiry_date: '',
 })
-const others = ref([])
+const extras = ref([])
 
-// Hydrate from an existing modelValue (e.g. stepper navigation back/forward).
 for (const d of props.modelValue || []) {
-  if (d.type === 'other') {
-    others.value.push({
+  if (requiredSet.has(d.type) && slots[d.type]) {
+    slots[d.type] = {
+      file: d.file || null,
+      issue_date: d.issue_date || '',
+      expiry_date: d.expiry_date || '',
+    }
+  } else {
+    extras.value.push({
       _localId: ++counter,
       title: d.title || '',
       file: d.file || null,
       issue_date: d.issue_date || '',
       expiry_date: d.expiry_date || '',
     })
-  } else if (slots[d.type]) {
-    slots[d.type] = {
-      file: d.file || null,
-      issue_date: d.issue_date || '',
-      expiry_date: d.expiry_date || '',
-    }
   }
 }
 
-const attachedCount = computed(
-  () => Object.values(slots).filter((s) => s.file).length,
+const attachedRequiredCount = computed(
+  () => Object.values(slots).filter((slot) => slot.file).length,
 )
-const otherAttachedCount = computed(() => others.value.filter((o) => o.file).length)
+const extraAttachedCount = computed(() => extras.value.filter((doc) => doc.file).length)
 
-function catAttached(cat) {
-  return cat.types.filter((t) => slots[t.value].file).length
+function addExtra() {
+  extras.value.push(blankExtra())
 }
 
-function addOther() {
-  others.value.push(blankOther())
-}
-function removeOther(i) {
-  others.value.splice(i, 1)
+function removeExtra(index) {
+  extras.value.splice(index, 1)
 }
 
-// Flatten slots + others into the emitted model — only rows with a file.
+function expiryStatus(doc) {
+  if (!doc.expiry_date) return { tone: 'neutral', icon: 'remove', label: '' }
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const days = Math.round((new Date(doc.expiry_date) - today) / 86400000)
+  if (days < 0) return { tone: 'negative', icon: 'error', label: 'Expirado' }
+  if (days <= 30) return { tone: 'warning', icon: 'flag', label: days === 0 ? 'Expira hoje' : `Expira em ${days} dia${days === 1 ? '' : 's'}` }
+  return { tone: 'positive', icon: 'check_circle', label: 'Válido' }
+}
+
 function buildModel() {
   const out = []
-  for (const [type, s] of Object.entries(slots)) {
-    if (s.file) {
+  for (const [type, slot] of Object.entries(slots)) {
+    if (slot.file) {
       out.push({
         type,
         title: '',
-        file: s.file,
-        issue_date: s.issue_date || '',
-        expiry_date: s.expiry_date || '',
+        file: slot.file,
+        issue_date: slot.issue_date || '',
+        expiry_date: slot.expiry_date || '',
       })
     }
   }
-  for (const o of others.value) {
-    if (o.file) {
+  for (const doc of extras.value) {
+    if (doc.file) {
       out.push({
         type: 'other',
-        title: o.title || '',
-        file: o.file,
-        issue_date: o.issue_date || '',
-        expiry_date: o.expiry_date || '',
+        title: doc.title || '',
+        file: doc.file,
+        issue_date: doc.issue_date || '',
+        expiry_date: doc.expiry_date || '',
       })
     }
   }
@@ -231,14 +237,19 @@ function buildModel() {
 }
 
 watch(
-  [slots, others],
+  [slots, extras],
   () => emit('update:modelValue', buildModel()),
   { deep: true },
 )
 </script>
 
 <style scoped>
-/* ── Summary ───────────────────────────────────────────────────────────── */
+.employee-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .docs-summary {
   display: flex;
   align-items: center;
@@ -246,140 +257,205 @@ watch(
   gap: 8px 12px;
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: color-mix(in oklab, var(--primary) 6%, transparent);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 6%, var(--card));
 }
+
 .docs-summary__text {
   font-size: 0.85rem;
   color: var(--foreground);
 }
-.docs-summary__hint {
+
+.doc-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.doc-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 35%, var(--card));
+}
+
+.doc-section__head h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--mono);
+}
+
+.doc-section__head p {
+  margin: 2px 0 0;
   font-size: 0.78rem;
   color: var(--muted-foreground);
 }
 
-/* ── Category ──────────────────────────────────────────────────────────── */
-.doc-cat {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+.doc-section__count {
+  flex: none;
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.required-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.required-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   background: var(--card);
 }
-.doc-cat__head {
+
+.required-slot:nth-child(2n) {
+  border-right: none;
+}
+
+.required-slot:nth-last-child(-n + 2) {
+  border-bottom: none;
+}
+
+.required-slot--filled,
+.extra-doc--filled {
+  background: color-mix(in oklab, var(--pluse-emerald-500, #10b981) 5%, var(--card));
+}
+
+.required-slot__head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  background: color-mix(in oklab, var(--muted) 35%, transparent);
-  border-bottom: 1px solid var(--border);
 }
-.doc-cat__icon {
+
+.required-slot__icon {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   flex: none;
-  border-radius: 7px;
-  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 12%, var(--card));
   color: var(--primary);
 }
-.doc-cat__title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--mono);
-  flex: 1;
+
+.required-slot__label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-.doc-cat__count {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--muted);
+
+.required-slot__label strong {
+  font-size: 0.9rem;
+  color: var(--foreground);
+}
+
+.required-slot__label span {
+  font-size: 0.72rem;
   color: var(--muted-foreground);
 }
-.doc-cat__body {
+
+.doc-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.doc-alert {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.doc-alert--positive {
+  background: color-mix(in oklab, var(--pluse-emerald-500, #10b981) 16%, var(--card));
+  color: var(--pluse-emerald-600, #059669);
+}
+
+.doc-alert--warning {
+  background: color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 18%, var(--card));
+  color: var(--pluse-amber-600, #d97706);
+}
+
+.doc-alert--negative {
+  background: color-mix(in oklab, var(--destructive) 16%, var(--card));
+  color: var(--destructive);
+}
+
+.extra-list {
   display: flex;
   flex-direction: column;
 }
 
-/* ── Document line ─────────────────────────────────────────────────────── */
-.doc-line {
-  padding: 10px 14px;
+.extra-doc {
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border);
 }
-.doc-line:last-child {
+
+.extra-doc:last-child {
   border-bottom: none;
 }
-.doc-line--filled {
-  background: color-mix(in oklab, var(--pluse-emerald-500, #10b981) 5%, transparent);
-}
-.doc-line__top {
+
+.extra-doc__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
-.doc-line__state {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--muted);
-  color: var(--muted-foreground);
-}
-.doc-line__state--on {
-  background: color-mix(in oklab, var(--pluse-emerald-500, #10b981) 18%, transparent);
-  color: var(--pluse-emerald-600, #059669);
-}
-.doc-line__label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+
+.extra-doc__title {
   flex: 1;
   min-width: 0;
 }
-.doc-line__name {
-  font-size: 0.86rem;
-  color: var(--foreground);
-}
-.doc-line__tag {
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--pluse-amber-500, #f59e0b) 16%, transparent);
-  color: var(--pluse-amber-600, #d97706);
-  white-space: nowrap;
-}
-.doc-line__file {
+
+.extra-doc__file {
   width: 220px;
   flex: none;
 }
-.doc-line__title {
-  flex: 1;
-  min-width: 0;
-}
-.doc-line__dates {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 10px;
-  padding-left: 34px;
-}
 
-@media (max-width: 640px) {
-  .doc-line__top {
-    flex-wrap: wrap;
+@media (max-width: 720px) {
+  .required-grid {
+    grid-template-columns: 1fr;
   }
-  .doc-line__file {
+
+  .required-slot,
+  .required-slot:nth-child(2n),
+  .required-slot:nth-last-child(-n + 2) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .required-slot:last-child {
+    border-bottom: none;
+  }
+
+  .doc-section__head,
+  .extra-doc__top {
+    flex-direction: column;
+  }
+
+  .extra-doc__file {
     width: 100%;
   }
-  .doc-line__dates {
+
+  .doc-dates {
     grid-template-columns: 1fr;
-    padding-left: 0;
   }
 }
 </style>

@@ -262,12 +262,12 @@
                 <span class="field-row__label">Departamento</span>
                 <span class="field-row__value">{{ employee.department_display || '—' }}</span>
               </div>
-              <div v-if="employee.department === 'operations'" class="field-row">
-                <span class="field-row__label">Cliente</span>
+              <div v-if="employee.client_name" class="field-row">
+                <span class="field-row__label">Cliente alocado</span>
                 <span class="field-row__value">{{ employee.client_name || '—' }}</span>
               </div>
-              <div v-if="employee.department === 'support'" class="field-row">
-                <span class="field-row__label">Unidade de suporte</span>
+              <div v-if="employee.support_unit_display" class="field-row">
+                <span class="field-row__label">Unidade interna</span>
                 <span class="field-row__value">{{ employee.support_unit_display || '—' }}</span>
               </div>
               <div class="field-row">
@@ -394,14 +394,13 @@
 
       <!-- Documentos -->
       <q-tab-panel name="documents" class="p-0">
-        <!-- Header: summary + add button -->
         <div class="docs-head">
           <div class="docs-head__info">
-            <AppHeading :level="3" class="docs-head__title">Documentos do colaborador</AppHeading>
+            <AppHeading :level="3" class="docs-head__title">Documentação do colaborador</AppHeading>
             <span class="docs-head__summary">
-              {{ documents.length }} anexado{{ documents.length === 1 ? '' : 's' }}
+              {{ attachedRequiredCount }} / {{ requiredDocumentSlots.length }} obrigatórios anexados
               <template v-if="expiringCount">
-                · <span class="docs-head__alert">{{ expiringCount }} a renovar</span>
+                · <span class="docs-head__alert">{{ expiringCount }} com red flag</span>
               </template>
             </span>
           </div>
@@ -410,89 +409,115 @@
             unelevated
             no-caps
             icon="add"
-            label="Adicionar documentos"
+            label="Adicionar Documento Extra"
             @click="openDocModal"
           />
         </div>
 
-        <!-- Categorised list -->
-        <div v-if="categoriesWithDocs.length" class="docs-categories">
-          <section
-            v-for="cat in categoriesWithDocs"
-            :key="cat.key"
-            class="doc-category"
-          >
-            <header class="doc-category__head">
-              <span class="doc-category__icon"><AppIcon :name="cat.icon" :size="16" /></span>
-              <span class="doc-category__title">{{ cat.label }}</span>
-              <span class="doc-category__count">{{ cat.docs.length }} / {{ cat.types.length }}</span>
-            </header>
-            <div class="documents-grid">
-              <div v-for="doc in cat.docs" :key="doc.id" class="doc-card">
-                <div class="doc-card__head">
-                  <span class="doc-card__icon">
-                    <AppIcon :name="cat.icon" :size="18" />
-                  </span>
-                  <q-btn flat round dense icon="more_vert" size="sm">
-                    <q-menu>
-                      <q-list dense style="min-width: 160px">
-                        <q-item
-                          clickable
-                          v-close-popup
-                          :href="absoluteFileUrl(doc.file)"
-                          target="_blank"
-                          rel="noopener"
-                        >
-                          <q-item-section avatar><q-icon name="open_in_new" /></q-item-section>
-                          <q-item-section>Abrir</q-item-section>
-                        </q-item>
-                        <q-item clickable v-close-popup @click="deleteDocument(doc)">
-                          <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
-                          <q-item-section>Eliminar</q-item-section>
-                        </q-item>
-                      </q-list>
-                    </q-menu>
-                  </q-btn>
-                </div>
-                <div class="doc-card__body">
-                  <div class="doc-card__title">{{ documentTypeLabel(doc.type) }}</div>
-                  <div v-if="doc.title" class="doc-card__subtitle">{{ doc.title }}</div>
-                  <div v-if="doc.issue_date || doc.expiry_date" class="doc-card__meta">
-                    <span v-if="doc.issue_date">Emitido {{ formatDate(doc.issue_date) }}</span>
-                    <span v-if="doc.expiry_date">
-                      {{ doc.issue_date ? ' · ' : '' }}Validade {{ formatDate(doc.expiry_date) }}
-                    </span>
-                  </div>
-                  <span
-                    class="doc-badge"
-                    :class="`doc-badge--${expiryStatus(doc).tone}`"
-                  >
-                    <q-icon :name="expiryStatus(doc).icon" size="12px" />
-                    {{ expiryStatus(doc).label }}
+        <section class="doc-category">
+          <header class="doc-category__head">
+            <span class="doc-category__icon"><AppIcon name="ki-shield-tick" :size="16" /></span>
+            <span class="doc-category__title">Documentação Obrigatória</span>
+            <span class="doc-category__count">{{ attachedRequiredCount }} / {{ requiredDocumentSlots.length }}</span>
+          </header>
+          <div class="documents-grid">
+            <div
+              v-for="slot in requiredDocumentSlots"
+              :key="slot.value"
+              class="doc-card"
+              :class="{ 'doc-card--missing': !slot.doc }"
+            >
+              <div class="doc-card__head">
+                <span class="doc-card__icon">
+                  <AppIcon :name="slot.doc ? 'ki-document' : 'ki-warning-2'" :size="18" />
+                </span>
+                <q-btn v-if="slot.doc" flat round dense icon="more_vert" size="sm">
+                  <q-menu>
+                    <q-list dense style="min-width: 160px">
+                      <q-item clickable v-close-popup :href="absoluteFileUrl(slot.doc.file)" target="_blank" rel="noopener">
+                        <q-item-section avatar><q-icon name="open_in_new" /></q-item-section>
+                        <q-item-section>Abrir</q-item-section>
+                      </q-item>
+                      <q-item clickable v-close-popup @click="deleteDocument(slot.doc)">
+                        <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
+                        <q-item-section>Eliminar</q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </div>
+              <div class="doc-card__body">
+                <div class="doc-card__title">{{ slot.label }}</div>
+                <div v-if="slot.doc?.title" class="doc-card__subtitle">{{ slot.doc.title }}</div>
+                <div v-if="slot.doc?.issue_date || slot.doc?.expiry_date" class="doc-card__meta">
+                  <span v-if="slot.doc.issue_date">Emitido {{ formatDate(slot.doc.issue_date) }}</span>
+                  <span v-if="slot.doc.expiry_date">
+                    {{ slot.doc.issue_date ? ' · ' : '' }}Validade {{ formatDate(slot.doc.expiry_date) }}
                   </span>
                 </div>
-                <div class="doc-card__footer">
-                  <a
-                    :href="absoluteFileUrl(doc.file)"
-                    target="_blank"
-                    rel="noopener"
-                    class="doc-card__link"
-                  >
-                    <AppIcon name="ki-document" :size="14" />
-                    Ver ficheiro
-                  </a>
-                </div>
+                <span class="doc-badge" :class="`doc-badge--${slot.doc ? expiryStatus(slot.doc).tone : 'negative'}`">
+                  <q-icon :name="slot.doc ? expiryStatus(slot.doc).icon : 'flag'" size="12px" />
+                  {{ slot.doc ? expiryStatus(slot.doc).label : 'Pendente' }}
+                </span>
+              </div>
+              <div v-if="slot.doc" class="doc-card__footer">
+                <a :href="absoluteFileUrl(slot.doc.file)" target="_blank" rel="noopener" class="doc-card__link">
+                  <AppIcon name="ki-document" :size="14" />
+                  Ver ficheiro
+                </a>
               </div>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
 
-        <AppEmptyState
-          v-else-if="!loadingDocs"
-          title="Sem documentos"
-          description="Anexe BI, NUIT, registo criminal, certificados ou contratos. Pode também adicioná-los logo no momento do registo."
-          icon="ki-document"
-        />
+        <section v-if="extraDocuments.length" class="doc-category doc-category--extra">
+          <header class="doc-category__head">
+            <span class="doc-category__icon"><AppIcon name="ki-document" :size="16" /></span>
+            <span class="doc-category__title">Documentos Extras</span>
+            <span class="doc-category__count">{{ extraDocuments.length }}</span>
+          </header>
+          <div class="documents-grid">
+            <div v-for="doc in extraDocuments" :key="doc.id" class="doc-card">
+              <div class="doc-card__head">
+                <span class="doc-card__icon"><AppIcon name="ki-document" :size="18" /></span>
+                <q-btn flat round dense icon="more_vert" size="sm">
+                  <q-menu>
+                    <q-list dense style="min-width: 160px">
+                      <q-item clickable v-close-popup :href="absoluteFileUrl(doc.file)" target="_blank" rel="noopener">
+                        <q-item-section avatar><q-icon name="open_in_new" /></q-item-section>
+                        <q-item-section>Abrir</q-item-section>
+                      </q-item>
+                      <q-item clickable v-close-popup @click="deleteDocument(doc)">
+                        <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
+                        <q-item-section>Eliminar</q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </div>
+              <div class="doc-card__body">
+                <div class="doc-card__title">{{ doc.title || documentTypeLabel(doc.type) }}</div>
+                <div v-if="doc.type !== 'other'" class="doc-card__subtitle">{{ documentTypeLabel(doc.type) }}</div>
+                <div v-if="doc.issue_date || doc.expiry_date" class="doc-card__meta">
+                  <span v-if="doc.issue_date">Emitido {{ formatDate(doc.issue_date) }}</span>
+                  <span v-if="doc.expiry_date">
+                    {{ doc.issue_date ? ' · ' : '' }}Validade {{ formatDate(doc.expiry_date) }}
+                  </span>
+                </div>
+                <span class="doc-badge" :class="`doc-badge--${expiryStatus(doc).tone}`">
+                  <q-icon :name="expiryStatus(doc).icon" size="12px" />
+                  {{ expiryStatus(doc).label }}
+                </span>
+              </div>
+              <div class="doc-card__footer">
+                <a :href="absoluteFileUrl(doc.file)" target="_blank" rel="noopener" class="doc-card__link">
+                  <AppIcon name="ki-document" :size="14" />
+                  Ver ficheiro
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </q-tab-panel>
 
       <!-- Disciplina -->
@@ -644,7 +669,6 @@ import { useToast } from 'src/composables/useToast'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
-import AppEmptyState from 'src/components/ui/AppEmptyState.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
 import ModernAlert from 'src/components/ui/ModernAlert.vue'
 import EmployeeFormDocuments from 'src/components/employees/EmployeeFormDocuments.vue'
@@ -653,7 +677,11 @@ import EmployeeDisciplinaryTab from 'src/components/employment/EmployeeDisciplin
 import EmployeeTransfersTab from 'src/components/employment/EmployeeTransfersTab.vue'
 import EmployeeAssetsTab from 'src/components/employees/EmployeeAssetsTab.vue'
 import { absoluteFileUrl } from 'src/utils/file-url'
-import { documentCategories, documentTypeMap, documentTypeLabel } from 'src/config/document-types'
+import {
+  documentTypeLabel,
+  requiredDocumentTypes,
+  requiredDocumentTypeValues,
+} from 'src/config/document-types'
 
 const route = useRoute()
 const router = useRouter()
@@ -679,16 +707,18 @@ const pendingDocs = ref([])
 const confirmState = ref({ open: false, mode: 'inactivate' })
 const deleteDocState = ref({ open: false, doc: null })
 
-/* Documents grouped by their config category — empty categories are hidden. */
-const categoriesWithDocs = computed(() =>
-  documentCategories
-    .map((cat) => ({
-      ...cat,
-      docs: documents.value.filter(
-        (d) => (documentTypeMap[d.type]?.categoryKey || 'other') === cat.key,
-      ),
-    }))
-    .filter((cat) => cat.docs.length),
+const requiredSet = new Set(requiredDocumentTypeValues)
+const requiredDocumentSlots = computed(() =>
+  requiredDocumentTypes.map((docType) => ({
+    ...docType,
+    doc: documents.value.find((doc) => doc.type === docType.value),
+  })),
+)
+const attachedRequiredCount = computed(
+  () => requiredDocumentSlots.value.filter((slot) => slot.doc).length,
+)
+const extraDocuments = computed(
+  () => documents.value.filter((doc) => !requiredSet.has(doc.type)),
 )
 
 /* Validity badge for a document. */
@@ -1088,6 +1118,9 @@ onMounted(async () => {
   gap: 10px;
   margin-bottom: 10px;
 }
+.doc-category + .doc-category {
+  margin-top: 22px;
+}
 .doc-category__icon {
   display: grid;
   place-items: center;
@@ -1127,6 +1160,10 @@ onMounted(async () => {
   border-radius: 14px;
   background: var(--card);
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.doc-card--missing {
+  border-color: color-mix(in oklab, var(--destructive) 28%, var(--border));
+  background: color-mix(in oklab, var(--destructive) 5%, var(--card));
 }
 .doc-card:hover {
   border-color: color-mix(in oklab, var(--primary) 28%, var(--border));

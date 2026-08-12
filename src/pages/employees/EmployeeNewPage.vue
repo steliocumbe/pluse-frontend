@@ -94,7 +94,7 @@ const toast = useToast()
 const initialFromQuery = computed(() => {
   const clientId = route.query.client ? Number(route.query.client) : null
   return clientId
-    ? { department: 'operations', client: clientId }
+    ? { department: 'operative', client: clientId }
     : {}
 })
 

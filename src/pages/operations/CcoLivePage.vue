@@ -1,11 +1,11 @@
 <!--
-  /cco — Centro de Controlo: painel ao vivo (Fase 4.2).
+  /cco — Base de Operações: painel ao vivo (Fase 4.2).
   Visão diária dos postos, cobertura, presenças e ocorrências em aberto.
 -->
 <template>
   <AdminPageTemplate
-    eyebrow="Operações · Centro de Controlo Operacional"
-    title="Centro de Controlo Operacional"
+    eyebrow="Operações · Base de Operações"
+    title="Base de Operações"
     description="Painel ao vivo para decidir rapidamente sobre cobertura, presenças, atrasos, check-ins fora do raio e ocorrências em aberto."
   >
     <template #meta>
@@ -470,7 +470,7 @@ function openSubstitution(post, shift) {
 
 /**
  * Acção rápida — confirma presença sem abrir modal.
- * Útil para o CCO marcar manualmente um vigilante (ex: sem dispositivo móvel,
+ * Útil para a Base de Operações marcar manualmente um vigilante (ex: sem dispositivo móvel,
  * só com rádio) sem ter de passar por um diálogo.
  */
 async function markPresent(shift) {
@@ -541,7 +541,7 @@ async function submitCcoAction() {
     } else {
       await shiftService.markAttendance(actionDialog.shift.id, {
         attendance_status: 'absent',
-        absence_reason: actionForm.reason || 'Falta marcada pelo Centro de Controlo Operacional.',
+        absence_reason: actionForm.reason || 'Falta marcada pela Base de Operações.',
       })
       $q.notify({ type: 'positive', icon: 'person_off', message: 'Falta registada.' })
     }
@@ -832,7 +832,7 @@ function coverageLabel(c) {
 .cco-command-card.is-amber { --pluse-tone: var(--pluse-amber-500, #f59e0b); }
 .cco-command-card.is-red { --pluse-tone: var(--destructive); }
 
-/* ── Filtros do CCO ──────────────────────────────────────────────────── */
+/* ── Filtros de Operações ──────────────────────────────────────────────────── */
 .cco-filters {
   display: flex;
   flex-wrap: wrap;

@@ -130,17 +130,17 @@ const stats = [
 ]
 
 const flowSteps = [
-  { title: 'Cadastrar cliente', copy: 'Dados fiscais, responsavel, contactos e zona operacional.' },
+  { title: 'Cadastrar cliente', copy: 'Dados fiscais, responsável, contactos e zona operacional.' },
   { title: 'Criar contrato', copy: 'Período, serviço, valor e regras de faturação.' },
   { title: 'Gerar postos', copy: 'Cada posto recebe GPS, QR Code e necessidade por turno.' },
-  { title: 'Planear escalas', copy: 'Operacoes aloca vigilantes e resolve conflitos antes do turno.' },
+  { title: 'Planear escalas', copy: 'Operações aloca vigilantes e resolve conflitos antes do turno.' },
 ]
 
 const clients = [
-  { initials: 'MR', name: 'MozMall Retail', contact: 'Ana Muchanga - Operacoes', sector: 'Retalho', contracts: 3, posts: 18, status: 'Ativo', statusVariant: 'success' },
+  { initials: 'MR', name: 'MozMall Retail', contact: 'Ana Muchanga - Operações', sector: 'Retalho', contracts: 3, posts: 18, status: 'Ativo', statusVariant: 'success' },
   { initials: 'PL', name: 'Porto Logística', contact: 'Carlos Nhampossa - Segurança', sector: 'Logística', contracts: 2, posts: 12, status: 'Ativo', statusVariant: 'success' },
-  { initials: 'BC', name: 'Banco Central', contact: 'Marta Uamusse - Administracao', sector: 'Financeiro', contracts: 2, posts: 9, status: 'Renovacao', statusVariant: 'warning' },
-  { initials: 'HM', name: 'Hospital Maputo', contact: 'Helena Macamo - Servicos gerais', sector: 'Saude', contracts: 1, posts: 7, status: 'Pendente', statusVariant: 'info' },
+  { initials: 'BC', name: 'Banco Central', contact: 'Marta Uamusse - Administração', sector: 'Financeiro', contracts: 2, posts: 9, status: 'Renovação', statusVariant: 'warning' },
+  { initials: 'HM', name: 'Hospital Maputo', contact: 'Helena Macamo - Serviços gerais', sector: 'Saúde', contracts: 1, posts: 7, status: 'Pendente', statusVariant: 'info' },
 ]
 
 const readiness = [

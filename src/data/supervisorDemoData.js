@@ -19,7 +19,7 @@ export const supervisorCommand = [
     tone: 'is-blue',
   },
   {
-    title: 'Escalar ao Centro de Controlo',
+    title: 'Escalar à Base de Operações',
     copy: 'Enviar apenas casos bloqueantes ou críticos para decisão central.',
     icon: 'ki-chart-line',
     tone: 'is-red',

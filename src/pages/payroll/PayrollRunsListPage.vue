@@ -17,6 +17,11 @@
 
     <template #actions>
       <q-btn
+        outline no-caps class="admin-hero-button"
+        icon="settings" label="Regras de dobra"
+        @click="openDoubleRules"
+      />
+      <q-btn
         unelevated no-caps class="admin-hero-primary"
         icon="add" label="Nova folha" @click="openCreate"
       />
@@ -98,13 +103,77 @@
         </q-form>
       </div>
     </AppModal>
+
+    <AppModal v-model="showDoubleRules" size="lg" persistent>
+      <div class="p-5 double-rules">
+        <div class="double-rules__head">
+          <div>
+            <AppHeading :level="3" class="text-base font-semibold text-mono">
+              Benefícios das dobras
+            </AppHeading>
+            <p class="text-xs text-muted-foreground m-0">
+              Defina o acréscimo salarial e o subsídio de alimentação aplicados a cada dobra.
+            </p>
+          </div>
+          <q-btn flat round dense icon="close" @click="showDoubleRules = false">
+            <q-tooltip>Fechar</q-tooltip>
+          </q-btn>
+        </div>
+
+        <q-table
+          :rows="doubleRules" :columns="doubleRuleColumns"
+          row-key="id" flat bordered dense class="pluse-table"
+          :loading="doubleRulesLoading"
+          no-data-label="Sem regras configuradas."
+        >
+          <template #body-cell-is_active="props">
+            <q-td :props="props">
+              <AppBadge :variant="props.row.is_active ? 'success' : 'neutral'">
+                {{ props.row.is_active ? 'Activa' : 'Inactiva' }}
+              </AppBadge>
+            </q-td>
+          </template>
+          <template #body-cell-actions="props">
+            <q-td :props="props" auto-width>
+              <q-btn flat round dense color="primary" icon="edit" @click="editDoubleRule(props.row)">
+                <q-tooltip>Editar regra</q-tooltip>
+              </q-btn>
+            </q-td>
+          </template>
+        </q-table>
+
+        <q-form ref="doubleRuleFormRef" greedy class="double-rules__form" @submit="submitDoubleRule">
+          <q-input v-model="doubleRuleForm.name" outlined dense label="Nome *" :rules="[req]" />
+          <q-input
+            v-model.number="doubleRuleForm.salary_multiplier"
+            type="number" min="0" step="0.01"
+            outlined dense label="Acréscimo salarial *" :rules="[req]"
+          />
+          <q-input
+            v-model.number="doubleRuleForm.food_allowance"
+            type="number" min="0" step="0.01"
+            outlined dense label="Subsídio de alimentação (MZN) *" :rules="[req]"
+          />
+          <q-toggle v-model="doubleRuleForm.is_active" label="Regra activa" />
+          <q-input v-model="doubleRuleForm.notes" outlined dense autogrow type="textarea" label="Notas" />
+          <div class="flex justify-end gap-2">
+            <q-btn flat no-caps label="Limpar" :disable="doubleRuleSaving" @click="resetDoubleRuleForm" />
+            <q-btn
+              unelevated no-caps color="primary" type="submit"
+              :label="editingDoubleRuleId ? 'Guardar regra' : 'Adicionar regra'"
+              :loading="doubleRuleSaving"
+            />
+          </div>
+        </q-form>
+      </div>
+    </AppModal>
   </AdminPageTemplate>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { payrollService } from 'src/services/payroll.service'
+import { payrollDoubleRuleService, payrollService } from 'src/services/payroll.service'
 import { useToast } from 'src/composables/useToast'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
@@ -132,6 +201,12 @@ const yearOptions = [currentYear - 1, currentYear, currentYear + 1].map((y) => (
 const rows = ref([])
 const loading = ref(false)
 const saving = ref(false)
+const showDoubleRules = ref(false)
+const doubleRules = ref([])
+const doubleRulesLoading = ref(false)
+const doubleRuleSaving = ref(false)
+const doubleRuleFormRef = ref(null)
+const editingDoubleRuleId = ref(null)
 const pagination = ref({
   sortBy: 'year', descending: true, page: 1, rowsPerPage: 10, rowsNumber: 0,
 })
@@ -141,6 +216,22 @@ const columns = [
   { name: 'totals', label: 'Resumo', field: 'totals', align: 'left' },
   { name: 'status', label: 'Estado', field: 'status', align: 'center' },
 ]
+
+const doubleRuleColumns = [
+  { name: 'name', label: 'Regra', field: 'name', align: 'left' },
+  { name: 'salary_multiplier', label: 'Acréscimo', field: 'salary_multiplier', align: 'center' },
+  { name: 'food_allowance', label: 'Subsídio alim.', field: 'food_allowance', align: 'right', format: money },
+  { name: 'is_active', label: 'Estado', field: 'is_active', align: 'center' },
+  { name: 'actions', label: '', field: 'id', align: 'right' },
+]
+
+const doubleRuleForm = reactive({
+  name: 'Regra padrão',
+  salary_multiplier: 1,
+  food_allowance: 150,
+  is_active: true,
+  notes: '',
+})
 
 function statusVariant(s) {
   return { active: 'success', pending: 'warning', inactive: 'neutral' }[s] || 'neutral'
@@ -203,10 +294,102 @@ async function submitCreate() {
   }
 }
 
+async function fetchDoubleRules() {
+  doubleRulesLoading.value = true
+  try {
+    const data = await payrollDoubleRuleService.list({ page_size: 100, ordering: '-is_active,name' })
+    doubleRules.value = data?.results ?? data ?? []
+  } finally {
+    doubleRulesLoading.value = false
+  }
+}
+
+function resetDoubleRuleForm() {
+  editingDoubleRuleId.value = null
+  Object.assign(doubleRuleForm, {
+    name: 'Regra padrão',
+    salary_multiplier: 1,
+    food_allowance: 150,
+    is_active: true,
+    notes: '',
+  })
+}
+
+async function openDoubleRules() {
+  showDoubleRules.value = true
+  resetDoubleRuleForm()
+  await fetchDoubleRules()
+}
+
+function editDoubleRule(row) {
+  editingDoubleRuleId.value = row.id
+  Object.assign(doubleRuleForm, {
+    name: row.name,
+    salary_multiplier: Number(row.salary_multiplier),
+    food_allowance: Number(row.food_allowance),
+    is_active: row.is_active,
+    notes: row.notes || '',
+  })
+}
+
+async function submitDoubleRule() {
+  const ok = await doubleRuleFormRef.value?.validate()
+  if (!ok) return
+  doubleRuleSaving.value = true
+  try {
+    if (editingDoubleRuleId.value) {
+      await payrollDoubleRuleService.update(editingDoubleRuleId.value, { ...doubleRuleForm })
+      toast.success('Regra de dobra actualizada.')
+    } else {
+      await payrollDoubleRuleService.create({ ...doubleRuleForm })
+      toast.success('Regra de dobra adicionada.')
+    }
+    resetDoubleRuleForm()
+    await fetchDoubleRules()
+  } catch (err) {
+    toast.error('Não foi possível guardar a regra.', {
+      caption: err?.response?.data?.detail
+        || Object.values(err?.response?.data || {})?.[0],
+    })
+  } finally {
+    doubleRuleSaving.value = false
+  }
+}
+
 onMounted(fetchPage)
 </script>
 
 <style scoped>
 .pluse-card { background: var(--card); }
 .pluse-table :deep(.q-table__top) { display: none; }
+
+.double-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.double-rules__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.double-rules__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.double-rules__form > :nth-child(1),
+.double-rules__form > :nth-child(4),
+.double-rules__form > :nth-child(5),
+.double-rules__form > :nth-child(6) {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .double-rules__form { grid-template-columns: 1fr; }
+}
 </style>

@@ -122,8 +122,8 @@
                 </select>
               </div>
               <div class="pluse-demo-field">
-                <label>Cargo do responsavel <span>Obrigatório</span></label>
-                <input value="Gestora de Operacoes" />
+                <label>Cargo do responsável <span>Obrigatório</span></label>
+                <input value="Gestora de Operações" />
               </div>
               <div class="pluse-demo-field">
                 <label>Contacto alternativo <span class="optional">Opcional</span></label>
@@ -148,7 +148,7 @@
             <div class="pluse-demo-section-head">
               <div>
                 <span>Operação e faturação</span>
-                <strong>Preferencias antes do primeiro contrato</strong>
+                <strong>Preferências antes do primeiro contrato</strong>
               </div>
               <AppBadge variant="info">A validar</AppBadge>
             </div>

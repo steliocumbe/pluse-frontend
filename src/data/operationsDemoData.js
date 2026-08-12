@@ -135,7 +135,7 @@ export const scheduleRows = [
       { shift: '06', title: 'Equipa Alfa', copy: 'Posto crítico com QR + GPS', coverage: '3/3', status: 'Pronto', variant: 'primary', tone: 'is-blue' },
       { shift: '12', title: 'Equipa Alfa', copy: 'Troca assistida pelo supervisor', coverage: '3/3', status: 'Pronto', variant: 'primary', tone: 'is-blue' },
       { shift: '18', title: 'Equipa Beta', copy: 'Foto obrigatória no check-in', coverage: '3/3', status: 'Pronto', variant: 'primary', tone: 'is-blue' },
-      { shift: '00', title: 'Equipa Beta', copy: 'Monitorado pelo Centro de Controlo Operacional', coverage: '3/3', status: 'Pronto', variant: 'primary', tone: 'is-blue' },
+      { shift: '00', title: 'Equipa Beta', copy: 'Monitorado pela Base de Operações', coverage: '3/3', status: 'Pronto', variant: 'primary', tone: 'is-blue' },
     ],
   },
 ]

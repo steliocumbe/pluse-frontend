@@ -119,11 +119,12 @@
                    :rules="[mozambicanPhone()]"
                    :error="!!fieldErrors.spouse_phone" :error-message="fieldErrors.spouse_phone"
                    @update:model-value="() => clearField('spouse_phone')" />
-          <q-input v-model="form.emergency_contact_name" label="Nome do contacto de emergência" outlined dense
+          <q-input v-model="form.emergency_contact_name" label="Nome do contacto de emergência *" outlined dense
+                   :rules="[reqEmergency]"
                    :error="!!fieldErrors.emergency_contact_name" :error-message="fieldErrors.emergency_contact_name"
                    @update:model-value="() => clearField('emergency_contact_name')" />
-          <q-input v-model="form.emergency_contact_phone" label="Telefone de emergência" outlined dense inputmode="tel"
-                   :rules="[mozambicanPhone()]"
+          <q-input v-model="form.emergency_contact_phone" label="Telefone de emergência *" outlined dense inputmode="tel"
+                   :rules="[reqEmergency, mozambicanPhone()]"
                    :error="!!fieldErrors.emergency_contact_phone" :error-message="fieldErrors.emergency_contact_phone"
                    @update:model-value="() => clearField('emergency_contact_phone')" />
         </div>
@@ -142,22 +143,15 @@
         <div class="form-group-label">Departamento e posto</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <q-select v-model="form.department" :options="departmentOptions"
-                    label="Departamento *" outlined dense emit-value map-options
+                    label="Área de Trabalho / Departamento *" outlined dense emit-value map-options
                     :rules="[req]"
                     :error="!!fieldErrors.department" :error-message="fieldErrors.department"
                     @update:model-value="() => clearField('department')" />
-          <q-select v-if="form.department === 'operations'" v-model="form.client"
-                    :options="clientOptions" label="Cliente *" outlined dense
+          <q-select v-model="form.client"
+                    :options="clientOptions" label="Alocar ao Cliente" outlined dense clearable
                     emit-value map-options :loading="loadingClients"
-                    :rules="[(v) => !!v || 'Obrigatório para Operações']"
                     :error="!!fieldErrors.client" :error-message="fieldErrors.client"
                     @update:model-value="() => clearField('client')" />
-          <q-select v-if="form.department === 'support'" v-model="form.support_unit"
-                    :options="supportUnitOptions" label="Unidade de suporte *"
-                    outlined dense emit-value map-options
-                    :rules="[(v) => !!v || 'Obrigatório para Suporte']"
-                    :error="!!fieldErrors.support_unit" :error-message="fieldErrors.support_unit"
-                    @update:model-value="() => clearField('support_unit')" />
           <q-select v-model="form.post" :options="postOptions" label="Posto"
                     outlined dense emit-value map-options clearable :loading="loadingPosts"
                     :error="!!fieldErrors.post" :error-message="fieldErrors.post"
@@ -402,6 +396,8 @@ const emit = defineEmits(['submit', 'cancel'])
 
 const toast = useToast()
 const req = (v) => !!v || 'Obrigatório'
+const emergencyContactMessage = 'O Contacto de Emergência é obrigatório para a segurança do colaborador.'
+const reqEmergency = (v) => !!String(v || '').trim() || emergencyContactMessage
 
 // Erros do backend mapeados por campo. Exposed for parent via defineExpose.
 const { fieldErrors, globalErrors, setFromResponse, clear: clearErrors, clearField } = useFormErrors()
@@ -505,9 +501,8 @@ watch(
 )
 watch(
   () => form.department,
-  (dep) => {
-    if (dep === 'operations') form.support_unit = null
-    if (dep === 'support') form.client = null
+  () => {
+    form.support_unit = null
   },
 )
 
@@ -529,16 +524,9 @@ const militaryOptions = [
   { label: 'Isento', value: 'exempt' },
 ]
 const departmentOptions = [
-  { label: 'Operações', value: 'operations' },
-  { label: 'Suporte', value: 'support' },
-]
-const supportUnitOptions = [
-  { label: 'Direção', value: 'direction' },
-  { label: 'Administração', value: 'administration' },
-  { label: 'Finanças', value: 'finance' },
-  { label: 'Recursos Humanos', value: 'hr' },
-  { label: 'Inspeção', value: 'inspection' },
-  { label: 'Supervisão', value: 'supervision' },
+  { label: 'Administrativo', value: 'administrative' },
+  { label: 'Operativo', value: 'operative' },
+  { label: 'Técnico', value: 'technical' },
 ]
 
 const groupOptions = ref([])
@@ -638,17 +626,14 @@ function getStepBlockReason(stepNumber) {
     if (isBlank(form.document_type)) return 'Preencha o campo obrigatório: Tipo de documento.'
     if (isBlank(form.document_number)) return 'Preencha o campo obrigatório: Número do documento.'
     if (isBlank(form.phone)) return 'Preencha o campo obrigatório: Telefone.'
+    if (isBlank(form.emergency_contact_name) || isBlank(form.emergency_contact_phone)) {
+      return emergencyContactMessage
+    }
     return ''
   }
 
   if (stepNumber === 2) {
-    if (isBlank(form.department)) return 'Selecione o Departamento.'
-    if (form.department === 'operations' && isBlank(form.client)) {
-      return 'Para Operações, selecione o Cliente.'
-    }
-    if (form.department === 'support' && isBlank(form.support_unit)) {
-      return 'Para Suporte, selecione a Unidade de suporte.'
-    }
+    if (isBlank(form.department)) return 'Selecione a Área de Trabalho / Departamento.'
     if (isBlank(form.types)) return 'Selecione pelo menos um Tipo de função.'
     if (isBlank(form.hire_date)) return 'Preencha a Data de admissão.'
     return ''
@@ -714,14 +699,23 @@ function isStepDisabled(n) {
 }
 
 async function onSubmit() {
-  // Validate every step that has a form — guards against header navigation
-  // skipping a step or editing a prior field after advancing.
-  for (const n of [1, 2, 3, 5]) {
-    if (!(await validateStep(n))) {
+  // Avoid validating hidden q-forms inside the stepper on final submit. In
+  // some browsers that can leave the final action waiting without ever
+  // emitting the POST request.
+  const stepsToCheck = props.mode === 'create' ? [1, 2, 3, 5] : [1, 2, 3]
+  for (const n of stepsToCheck) {
+    const reason = getStepBlockReason(n)
+    if (reason) {
+      maxStepReached.value = Math.max(maxStepReached.value, n)
       step.value = n
-      toast.warning('Há campos por preencher. Reveja os passos destacados.')
+      toast.warning(reason)
       return
     }
+  }
+
+  if (!(await validateStep(step.value))) {
+    toast.warning('Há campos por preencher. Reveja os campos destacados.')
+    return
   }
 
   const initialDocuments = (form.initial_documents || []).filter((d) => d.type && d.file)

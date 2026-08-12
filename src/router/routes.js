@@ -293,6 +293,11 @@ const routes = [
         component: () => import('pages/finance/JournalEntriesPage.vue'),
       },
       {
+        path: 'finance/control',
+        name: 'finance-control',
+        component: () => import('pages/finance/FinanceControlCenterPage.vue'),
+      },
+      {
         path: 'finance/billing',
         name: 'finance-billing',
         component: () => import('pages/finance/BillingDocumentsPage.vue'),

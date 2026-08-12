@@ -37,7 +37,7 @@
         <q-btn
           v-if="client.stage === 'prospecting'"
           unelevated no-caps class="admin-hero-primary"
-          icon="send" label="Submeter análise de risco"
+          icon="send" label="Enviar para aprovação"
           @click="submitRisk"
         />
         <q-btn
@@ -191,6 +191,83 @@
         </q-tab-panel>
 
         <!-- ── Contratos comerciais ───────────────────────────────── -->
+        <q-tab-panel name="documents" class="p-0">
+          <div class="tab-panel-head">
+            <div>
+              <h3>Documentação do cliente</h3>
+              <p>NUIT, Alvará, BI do representante e Certidão anexados ao cadastro.</p>
+            </div>
+            <q-btn
+              unelevated no-caps color="primary" icon="add"
+              label="Adicionar documentos"
+              @click="openDocumentModal"
+            />
+          </div>
+
+          <div class="contracts-summary">
+            <div class="summary-pill" :class="{ 'summary-pill--warn': missingClientDocumentsCount }">
+              <span class="summary-pill__label">Obrigatórios</span>
+              <strong>{{ attachedClientDocumentsCount }} / {{ requiredClientDocumentSlots.length }}</strong>
+            </div>
+            <div class="summary-pill">
+              <span class="summary-pill__label">Total anexado</span>
+              <strong>{{ documents.length }}</strong>
+            </div>
+          </div>
+
+          <div v-if="loadingDocuments" class="empty-tab"><q-spinner /> A carregar…</div>
+          <div v-else class="documents-grid">
+            <div
+              v-for="slot in requiredClientDocumentSlots"
+              :key="slot.value"
+              class="doc-card"
+              :class="{ 'doc-card--missing': !slot.doc }"
+            >
+              <div class="doc-card__head">
+                <span class="doc-card__icon">
+                  <AppIcon :name="slot.doc ? 'ki-document' : 'ki-warning-2'" :size="18" />
+                </span>
+                <q-btn v-if="slot.doc" flat round dense icon="more_vert" size="sm">
+                  <q-menu>
+                    <q-list dense style="min-width: 160px">
+                      <q-item clickable v-close-popup :href="absoluteFileUrl(slot.doc.file)" target="_blank" rel="noopener">
+                        <q-item-section avatar><q-icon name="open_in_new" /></q-item-section>
+                        <q-item-section>Abrir</q-item-section>
+                      </q-item>
+                      <q-item clickable v-close-popup @click="deleteDocument(slot.doc)">
+                        <q-item-section avatar><q-icon name="delete" color="negative" /></q-item-section>
+                        <q-item-section>Eliminar</q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </div>
+              <div class="doc-card__body">
+                <div class="doc-card__title">{{ slot.label }}</div>
+                <div v-if="slot.doc?.title && slot.doc.title !== slot.label" class="doc-card__subtitle">
+                  {{ slot.doc.title }}
+                </div>
+                <div v-if="slot.doc?.issue_date || slot.doc?.expiry_date" class="doc-card__meta">
+                  <span v-if="slot.doc.issue_date">Emitido {{ formatDate(slot.doc.issue_date) }}</span>
+                  <span v-if="slot.doc.expiry_date">
+                    {{ slot.doc.issue_date ? ' · ' : '' }}Validade {{ formatDate(slot.doc.expiry_date) }}
+                  </span>
+                </div>
+                <span class="doc-badge" :class="`doc-badge--${slot.doc ? documentStatus(slot.doc).tone : 'negative'}`">
+                  <q-icon :name="slot.doc ? documentStatus(slot.doc).icon : 'flag'" size="12px" />
+                  {{ slot.doc ? documentStatus(slot.doc).label : 'Pendente' }}
+                </span>
+              </div>
+              <div v-if="slot.doc" class="doc-card__footer">
+                <a :href="absoluteFileUrl(slot.doc.file)" target="_blank" rel="noopener" class="doc-card__link">
+                  <AppIcon name="ki-document" :size="14" />
+                  Ver ficheiro
+                </a>
+              </div>
+            </div>
+          </div>
+        </q-tab-panel>
+
         <q-tab-panel name="contracts" class="p-0">
           <div class="tab-panel-head">
             <div>
@@ -416,6 +493,36 @@
         </q-tab-panel>
       </q-tab-panels>
     </template>
+
+    <AppModal v-model="showDocumentsModal" size="xl" persistent>
+      <div class="p-5">
+        <div class="document-modal-head">
+          <span class="document-modal-head__icon">
+            <AppIcon name="ki-document" :size="20" />
+          </span>
+          <div>
+            <h3>Adicionar documentos</h3>
+            <p>Anexe NUIT, Alvará, BI do representante ou Certidão ao cadastro do cliente.</p>
+          </div>
+        </div>
+
+        <ClientDocumentSlots v-model="pendingDocuments" />
+
+        <div class="flex justify-end gap-2 mt-5">
+          <q-btn flat no-caps label="Cancelar" :disable="uploadingDocuments" @click="showDocumentsModal = false" />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            icon="cloud_upload"
+            label="Carregar documentos"
+            :loading="uploadingDocuments"
+            :disable="!pendingDocuments.some((doc) => doc.file)"
+            @click="uploadDocuments"
+          />
+        </div>
+      </div>
+    </AppModal>
   </AdminPageTemplate>
 </template>
 
@@ -428,13 +535,16 @@ import { postService } from 'src/services/post.service'
 import { clientContractService } from 'src/services/client-contract.service'
 import { employeeService } from 'src/services/employee.service'
 import { riskLevelLabel } from 'src/config/clients'
+import { clientDocumentTypes } from 'src/config/client-documents'
 import { contractStatusVariant } from 'src/config/client-contracts'
 import { useAuthStore } from 'src/stores/auth'
 import { useToast } from 'src/composables/useToast'
 import { absoluteFileUrl } from 'src/utils/file-url'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
+import ClientDocumentSlots from 'src/components/clients/ClientDocumentSlots.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import AppBadge from 'src/components/ui/AppBadge.vue'
+import AppModal from 'src/components/ui/AppModal.vue'
 import AuditTrail from 'src/components/ui/AuditTrail.vue'
 
 const route = useRoute()
@@ -450,6 +560,11 @@ const contracts = ref([])
 const loadingContracts = ref(false)
 const employees = ref([])
 const loadingEmployees = ref(false)
+const documents = ref([])
+const loadingDocuments = ref(false)
+const showDocumentsModal = ref(false)
+const pendingDocuments = ref([])
+const uploadingDocuments = ref(false)
 
 // Tab actual — preservado em ?tab= para deep-link e refresh
 const activeTab = ref(route.query.tab || 'geral')
@@ -457,6 +572,7 @@ const activeTab = ref(route.query.tab || 'geral')
 // Definição declarativa das tabs (uniforme; contagens reactivas)
 const tabsDef = computed(() => [
   { name: 'geral', icon: 'badge', label: 'Geral', count: 0 },
+  { name: 'documents', icon: 'folder', label: 'Documentos', count: documents.value.length },
   { name: 'contracts', icon: 'description', label: 'Contratos', count: contracts.value.length },
   { name: 'posts', icon: 'place', label: 'Postos', count: posts.value.length },
   { name: 'employees', icon: 'people', label: 'Colaboradores', count: employees.value.length },
@@ -473,6 +589,19 @@ const totalActiveMonthly = computed(() => {
 // Colaboradores sem posto atribuído
 const unassignedEmployees = computed(() =>
   employees.value.filter((e) => !e.post),
+)
+
+const requiredClientDocumentSlots = computed(() =>
+  clientDocumentTypes.map((docType) => ({
+    ...docType,
+    doc: documents.value.find((doc) => doc.type === docType.value),
+  })),
+)
+const attachedClientDocumentsCount = computed(
+  () => requiredClientDocumentSlots.value.filter((slot) => slot.doc).length,
+)
+const missingClientDocumentsCount = computed(
+  () => requiredClientDocumentSlots.value.length - attachedClientDocumentsCount.value,
 )
 
 /**
@@ -541,8 +670,86 @@ function postStatusVariant(status) {
   return { active: 'success', pending: 'warning', inactive: 'neutral' }[status] || 'neutral'
 }
 
+function documentStatus(doc) {
+  if (!doc.expiry_date) {
+    return { tone: 'neutral', icon: 'remove', label: 'Sem validade' }
+  }
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const days = Math.round((new Date(doc.expiry_date) - today) / 86400000)
+  if (days < 0) return { tone: 'negative', icon: 'error', label: 'Expirado' }
+  if (days === 0) return { tone: 'warning', icon: 'schedule', label: 'Expira hoje' }
+  if (days <= 30) {
+    return { tone: 'warning', icon: 'schedule', label: `Expira em ${days} dia${days === 1 ? '' : 's'}` }
+  }
+  return { tone: 'positive', icon: 'check_circle', label: 'Válido' }
+}
+
 async function load() {
   client.value = await clientService.get(route.params.id)
+}
+
+async function loadDocuments() {
+  loadingDocuments.value = true
+  try {
+    documents.value = await clientService.listDocuments(route.params.id)
+  } catch {
+    /* interceptor toasts */
+  } finally {
+    loadingDocuments.value = false
+  }
+}
+
+function openDocumentModal() {
+  pendingDocuments.value = []
+  showDocumentsModal.value = true
+}
+
+async function uploadDocuments() {
+  const rows = pendingDocuments.value.filter((doc) => doc.file instanceof File)
+  if (!rows.length) {
+    toast.error('Adicione pelo menos um documento com ficheiro.')
+    return
+  }
+  uploadingDocuments.value = true
+  let uploaded = 0
+  try {
+    for (const doc of rows) {
+      await clientService.uploadDocument(route.params.id, {
+        type: doc.type,
+        title: doc.title,
+        file: doc.file,
+        issue_date: doc.issue_date || '',
+        expiry_date: doc.expiry_date || '',
+      })
+      uploaded++
+    }
+    toast.success(`${uploaded} documento${uploaded === 1 ? '' : 's'} carregado${uploaded === 1 ? '' : 's'}.`)
+    showDocumentsModal.value = false
+    pendingDocuments.value = []
+    await loadDocuments()
+  } catch (err) {
+    toast.error('Não foi possível carregar os documentos.', { caption: err?.response?.data?.detail })
+  } finally {
+    uploadingDocuments.value = false
+  }
+}
+
+function deleteDocument(doc) {
+  $q.dialog({
+    title: 'Eliminar documento',
+    message: `Eliminar ${doc.title || doc.type_display}?`,
+    cancel: { label: 'Cancelar', flat: true, noCaps: true },
+    ok: { label: 'Eliminar', color: 'negative', unelevated: true, noCaps: true },
+  }).onOk(async () => {
+    try {
+      await clientService.deleteDocument(route.params.id, doc.id)
+      toast.success('Documento eliminado.')
+      await loadDocuments()
+    } catch (err) {
+      toast.error('Não foi possível eliminar o documento.', { caption: err?.response?.data?.detail })
+    }
+  })
 }
 
 async function loadPosts() {
@@ -654,6 +861,7 @@ onMounted(async () => {
     router.push({ name: 'clients-list' })
     return
   }
+  loadDocuments()
   loadPosts()
   loadContracts()
   loadEmployees()
@@ -958,6 +1166,150 @@ watch(activeTab, (next) => {
   color: var(--primary);
   padding-top: 8px;
   border-top: 1px dashed var(--border);
+}
+
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.doc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.doc-card--missing {
+  border-color: color-mix(in oklab, var(--destructive) 28%, var(--border));
+  background: color-mix(in oklab, var(--destructive) 5%, var(--card));
+}
+
+.doc-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.doc-card__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.doc-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.doc-card__title {
+  font-size: 0.94rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--mono);
+  word-break: break-word;
+}
+
+.doc-card__subtitle,
+.doc-card__meta {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.doc-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.doc-badge--positive {
+  background: color-mix(in oklab, #10b981 16%, transparent);
+  color: #059669;
+}
+
+.doc-badge--warning {
+  background: color-mix(in oklab, #f59e0b 20%, transparent);
+  color: #b45309;
+}
+
+.doc-badge--negative {
+  background: color-mix(in oklab, var(--destructive) 16%, transparent);
+  color: var(--destructive);
+}
+
+.doc-badge--neutral {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.doc-card__footer {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.doc-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.doc-card__link:hover {
+  text-decoration: underline;
+}
+
+.document-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.document-modal-head__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.document-modal-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mono);
+}
+
+.document-modal-head p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
 }
 
 /* ── Tabs (minimalista, profissional) ───────────────────────────────── */

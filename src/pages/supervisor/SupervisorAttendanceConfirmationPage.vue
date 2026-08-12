@@ -27,7 +27,7 @@
       <article class="pluse-demo-panel supervisor-validation">
         <span>Ponte com o comando</span>
         <strong>Decisão auditável</strong>
-        <p>Cada confirmação guarda motivo, evidência e responsável. O Centro de Controlo Operacional recebe apenas os casos escalados ou bloqueantes.</p>
+        <p>Cada confirmação guarda motivo, evidência e responsável. A Base de Operações recebe apenas os casos escalados ou bloqueantes.</p>
         <div class="supervisor-action-row">
           <button type="button" class="kt-btn kt-btn-outline">Marcar ausência</button>
           <button type="button" class="kt-btn kt-btn-primary">Confirmar presença</button>

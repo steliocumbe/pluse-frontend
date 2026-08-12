@@ -70,6 +70,11 @@
               @update:model-value="() => clearField('contact_email')" />
           </div>
 
+          <template v-if="!isEdit">
+            <div class="form-group-label">Documentação do cliente</div>
+            <ClientDocumentSlots v-model="clientDocuments" />
+          </template>
+
           <div class="form-group-label">Análise de risco</div>
           <p class="text-sm text-muted-foreground">
             Preencha a análise de risco. A submissão para aprovação faz-se na página
@@ -112,6 +117,7 @@ import { useToast } from 'src/composables/useToast'
 import { useFormErrors } from 'src/composables/useFormErrors'
 import { nuit, mozambicanPhone, email } from 'src/utils/validators'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
+import ClientDocumentSlots from 'src/components/clients/ClientDocumentSlots.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -121,6 +127,7 @@ const isEdit = computed(() => !!route.params.id)
 const formRef = ref(null)
 const submitting = ref(false)
 const clientName = ref('')
+const clientDocuments = ref([])
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
 
 // Erros do backend mapeados por campo
@@ -164,6 +171,20 @@ onMounted(async () => {
   }
 })
 
+async function uploadClientDocuments(clientId) {
+  const pending = clientDocuments.value.filter((doc) => doc.file instanceof File)
+  for (const doc of pending) {
+    await clientService.uploadDocument(clientId, {
+      type: doc.type,
+      title: doc.title,
+      file: doc.file,
+      issue_date: doc.issue_date || '',
+      expiry_date: doc.expiry_date || '',
+    })
+  }
+  return pending.length
+}
+
 async function onSubmit() {
   clearErrors()
   const ok = await formRef.value?.validate()
@@ -175,7 +196,10 @@ async function onSubmit() {
     const saved = isEdit.value
       ? await clientService.update(route.params.id, payload)
       : await clientService.create(payload)
-    toast.success(isEdit.value ? 'Cliente actualizado.' : 'Cliente registado.')
+    const uploadedCount = isEdit.value ? 0 : await uploadClientDocuments(saved.id)
+    toast.success(uploadedCount
+      ? `Cliente registado com ${uploadedCount} documento(s).`
+      : (isEdit.value ? 'Cliente actualizado.' : 'Cliente registado.'))
     router.push({ name: 'clients-detail', params: { id: saved.id } })
   } catch (err) {
     setFromResponse(err.response)

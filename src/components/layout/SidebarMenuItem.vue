@@ -1,7 +1,7 @@
 <template>
-  <!-- Section heading (e.g. "OPERACOES") -->
+  <!-- Section heading (e.g. "Operações") -->
   <div v-if="item.type === 'heading'" class="kt-menu-item pt-4 pb-1">
-    <span class="kt-menu-heading uppercase text-xs font-semibold text-white/42 ps-[10px] pe-[10px]">
+    <span class="kt-menu-heading normal-case text-xs font-semibold text-white/42 ps-[10px] pe-[10px]">
       {{ item.label }}
     </span>
   </div>

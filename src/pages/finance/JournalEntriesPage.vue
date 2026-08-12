@@ -104,6 +104,17 @@
           </div>
           <q-input v-model="form.description" type="textarea" autogrow outlined dense label="Descrição" />
 
+          <q-select
+            v-model="form.department"
+            :options="departmentOptions"
+            emit-value
+            map-options
+            clearable
+            outlined
+            dense
+            label="Departamento"
+          />
+
           <div v-if="form.entry_type === 'expense'" class="grid grid-cols-2 gap-3">
             <q-select
               v-model="form.employee_id"
@@ -148,7 +159,7 @@
               :loading="loadingPaidDocuments"
               label="Faturação paga *"
               :rules="[req]"
-              hint="Apenas documentos com status pago são exibidos."
+              hint="Apenas faturas pagas ainda não lançadas são exibidas."
             />
             <q-input
               class="col-span-2"
@@ -186,6 +197,7 @@ import AppBadge from 'src/components/ui/AppBadge.vue'
 import AppModal from 'src/components/ui/AppModal.vue'
 import AppHeading from 'src/components/ui/AppHeading.vue'
 import { clientService } from 'src/services/client.service'
+import { departmentService } from 'src/services/hr.service'
 import { employeeService } from 'src/services/employee.service'
 import { billingDocumentService, financeAccountService, financeSystemSettingService, journalEntryService } from 'src/services/finance.service'
 import { useToast } from 'src/composables/useToast'
@@ -203,6 +215,7 @@ const rows = ref([])
 const accounts = ref([])
 const clients = ref([])
 const employees = ref([])
+const departments = ref([])
 const companySettings = ref(null)
 const loading = ref(false)
 const saving = ref(false)
@@ -223,6 +236,7 @@ const form = reactive({
   date: new Date().toISOString().slice(0, 10),
   reference: '',
   entry_type: 'expense',
+  department: null,
   description: '',
   amount: 0,
   employee_id: null,
@@ -237,11 +251,13 @@ const entryTypeOptions = [
 
 const clientOptions = computed(() => clients.value.map((c) => ({ value: c.id, label: c.name })))
 const employeeOptions = computed(() => employees.value.map((e) => ({ value: e.id, label: `${e.employee_number || 'SEM-NUM'} - ${e.full_name}` })))
-const paidBillingOptions = computed(() => paidBillingDocuments.value.map((doc) => ({
+const departmentOptions = computed(() => departments.value.map((d) => ({ value: d.id, label: d.name })))
+const availablePaidBillingDocuments = computed(() => paidBillingDocuments.value.filter((doc) => !hasJournalEntry(doc)))
+const paidBillingOptions = computed(() => availablePaidBillingDocuments.value.map((doc) => ({
   value: doc.id,
   label: `${doc.document_number || `DOC-${doc.id}`} · ${money(doc.total_amount)} · ${doc.issue_date || ''}`,
 })))
-const selectedPaidDocument = computed(() => paidBillingDocuments.value.find((doc) => doc.id === form.paid_billing_document_id) || null)
+const selectedPaidDocument = computed(() => availablePaidBillingDocuments.value.find((doc) => doc.id === form.paid_billing_document_id) || null)
 const totalDebit = computed(() => Number(form.amount || 0))
 const totalCredit = computed(() => Number(form.amount || 0))
 const vatRatePercent = computed(() => {
@@ -260,6 +276,10 @@ const estimatedVat = computed(() => (totalEntradas.value * vatRatePercent.value)
 
 function accountByType(accountType) {
   return accounts.value.find((account) => account.account_type === accountType) || null
+}
+
+function hasJournalEntry(doc) {
+  return Boolean(doc?.journal_entry || doc?.journal_entry_reference)
 }
 
 function buildAutoLines() {
@@ -446,9 +466,14 @@ async function fetchPaidDocuments(clientId) {
 
   loadingPaidDocuments.value = true
   try {
-    const data = await billingDocumentService.list({ client: clientId, status: 'paid', page_size: 200 })
-    paidBillingDocuments.value = data?.results ?? data ?? []
-    if (!paidBillingDocuments.value.some((doc) => doc.id === form.paid_billing_document_id)) {
+    const data = await billingDocumentService.list({
+      client: clientId,
+      status: 'paid',
+      journal_entry__isnull: true,
+      page_size: 200,
+    })
+    paidBillingDocuments.value = (data?.results ?? data ?? []).filter((doc) => !hasJournalEntry(doc))
+    if (!availablePaidBillingDocuments.value.some((doc) => doc.id === form.paid_billing_document_id)) {
       form.paid_billing_document_id = null
     }
   } catch {
@@ -464,6 +489,7 @@ function openCreate() {
     date: new Date().toISOString().slice(0, 10),
     reference: '',
     entry_type: 'expense',
+    department: null,
     description: '',
     amount: 0,
     employee_id: null,
@@ -479,18 +505,20 @@ function openCreate() {
 async function fetchRows() {
   loading.value = true
   try {
-    const [entriesData, accountData, settingsData, clientData, employeeData] = await Promise.all([
+    const [entriesData, accountData, settingsData, clientData, employeeData, departmentData] = await Promise.all([
       journalEntryService.list({ page_size: 200 }),
       financeAccountService.list({ page_size: 500, is_active: true }),
       financeSystemSettingService.get().catch(() => null),
       clientService.list({ page_size: 300 }),
       employeeService.list({ page_size: 300 }),
+      departmentService.list({ page_size: 200, is_active: true }),
     ])
     rows.value = entriesData?.results ?? entriesData ?? []
     accounts.value = accountData?.results ?? accountData ?? []
     companySettings.value = settingsData
     clients.value = clientData?.results ?? clientData ?? []
     employees.value = employeeData?.results ?? employeeData ?? []
+    departments.value = departmentData?.results ?? departmentData ?? []
   } finally {
     loading.value = false
   }
@@ -548,8 +576,10 @@ async function submitCreate() {
       date: form.date,
       reference: form.reference,
       entry_type: form.entry_type,
+      department: form.department || null,
       description: `${form.description || ''}${descriptionSuffix}`.trim(),
       status: form.status,
+      paid_billing_document_id: form.entry_type === 'income' ? form.paid_billing_document_id : null,
       lines: autoLines.lines,
     })
     toast.success('Lançamento criado.')
@@ -592,7 +622,7 @@ watch(
   () => form.paid_billing_document_id,
   (billingId) => {
     if (form.entry_type !== 'income') return
-    const selected = paidBillingDocuments.value.find((doc) => doc.id === billingId)
+    const selected = availablePaidBillingDocuments.value.find((doc) => doc.id === billingId)
     form.amount = Number(selected?.total_amount || 0)
   },
 )
