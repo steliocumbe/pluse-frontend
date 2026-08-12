@@ -76,13 +76,42 @@
         </div>
       </div>
 
-      <q-card flat bordered class="pluse-card">
+      <div v-if="departmentGroups.length" class="department-grid">
+        <div v-for="group in departmentGroups" :key="group.code" class="department-total">
+          <span class="department-total__label">{{ group.name }}</span>
+          <strong class="department-total__value">{{ money(group.net) }}</strong>
+          <span class="department-total__meta">
+            {{ group.count }} colaborador(es) · {{ group.doubles }} dobra(s)
+          </span>
+        </div>
+      </div>
+
+      <div v-if="!departmentGroups.length" class="empty-payroll">
+        Sem colaboradores nesta folha.
+      </div>
+
+      <section
+        v-for="group in departmentGroups"
+        :key="`department-${group.code}`"
+        class="department-section"
+      >
+        <div class="department-section__head">
+          <div>
+            <h3>{{ group.name }}</h3>
+            <p>{{ money(group.gross) }} bruto · {{ money(group.net) }} líquido</p>
+          </div>
+          <div class="department-section__badges">
+            <AppBadge variant="neutral">{{ group.count }} colaborador(es)</AppBadge>
+            <AppBadge v-if="group.doubles" variant="warning">{{ group.doubles }} dobra(s)</AppBadge>
+          </div>
+        </div>
+
         <q-table
-          :rows="run.items" :columns="columns" :loading="false"
+          :rows="group.items" :columns="columns" :loading="false"
           row-key="id" flat bordered
           :pagination="{ rowsPerPage: 0 }" hide-pagination
           class="pluse-table"
-          no-data-label="Sem colaboradores nesta folha."
+          no-data-label="Sem colaboradores neste departamento."
         >
           <template #body-cell-employee="props">
             <q-td :props="props">
@@ -96,6 +125,18 @@
 
           <template #body-cell-base_salary="props">
             <q-td :props="props">{{ money(props.row.base_salary) }}</q-td>
+          </template>
+
+          <template #body-cell-double_salary_pay="props">
+            <q-td :props="props" class="text-positive">
+              {{ Number(props.row.double_salary_pay) ? '+' + money(props.row.double_salary_pay) : '—' }}
+            </q-td>
+          </template>
+
+          <template #body-cell-double_food_allowance_pay="props">
+            <q-td :props="props" class="text-positive">
+              {{ Number(props.row.double_food_allowance_pay) ? '+' + money(props.row.double_food_allowance_pay) : '—' }}
+            </q-td>
           </template>
 
           <template #body-cell-doubles_pay="props">
@@ -120,7 +161,7 @@
             </q-td>
           </template>
         </q-table>
-      </q-card>
+      </section>
     </template>
   </AdminPageTemplate>
 </template>
@@ -134,6 +175,7 @@ import { useAuthStore } from 'src/stores/auth'
 import { useToast } from 'src/composables/useToast'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
+import AppBadge from 'src/components/ui/AppBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -148,6 +190,31 @@ const canApprove = computed(
   () => auth.user?.is_superuser
     || auth.hasAnyGroup('Diretor Financeiro', 'Administrador', 'Direcao'),
 )
+
+const departmentGroups = computed(() => {
+  const groups = new Map()
+  for (const item of run.value?.items || []) {
+    const code = item.department_code || 'none'
+    if (!groups.has(code)) {
+      groups.set(code, {
+        code,
+        name: item.department_name || 'Sem departamento',
+        items: [],
+        count: 0,
+        doubles: 0,
+        gross: 0,
+        net: 0,
+      })
+    }
+    const group = groups.get(code)
+    group.items.push(item)
+    group.count += 1
+    group.doubles += Number(item.doubles || 0)
+    group.gross += Number(item.gross || 0)
+    group.net += Number(item.net || 0)
+  }
+  return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name))
+})
 
 const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -171,6 +238,8 @@ const columns = [
   { name: 'days_worked', label: 'Dias trab.', field: 'days_worked', align: 'center' },
   { name: 'doubles', label: 'Dobras', field: 'doubles', align: 'center' },
   { name: 'unjustified_absences', label: 'Faltas n/just.', field: 'unjustified_absences', align: 'center' },
+  { name: 'double_salary_pay', label: '+ Acréscimo', field: 'double_salary_pay', align: 'right' },
+  { name: 'double_food_allowance_pay', label: '+ Alimentação', field: 'double_food_allowance_pay', align: 'right' },
   { name: 'doubles_pay', label: '+ Dobras', field: 'doubles_pay', align: 'right' },
   { name: 'absence_deduction', label: '− Faltas', field: 'absence_deduction', align: 'right' },
   { name: 'gross', label: 'Bruto', field: 'gross', align: 'right' },
@@ -304,6 +373,72 @@ onMounted(async () => {
   border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
 }
 .total-card--primary .total-card__value { color: var(--primary); }
+.department-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.department-total {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+}
+.department-total__label,
+.department-total__meta {
+  display: block;
+  color: var(--muted-foreground);
+}
+.department-total__label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.department-total__value {
+  display: block;
+  margin-top: 4px;
+  color: var(--mono);
+  font-size: 1.15rem;
+}
+.department-total__meta {
+  margin-top: 2px;
+  font-size: 0.78rem;
+}
+.empty-payroll {
+  padding: 36px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.department-section {
+  margin-top: 16px;
+}
+.department-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px 10px;
+}
+.department-section__head h3 {
+  margin: 0;
+  color: var(--mono);
+  font-size: 1rem;
+  font-weight: 800;
+}
+.department-section__head p {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+.department-section__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .net-figure {
   font-weight: 800;
   color: var(--mono);

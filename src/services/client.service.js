@@ -46,6 +46,19 @@ export const clientService = {
   remove(id) {
     return api.delete(`/clients/${id}/`).then((r) => r.data)
   },
+  listDocuments(id) {
+    return api.get(`/clients/${id}/documents/`).then((r) => r.data)
+  },
+  uploadDocument(id, payload) {
+    return api.post(
+      `/clients/${id}/documents/`,
+      toFormData(payload),
+      uploadConfig(payload?._onProgress),
+    ).then((r) => r.data)
+  },
+  deleteDocument(id, documentId) {
+    return api.delete(`/clients/${id}/documents/${documentId}/`).then((r) => r.data)
+  },
   submitRisk(id) {
     return api.post(`/clients/${id}/submit-risk/`).then((r) => r.data)
   },
@@ -53,6 +66,12 @@ export const clientService = {
     return api.post(`/clients/${id}/approve-onboarding/`).then((r) => r.data)
   },
   rejectOnboarding(id, reason = '') {
+    return api.post(`/clients/${id}/reject-onboarding/`, { reason }).then((r) => r.data)
+  },
+  approve(id) {
+    return api.post(`/clients/${id}/approve-onboarding/`).then((r) => r.data)
+  },
+  reject(id, reason = '') {
     return api.post(`/clients/${id}/reject-onboarding/`, { reason }).then((r) => r.data)
   },
 }

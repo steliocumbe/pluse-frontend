@@ -1,6 +1,6 @@
 <!--
   /participations — Participações contra vigilantes (Fase 4.1).
-  Origem CCO/Supervisor/Gestor/Inspector → conversível em processo disciplinar.
+  Origem Base de Operações/Supervisor/Gestor/Inspector → conversível em processo disciplinar.
 -->
 <template>
   <AdminPageTemplate

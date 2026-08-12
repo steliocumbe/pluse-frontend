@@ -178,7 +178,7 @@
           <div class="theme-row">
             <div>
               <strong>Tema da interface</strong>
-              <p>Ative o modo escuro para operação noturna no CCO.</p>
+              <p>Ative o modo escuro para operação noturna na Base de Operações.</p>
             </div>
             <div class="theme-toggle">
               <span :class="{ muted: isDark }">Claro</span>

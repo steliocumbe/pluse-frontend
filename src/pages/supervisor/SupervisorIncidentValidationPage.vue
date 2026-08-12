@@ -1,7 +1,7 @@
 <template>
   <SupervisorPanel
     title="Validação de ocorrência"
-    description="Tela para o supervisor rever evidências, decidir prioridade e encaminhar casos relevantes ao Centro de Controlo Operacional."
+    description="Tela para o supervisor rever evidências, decidir prioridade e encaminhar casos relevantes à Base de Operações."
   >
     <section class="pluse-demo-grid">
       <article class="pluse-demo-panel">

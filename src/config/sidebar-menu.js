@@ -9,8 +9,8 @@ export const sidebarMenu = [
   { type: 'heading', label: 'Visão geral' },
   { label: 'Dashboard', icon: 'ki-element-11', to: '/' },
 
-  { type: 'heading', label: 'Centro de Controlo' },
-  { label: 'Centro de controle', icon: 'ki-chart-line', to: '/cco' },
+  { type: 'heading', label: 'Módulo de Operações' },
+  { label: 'Painel de Operações', icon: 'ki-chart-line', to: '/cco' },
   { label: 'Ocorrências', icon: 'ki-warning-2', to: '/incidents' },
   { label: 'Participações', icon: 'ki-information-2', to: '/participations' },
 
@@ -41,6 +41,7 @@ export const sidebarMenu = [
 
   { type: 'heading', label: 'Contabilidade e finanças' },
   { label: 'Plano de contas', icon: 'ki-bank', to: '/finance/accounts' },
+  { label: 'Centro financeiro', icon: 'ki-chart-line', to: '/finance/control' },
   { label: 'Diário contabilístico', icon: 'ki-document', to: '/finance/journal' },
   { label: 'Faturação', icon: 'ki-cheque', to: '/finance/billing' },
 
@@ -58,11 +59,11 @@ export const parkedModules = [
   { type: 'heading', label: 'Demonstração e fluxos em desenho' },
   { label: 'Contratos comerciais', icon: 'ki-document', to: '/contracts' },
   { label: 'Mapa operacional de postos', icon: 'ki-geolocation', to: '/posts/map' },
-  { label: 'Painel de presenças CCO', icon: 'ki-check-circle', to: '/cco/presences' },
-  { label: 'Postos cobertos CCO', icon: 'ki-shield-tick', to: '/cco/coverage' },
-  { label: 'Atrasos CCO', icon: 'ki-time', to: '/cco/delays' },
-  { label: 'Check-ins fora do raio CCO', icon: 'ki-geolocation', to: '/cco/out-of-radius' },
-  { label: 'Ocorrências abertas CCO', icon: 'ki-warning-2', to: '/cco/incidents' },
+  { label: 'Painel de presenças', icon: 'ki-check-circle', to: '/cco/presences' },
+  { label: 'Postos cobertos', icon: 'ki-shield-tick', to: '/cco/coverage' },
+  { label: 'Atrasos operacionais', icon: 'ki-time', to: '/cco/delays' },
+  { label: 'Check-ins fora do raio', icon: 'ki-geolocation', to: '/cco/out-of-radius' },
+  { label: 'Ocorrências abertas', icon: 'ki-warning-2', to: '/cco/incidents' },
   { label: 'Equipa em campo', icon: 'ki-people', to: '/supervisor/team' },
   { label: 'Validação de ocorrência', icon: 'ki-search-list', to: '/supervisor/incidents/validation' },
   { label: 'Confirmação de presença', icon: 'ki-check-circle', to: '/supervisor/attendance-confirmation' },

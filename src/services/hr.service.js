@@ -34,4 +34,22 @@ export const vacationBalanceService = {
   adjust(id, payload) {
     return api.post(`/hr/vacation-balances/${id}/adjust/`, payload).then((r) => r.data)
   },
+  recalculate(id) {
+    return api.post(`/hr/vacation-balances/${id}/recalculate/`).then((r) => r.data)
+  },
+}
+
+export const vacationEntitlementRuleService = {
+  list(params = {}) {
+    return api.get('/hr/vacation-entitlement-rules/', { params }).then((r) => r.data)
+  },
+  create(payload) {
+    return api.post('/hr/vacation-entitlement-rules/', payload).then((r) => r.data)
+  },
+  update(id, payload) {
+    return api.patch(`/hr/vacation-entitlement-rules/${id}/`, payload).then((r) => r.data)
+  },
+  remove(id) {
+    return api.delete(`/hr/vacation-entitlement-rules/${id}/`).then((r) => r.data)
+  },
 }

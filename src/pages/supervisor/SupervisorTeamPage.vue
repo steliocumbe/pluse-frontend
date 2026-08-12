@@ -1,7 +1,7 @@
 <template>
   <SupervisorPanel
     title="Equipa em campo"
-    description="Visão do supervisor sobre vigilantes em serviço, atrasos, ausências e situações que precisam ser comunicadas ao Centro de Controlo Operacional."
+    description="Visão do supervisor sobre vigilantes em serviço, atrasos, ausências e situações que precisam ser comunicadas à Base de Operações."
   >
     <section class="pluse-demo-grid">
       <article class="pluse-demo-panel">
@@ -27,7 +27,7 @@
       <article class="pluse-demo-panel supervisor-decision-card">
         <span>Prioridade do supervisor</span>
         <strong>Resolver ausências antes de escalar</strong>
-        <p>O supervisor confirma presença, aciona substituto ou envia o caso ao Centro de Controlo Operacional quando precisa de decisão central.</p>
+        <p>O supervisor confirma presença, aciona substituto ou envia o caso à Base de Operações quando precisa de decisão central.</p>
         <router-link to="/supervisor/attendance-confirmation" class="kt-btn kt-btn-primary">Confirmar presença</router-link>
       </article>
     </section>

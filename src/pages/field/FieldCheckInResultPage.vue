@@ -18,7 +18,7 @@
           <article>
             <span>Comprovativo</span>
             <strong>PL-CHK-2026-0018</strong>
-            <p>O supervisor e o Centro de Controlo Operacional já foram atualizados.</p>
+            <p>O supervisor e o Base de Operações já foram atualizados.</p>
           </article>
           <article class="is-warning">
             <span>Exemplo de erro</span>

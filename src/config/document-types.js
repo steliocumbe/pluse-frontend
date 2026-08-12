@@ -102,6 +102,26 @@ export const documentCategories = [
 /** Flat list of all 24 types — handy for plain selects. */
 export const documentTypes = documentCategories.flatMap((c) => c.types)
 
+export const requiredDocumentTypeValues = [
+  'id_card',
+  'nuit_card',
+  'bank_proof',
+  'employment_contract',
+]
+
+export const requiredDocumentTypes = requiredDocumentTypeValues.map((value) => {
+  const type = documentTypes.find((t) => t.value === value)
+  return {
+    ...type,
+    label: {
+      id_card: 'BI',
+      nuit_card: 'NUIT',
+      bank_proof: 'NIB Bancário',
+      employment_contract: 'Contrato Assinado',
+    }[value] || type.label,
+  }
+})
+
 /** value → { label, expirable, categoryKey, categoryLabel }. */
 export const documentTypeMap = Object.fromEntries(
   documentCategories.flatMap((c) =>

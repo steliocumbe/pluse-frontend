@@ -15,6 +15,19 @@
       />
     </div>
 
+    <div v-if="disciplinaryProcessCount >= 3" class="termination-ready">
+      <div>
+        <strong>{{ disciplinaryProcessCount }} processos disciplinares registados</strong>
+        <span>{{ currentContract ? 'Contrato activo disponível para rescisão.' : 'Sem contrato activo.' }}</span>
+      </div>
+      <q-btn
+        unelevated no-caps color="negative" size="sm" icon="logout"
+        label="Rescindir contrato"
+        :disable="!currentContract"
+        @click="openTermination"
+      />
+    </div>
+
     <div v-if="loading" class="loading-row">
       <q-spinner color="primary" size="1.6em" /><span>A carregar…</span>
     </div>
@@ -98,8 +111,9 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
-import { disciplinaryService } from 'src/services/employment.service'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { contractService, disciplinaryService } from 'src/services/employment.service'
 import { disciplinaryTypeOptions, disciplinaryOutcomeOptions } from 'src/config/employment'
 import { useToast } from 'src/composables/useToast'
 import { absoluteFileUrl } from 'src/utils/file-url'
@@ -114,9 +128,11 @@ const props = defineProps({
 })
 
 const toast = useToast()
+const router = useRouter()
 const req = (v) => (v !== '' && v !== null && v !== undefined) || 'Obrigatório'
 
 const items = ref([])
+const currentContract = ref(null)
 const loading = ref(false)
 const showModal = ref(false)
 const submitting = ref(false)
@@ -130,6 +146,10 @@ const form = reactive({
   measure: '',
   file: null,
 })
+
+const disciplinaryProcessCount = computed(
+  () => items.value.filter((r) => r.record_type === 'disciplinary_process').length,
+)
 
 function formatDate(s) {
   if (!s) return '—'
@@ -165,6 +185,20 @@ async function fetchRecords() {
   }
 }
 
+async function fetchActiveContract() {
+  try {
+    const data = await contractService.list({
+      employee: props.employeeId,
+      status: 'active',
+      page_size: 1,
+    })
+    const rows = data?.results ?? data ?? []
+    currentContract.value = rows[0] || null
+  } catch {
+    currentContract.value = null
+  }
+}
+
 function openModal() {
   Object.assign(form, {
     record_type: '', incident_date: '', suspension_days: null,
@@ -194,7 +228,17 @@ async function submit() {
   }
 }
 
-onMounted(fetchRecords)
+function openTermination() {
+  if (!currentContract.value) return
+  router.push({
+    name: 'employment-contracts-detail',
+    params: { id: currentContract.value.id },
+  })
+}
+
+onMounted(async () => {
+  await Promise.all([fetchRecords(), fetchActiveContract()])
+})
 </script>
 
 <style scoped>
@@ -213,6 +257,29 @@ onMounted(fetchRecords)
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
+}
+.termination-ready {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--destructive) 34%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--destructive) 7%, var(--card));
+}
+.termination-ready strong,
+.termination-ready span {
+  display: block;
+}
+.termination-ready strong {
+  color: var(--mono);
+  font-size: 0.9rem;
+}
+.termination-ready span {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  margin-top: 2px;
 }
 .disc-row__icon {
   display: grid;

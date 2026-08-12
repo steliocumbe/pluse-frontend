@@ -128,6 +128,7 @@
         <q-form ref="formRef" greedy class="flex flex-col gap-4" @submit="submitCreate">
           <!-- Inputs com estilo Outlined mas arredondados (rounded) -->
           <q-select rounded v-model="form.client" :options="clientOptions" emit-value map-options outlined dense label="Cliente / Client *" :rules="[req]" />
+          <q-select rounded v-model="form.department" :options="departmentOptions" emit-value map-options outlined dense label="Departamento / Department" clearable />
 
           <div class="wave-soft-surface rounded-2xl p-4">
             <div class="flex items-center justify-between mb-3">
@@ -464,6 +465,7 @@ import AppHeading from 'src/components/ui/AppHeading.vue'
 import AppIcon from 'src/components/ui/AppIcon.vue'
 import { billingDocumentService, financeSystemSettingService } from 'src/services/finance.service'
 import { clientService } from 'src/services/client.service'
+import { departmentService } from 'src/services/hr.service'
 import { serviceCatalogService } from 'src/services/service-catalog.service'
 import { useToast } from 'src/composables/useToast'
 import {
@@ -481,6 +483,7 @@ const loading = ref(false)
 const saving = ref(false)
 const clients = ref([])
 const services = ref([])
+const departments = ref([])
 const companySettings = ref(null)
 const vatRatePercent = computed(() => {
   const fromSettings = Number(companySettings.value?.vat_rate_percent)
@@ -513,6 +516,7 @@ const sendWhatsAppFormRef = ref(null)
 const receiptPlanFormRef = ref(null)
 const form = reactive({
   client: null,
+  department: null,
   items: [],
   document_type: 'invoice',
   issue_date: new Date().toISOString().slice(0, 10),
@@ -556,6 +560,7 @@ const receiptPeriodOptions = [
 ]
 
 const clientOptions = computed(() => clients.value.map((c) => ({ value: c.id, label: c.name })))
+const departmentOptions = computed(() => departments.value.map((d) => ({ value: d.id, label: d.name })))
 const serviceOptions = computed(() => services.value.map((s) => ({
   value: s.id,
   label: `${s.name} (${s.sku}) • ${s.billing_period_display || 'Sem periodicidade'}`,
@@ -1014,6 +1019,7 @@ async function submitSendWhatsApp() {
 function openCreate() {
   Object.assign(form, {
     client: null,
+    department: null,
     items: [createServiceLine()],
     document_type: 'invoice',
     issue_date: new Date().toISOString().slice(0, 10),
@@ -1033,15 +1039,17 @@ function openCreate() {
 async function fetchRows() {
   loading.value = true
   try {
-    const [docsData, clientData, servicesData, settingsData] = await Promise.all([
+    const [docsData, clientData, servicesData, departmentsData, settingsData] = await Promise.all([
       billingDocumentService.list({ page_size: 300 }),
       clientService.list({ page_size: 300 }),
       serviceCatalogService.list({ page_size: 300, is_published: true, status: 'active' }),
+      departmentService.list({ page_size: 200, is_active: true }),
       financeSystemSettingService.get().catch(() => null),
     ])
     rows.value = docsData?.results ?? docsData ?? []
     clients.value = clientData?.results ?? clientData ?? []
     services.value = servicesData?.results ?? servicesData ?? []
+    departments.value = departmentsData?.results ?? departmentsData ?? []
     companySettings.value = settingsData
   } finally {
     loading.value = false
@@ -1067,6 +1075,7 @@ async function submitCreate() {
     await billingDocumentService.create({
       ...form,
       due_date: form.due_date || null,
+      department: form.department || null,
       discount_percent: Number(form.discount_percent || 0),
       discount_amount: Number(form.discount_amount || 0),
       service: form.items[0]?.service || null,

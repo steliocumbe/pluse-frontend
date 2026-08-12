@@ -233,6 +233,81 @@
                 :rules="basePriceRules"
               />
               <q-input v-model.number="form.vat_rate" outlined dense type="number" min="0" max="100" label="IVA (%)" />
+              <div class="service-box profitability-panel md:col-span-2">
+                <div class="profitability-head">
+                  <div>
+                    <div class="service-box__title">Analise de Rentabilidade</div>
+                    <div class="service-box__hint">Custos internos, terceiros e margem alvo para precificar sem vender abaixo do custo.</div>
+                  </div>
+                  <AppBadge :variant="pricingBelowSuggested ? 'warning' : 'success'">
+                    {{ pricingBelowSuggested ? 'Abaixo do sugerido' : 'Margem protegida' }}
+                  </AppBadge>
+                </div>
+
+                <div class="profitability-grid">
+                  <q-input
+                    v-model.number="form.pricing.supplier_cost"
+                    outlined
+                    dense
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    label="Terceiros / Fornecedores"
+                  />
+                  <q-input
+                    v-model.number="form.pricing.materials_cost"
+                    outlined
+                    dense
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    label="Materiais / Insumos"
+                  />
+                  <q-input
+                    v-model.number="form.pricing.overhead_cost"
+                    outlined
+                    dense
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    label="Overhead"
+                  />
+                  <q-input
+                    v-model.number="form.pricing.profit_margin_percent"
+                    outlined
+                    dense
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    suffix="%"
+                    label="Margem alvo"
+                  />
+                </div>
+
+                <div class="profitability-summary">
+                  <div>
+                    <span>Custo total</span>
+                    <strong>{{ formatMoney(pricingTotalCost) }}</strong>
+                  </div>
+                  <div>
+                    <span>Lucro alvo</span>
+                    <strong>{{ formatMoney(pricingProfitAmount) }}</strong>
+                  </div>
+                  <div>
+                    <span>Preco sugerido</span>
+                    <strong>{{ formatMoney(pricingSuggestedPrice) }}</strong>
+                  </div>
+                  <q-btn
+                    flat
+                    no-caps
+                    color="primary"
+                    icon="price_check"
+                    label="Usar sugerido"
+                    :disable="form.billing_type === 'variable'"
+                    @click="form.base_price = pricingSuggestedPrice"
+                  />
+                </div>
+              </div>
               <q-checkbox v-model="form.include_vat" class="md:col-span-2" label="Incluir IVA no cálculo" />
             </q-form>
           </q-step>
@@ -412,6 +487,7 @@ import { api } from 'src/services/api'
 import { clientService } from 'src/services/client.service'
 import { postService } from 'src/services/post.service'
 import { equipmentService } from 'src/services/assets.service'
+import { financeServicePricingService } from 'src/services/finance.service'
 import { serviceCatalogService } from 'src/services/service-catalog.service'
 import {
   publishedOptions,
@@ -466,6 +542,16 @@ const formStep2 = ref(null)
 const formStep4 = ref(null)
 const formStep5 = ref(null)
 
+function defaultPricing() {
+  return {
+    id: null,
+    supplier_cost: 0,
+    materials_cost: 0,
+    overhead_cost: 0,
+    profit_margin_percent: 0,
+  }
+}
+
 const form = reactive({
   id: null,
   name: '',
@@ -487,6 +573,7 @@ const form = reactive({
   default_post: null,
   responsible_manager: null,
   is_published: true,
+  pricing: defaultPricing(),
 })
 
 const clientOptions = ref([])
@@ -503,6 +590,21 @@ const basePriceRules = computed(() => {
   if (form.billing_type === 'variable') return []
   return [req, (v) => Number(v) >= 0 || 'Valor inválido']
 })
+
+const pricingTotalCost = computed(() => (
+  Number(form.pricing.supplier_cost || 0)
+  + Number(form.pricing.materials_cost || 0)
+  + Number(form.pricing.overhead_cost || 0)
+))
+const pricingProfitAmount = computed(() => (
+  pricingTotalCost.value * (Number(form.pricing.profit_margin_percent || 0) / 100)
+))
+const pricingSuggestedPrice = computed(() => Number((pricingTotalCost.value + pricingProfitAmount.value).toFixed(2)))
+const pricingBelowSuggested = computed(() => (
+  form.billing_type !== 'variable'
+  && Number(form.base_price || 0) > 0
+  && Number(form.base_price || 0) < pricingSuggestedPrice.value
+))
 
 const confirmState = reactive({
   open: false,
@@ -546,6 +648,7 @@ function resetForm() {
     default_post: null,
     responsible_manager: null,
     is_published: true,
+    pricing: defaultPricing(),
   })
 }
 
@@ -577,6 +680,13 @@ function openEditor(row) {
       default_post: row.default_post || null,
       responsible_manager: row.responsible_manager || null,
       is_published: !!row.is_published,
+      pricing: {
+        id: row.finance_pricing?.id || null,
+        supplier_cost: Number(row.finance_pricing?.supplier_cost || 0),
+        materials_cost: Number(row.finance_pricing?.materials_cost || 0),
+        overhead_cost: Number(row.finance_pricing?.overhead_cost || 0),
+        profit_margin_percent: Number(row.finance_pricing?.profit_margin_percent || 0),
+      },
     })
   }
   showEditor.value = true
@@ -645,6 +755,20 @@ function buildPayload() {
   }
 }
 
+async function savePricingForService(serviceId) {
+  const pricing = {
+    service: serviceId,
+    supplier_cost: String(Number(form.pricing.supplier_cost || 0)),
+    materials_cost: String(Number(form.pricing.materials_cost || 0)),
+    overhead_cost: String(Number(form.pricing.overhead_cost || 0)),
+    profit_margin_percent: String(Number(form.pricing.profit_margin_percent || 0)),
+  }
+  const hasPricing = form.pricing.id || Object.entries(pricing)
+    .some(([key, value]) => key !== 'service' && Number(value || 0) > 0)
+  if (!hasPricing) return
+  await financeServicePricingService.upsert(pricing)
+}
+
 async function saveService() {
   if (!(await validateCurrentStep())) {
     toast.warning('Existem campos inválidos antes de guardar.')
@@ -654,13 +778,15 @@ async function saveService() {
   saving.value = true
   try {
     const payload = buildPayload()
+    let savedService
     if (form.id) {
-      await serviceCatalogService.update(form.id, payload)
+      savedService = await serviceCatalogService.update(form.id, payload)
       toast.success('Serviço atualizado com sucesso.')
     } else {
-      await serviceCatalogService.create(payload)
+      savedService = await serviceCatalogService.create(payload)
       toast.success('Serviço criado com sucesso.')
     }
+    await savePricingForService(savedService?.id || form.id)
     showEditor.value = false
     await fetchPage()
   } catch (err) {
@@ -862,5 +988,61 @@ onMounted(async () => {
   font-size: 0.86rem;
   font-weight: 700;
   color: var(--mono);
+}
+
+.service-box__hint {
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+}
+
+.profitability-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profitability-head,
+.profitability-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profitability-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profitability-summary {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.profitability-summary span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+}
+
+.profitability-summary strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.92rem;
+  color: var(--mono);
+}
+
+@media (max-width: 980px) {
+  .profitability-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .profitability-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

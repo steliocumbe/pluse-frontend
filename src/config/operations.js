@@ -28,7 +28,7 @@ export const incidentStateOptions = [
 ]
 
 export const participationSourceOptions = [
-  { value: 'cco', label: 'Centro de Controlo' },
+  { value: 'cco', label: 'Base de Operações' },
   { value: 'supervisor', label: 'Supervisor' },
   { value: 'manager', label: 'Gestor Operativo' },
   { value: 'inspector', label: 'Inspector' },

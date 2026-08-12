@@ -42,8 +42,9 @@ export const disciplinaryOutcomeOptions = [
 ]
 
 export const departmentOptions = [
-  { value: 'operations', label: 'Operações' },
-  { value: 'support', label: 'Suporte' },
+  { value: 'administrative', label: 'Administrativo' },
+  { value: 'operative', label: 'Operativo' },
+  { value: 'technical', label: 'Técnico' },
 ]
 
 export const supportUnitOptions = [

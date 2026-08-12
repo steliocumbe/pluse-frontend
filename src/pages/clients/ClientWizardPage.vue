@@ -115,6 +115,12 @@
                 />
               </div>
 
+              <div class="form-group-label">Documentação do cliente</div>
+              <ClientDocumentSlots
+                v-model="clientDocuments"
+                :disabled="!!createdClient"
+              />
+
               <div v-if="createdClient" class="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
                 <q-icon name="check_circle" class="q-mr-xs" />
                 Cliente <strong>{{ createdClient.name }}</strong> criado com sucesso.
@@ -134,7 +140,6 @@
                     icon-right="arrow_forward"
                     label="Criar cliente e continuar"
                     :loading="submittingClient"
-                    @click="onCreateClient"
                   />
                   <q-btn
                     v-else
@@ -427,6 +432,7 @@ import {
 import { useToast } from 'src/composables/useToast'
 import { useFormErrors } from 'src/composables/useFormErrors'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
+import ClientDocumentSlots from 'src/components/clients/ClientDocumentSlots.vue'
 
 const router = useRouter()
 const toast = useToast()
@@ -446,6 +452,7 @@ function todayISO() {
 const clientFormRef = ref(null)
 const submittingClient = ref(false)
 const createdClient = ref(null)
+const clientDocuments = ref([])
 
 const clientErr = useFormErrors()
 const clientFieldErrors = clientErr.fieldErrors
@@ -461,7 +468,22 @@ const clientForm = reactive({
   address: '',
 })
 
+async function uploadClientDocuments(clientId) {
+  const pending = clientDocuments.value.filter((doc) => doc.file instanceof File)
+  for (const doc of pending) {
+    await clientService.uploadDocument(clientId, {
+      type: doc.type,
+      title: doc.title,
+      file: doc.file,
+      issue_date: doc.issue_date || '',
+      expiry_date: doc.expiry_date || '',
+    })
+  }
+  return pending.length
+}
+
 async function onCreateClient() {
+  if (submittingClient.value) return
   if (createdClient.value) {
     step.value = 2
     return
@@ -474,7 +496,10 @@ async function onCreateClient() {
     const payload = { ...clientForm }
     const saved = await clientService.create(payload)
     createdClient.value = saved
-    toast.success('Cliente registado.')
+    const uploadedCount = await uploadClientDocuments(saved.id)
+    toast.success(uploadedCount
+      ? `Cliente registado com ${uploadedCount} documento(s).`
+      : 'Cliente registado.')
     step.value = 2
   } catch (err) {
     clientErr.setFromResponse(err.response)

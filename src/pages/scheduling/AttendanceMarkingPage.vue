@@ -81,6 +81,7 @@
             v-model="mark.attendance_status" :options="attendanceStatusOptions"
             label="Estado *" outlined dense emit-value map-options :rules="[req]"
           />
+          <q-toggle v-model="mark.is_double" label="Dobra realizada" />
           <q-select
             v-if="mark.attendance_status === 'substituted'"
             v-model="mark.substitute" :options="employeeOptions"
@@ -180,7 +181,12 @@ async function fetchShifts() {
 const showMark = ref(false)
 const markForm = ref(null)
 const current = ref(null)
-const mark = reactive({ attendance_status: 'present', substitute: '', absence_reason: '' })
+const mark = reactive({
+  attendance_status: 'present',
+  substitute: '',
+  absence_reason: '',
+  is_double: false,
+})
 
 function openMark(shift) {
   current.value = shift
@@ -189,6 +195,7 @@ function openMark(shift) {
       ? 'present' : shift.attendance_status,
     substitute: shift.substitute || '',
     absence_reason: shift.absence_reason || '',
+    is_double: Boolean(shift.is_double),
   })
   showMark.value = true
 }
@@ -197,7 +204,7 @@ async function submitMark() {
   if (!(await markForm.value?.validate())) return
   saving.value = true
   try {
-    const payload = { attendance_status: mark.attendance_status }
+    const payload = { attendance_status: mark.attendance_status, is_double: mark.is_double }
     if (mark.attendance_status === 'substituted') payload.substitute = mark.substitute
     if (mark.attendance_status === 'absent') payload.absence_reason = mark.absence_reason
     const updated = await shiftService.markAttendance(current.value.id, payload)

@@ -53,6 +53,24 @@ export const financeAccountService = {
   },
 }
 
+export const financeServicePricingService = {
+  list(params = {}) {
+    return api.get('/finance/service-pricing/', { params }).then((r) => r.data)
+  },
+  get(id) {
+    return api.get(`/finance/service-pricing/${id}/`).then((r) => r.data)
+  },
+  create(payload) {
+    return api.post('/finance/service-pricing/', payload).then((r) => r.data)
+  },
+  update(id, payload) {
+    return api.patch(`/finance/service-pricing/${id}/`, payload).then((r) => r.data)
+  },
+  upsert(payload) {
+    return api.post('/finance/service-pricing/upsert/', payload).then((r) => r.data)
+  },
+}
+
 export const journalEntryService = {
   list(params = {}) {
     return api.get('/finance/journal-entries/', { params }).then((r) => r.data)
@@ -74,6 +92,69 @@ export const journalEntryService = {
   },
   remove(id) {
     return api.delete(`/finance/journal-entries/${id}/`).then((r) => r.data)
+  },
+}
+
+export const financeRequisitionService = {
+  list(params = {}) {
+    return api.get('/finance/requisitions/', { params }).then((r) => r.data)
+  },
+  create(payload) {
+    return send('post', '/finance/requisitions/', payload)
+  },
+  update(id, payload) {
+    return send('patch', `/finance/requisitions/${id}/`, payload)
+  },
+  approve(id) {
+    return api.post(`/finance/requisitions/${id}/approve/`).then((r) => r.data)
+  },
+  reject(id, reason = '') {
+    return api.post(`/finance/requisitions/${id}/reject/`, { reason }).then((r) => r.data)
+  },
+  markPaid(id) {
+    return api.post(`/finance/requisitions/${id}/mark-paid/`).then((r) => r.data)
+  },
+}
+
+export const financePartnerDebtService = {
+  list(params = {}) {
+    return api.get('/finance/partner-debts/', { params }).then((r) => r.data)
+  },
+  create(payload) {
+    return api.post('/finance/partner-debts/', payload).then((r) => r.data)
+  },
+  update(id, payload) {
+    return api.patch(`/finance/partner-debts/${id}/`, payload).then((r) => r.data)
+  },
+  markPaid(id) {
+    return api.post(`/finance/partner-debts/${id}/mark-paid/`).then((r) => r.data)
+  },
+  cancel(id) {
+    return api.post(`/finance/partner-debts/${id}/cancel/`).then((r) => r.data)
+  },
+}
+
+export const financeCommunicationLogService = {
+  list(params = {}) {
+    return api.get('/finance/communication-logs/', { params }).then((r) => r.data)
+  },
+}
+
+export const financeActivityLogService = {
+  list(params = {}) {
+    return api.get('/finance/activity-logs/', { params }).then((r) => r.data)
+  },
+}
+
+export const financeReportService = {
+  overview(params = {}) {
+    return api.get('/finance/reports/overview/', { params }).then((r) => r.data)
+  },
+  clientStatement(params = {}) {
+    return api.get('/finance/reports/client-statement/', { params }).then((r) => r.data)
+  },
+  ledger(params = {}) {
+    return api.get('/finance/reports/ledger/', { params }).then((r) => r.data)
   },
 }
 
@@ -113,6 +194,9 @@ export const billingDocumentService = {
   },
   dispatchAutoEmails() {
     return api.post('/finance/billing-documents/dispatch-auto-emails/').then((r) => r.data)
+  },
+  dispatchReminders(payload = {}) {
+    return api.post('/finance/billing-documents/dispatch-reminders/', payload).then((r) => r.data)
   },
 }
 

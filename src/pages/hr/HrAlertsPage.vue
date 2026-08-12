@@ -112,6 +112,7 @@ const categories = [
   { key: 'probations', label: 'Probatório', tone: 'info', icon: 'ki-calendar-tick' },
   { key: 'documents', label: 'Documentos', tone: 'warning', icon: 'ki-document' },
   { key: 'certifications', label: 'Certificações', tone: 'warning', icon: 'ki-shield-tick' },
+  { key: 'vacation_reminder', label: 'Férias em 10 dias', tone: 'info', icon: 'ki-calendar-tick' },
   { key: 'leave_pending', label: 'Férias por aprovar', tone: 'danger', icon: 'ki-calendar' },
   { key: 'sick_leave_ending', label: 'Baixas a terminar', tone: 'danger', icon: 'ki-information-2' },
 ]
@@ -141,6 +142,9 @@ function linkTo(item) {
   }
   if (item.link_type === 'leave') {
     return '/employees/approvals'
+  }
+  if (item.link_type === 'vacation_plan') {
+    return '/hr/vacation-plans'
   }
   if (item.link_type === 'employee') {
     return `/employees/${item.link_id}`

@@ -38,7 +38,7 @@ import AppIcon from 'src/components/ui/AppIcon.vue'
  *
  *   <AuditTrail :events="[
  *     { action: 'Criado', by: 'RH', at: '2026-01-01T...' },
- *     { action: 'Validado', by: 'CCO', at: '...', tone: 'success' },
+ *     { action: 'Validado', by: 'Diretor de Operações', at: '...', tone: 'success' },
  *   ]" />
  */
 const props = defineProps({

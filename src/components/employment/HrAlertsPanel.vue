@@ -87,6 +87,12 @@ function linkTo(item) {
   if (item.link_type === 'contract') {
     return { name: 'employment-contracts-detail', params: { id: item.link_id } }
   }
+  if (item.link_type === 'leave') {
+    return '/employees/approvals'
+  }
+  if (item.link_type === 'vacation_plan') {
+    return '/hr/vacation-plans'
+  }
   return `/employees/${item.link_id}`
 }
 

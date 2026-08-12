@@ -11,7 +11,7 @@
       </button>
       <router-link to="/cco" class="kt-btn kt-btn-primary pluse-demo-hero-primary">
         <AppIcon name="ki-chart-line" :size="16" icon-class="me-1.5" />
-        Abrir Centro de Controlo Operacional
+        Abrir Base de Operações
       </router-link>
     </template>
 

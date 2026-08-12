@@ -5,7 +5,7 @@ import { api } from 'src/services/api'
  * usePendingCounts — singleton com contagens de pendentes do PLUSE.
  *
  * Faz fetch a /me/dashboard-counts/ no mount e em intervalos (default 60s).
- * Singleton porque várias views (sidebar, header, badges no CCO) lêem os
+ * Singleton porque várias views (sidebar, header, badges na Base de Operações) lêem os
  * mesmos valores — não faz sentido cada uma fazer o seu polling.
  *
  *   const { counts, lastUpdated, refresh } = usePendingCounts()
@@ -13,7 +13,7 @@ import { api } from 'src/services/api'
  *
  * Adicional: emite evento `pluse-incident-critical` no `window` quando o
  * contador `incidents_critical` aumenta entre duas leituras consecutivas —
- * permite ao CCO disparar notificações sem ter ele próprio polling extra.
+ * permite ? Base de Operações disparar notificações sem ter ele próprio polling extra.
  */
 
 const POLL_INTERVAL_MS = 60_000
