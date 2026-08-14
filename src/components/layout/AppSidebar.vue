@@ -22,7 +22,7 @@
           <img src="/icons/android-chrome-192x192.png" alt="" class="sidebar-logo-mark" />
           <span class="min-w-0 flex flex-col leading-none">
             <span class="sidebar-brand-title text-base font-bold whitespace-nowrap">PLUSE</span>
-            <span class="sidebar-brand-subtitle mt-1 text-[12px] font-medium whitespace-nowrap">Admin Console</span>
+            <!-- <span class="sidebar-brand-subtitle mt-1 text-[12px] font-medium whitespace-nowrap">Admin Console</span> -->
           </span>
         </span>
       </router-link>
