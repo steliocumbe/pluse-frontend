@@ -81,6 +81,12 @@ function backendExecutablePath() {
   return path.join(process.resourcesPath, 'backend', exeName)
 }
 
+function backendLogPath() {
+  const exe = backendExecutablePath()
+  if (!exe) return ''
+  return path.join(path.dirname(exe), 'logs', 'backend.log')
+}
+
 function startLocalBackend() {
   const exe = backendExecutablePath()
   if (!exe || !fs.existsSync(exe)) {
@@ -378,7 +384,7 @@ app.whenReady().then(async () => {
         'Erro ao iniciar o PLUSE',
         `Não foi possível arrancar o backend:\n\n${err.message}\n\n` +
           'Vais ver a janela na mesma — usa Configurações → Servidor para ajustar.\n' +
-          'Verifica os logs em %LOCALAPPDATA%\\PLUSE\\data\\logs\\.',
+          `Verifica os logs em:\n${backendLogPath()}`,
       )
       // Não saímos — deixamos o user abrir o wizard.
       needsSetup = true

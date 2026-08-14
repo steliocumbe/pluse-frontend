@@ -284,9 +284,20 @@ async function loadOperators() {
     }
   } catch (error) {
     operators.value = []
-    operatorsError.value =
-      error?.response?.data?.detail ||
-      'Não foi possível carregar os operadores. Verifique se o backend está activo.'
+    const status = error?.response?.status
+    const data = error?.response?.data || {}
+    const detail = data?.detail
+    const machineCode = data?.machine_code
+    if (status === 423) {
+      operatorsError.value = `Sistema bloqueado por licença. Código deste computador: ${machineCode || 'indisponível'}.`
+    } else if (detail) {
+      operatorsError.value = detail
+    } else if (status) {
+      operatorsError.value = `Não foi possível carregar os operadores. O backend respondeu com erro ${status}.`
+    } else {
+      operatorsError.value =
+        'Não foi possível carregar os operadores. Verifique se o backend está activo.'
+    }
   } finally {
     loadingOperators.value = false
   }

@@ -9,10 +9,35 @@ import axios from 'axios'
 //   3. 'http://127.0.0.1:8000' — backend local usado no desenvolvimento.
 const desktopBackend =
   typeof window !== 'undefined' ? window.pluseDesktop?.backendUrl : null
-const baseURL = (desktopBackend || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(
+const initialBaseURL = (desktopBackend || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(
   /\/+$/,
   '',
 )
+
+let resolvedDesktopBackend = desktopBackend || null
+let resolvingDesktopBackend = null
+
+async function resolveDesktopBackendUrl() {
+  if (resolvedDesktopBackend) return resolvedDesktopBackend
+
+  const desktop = typeof window !== 'undefined' ? window.pluseDesktop : null
+  if (!desktop?.getBackendUrl) return null
+
+  if (!resolvingDesktopBackend) {
+    resolvingDesktopBackend = desktop
+      .getBackendUrl()
+      .then((url) => {
+        resolvedDesktopBackend = typeof url === 'string' && url.trim() ? url.trim() : null
+        return resolvedDesktopBackend
+      })
+      .catch(() => null)
+      .finally(() => {
+        resolvingDesktopBackend = null
+      })
+  }
+
+  return resolvingDesktopBackend
+}
 
 /**
  * Shared axios instance for the PLUSE backend.
@@ -33,9 +58,17 @@ export const DEFAULT_TIMEOUT = 20_000
 export const UPLOAD_TIMEOUT = 120_000
 
 export const api = axios.create({
-  baseURL: `${baseURL}/api/v1`,
+  baseURL: `${initialBaseURL}/api/v1`,
   timeout: DEFAULT_TIMEOUT,
   headers: { 'Content-Type': 'application/json' },
+})
+
+api.interceptors.request.use(async (config) => {
+  const desktopUrl = await resolveDesktopBackendUrl()
+  if (desktopUrl) {
+    config.baseURL = `${desktopUrl.replace(/\/+$/, '')}/api/v1`
+  }
+  return config
 })
 
 /**

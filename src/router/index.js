@@ -39,22 +39,10 @@ export default defineRouter((/* { store, ssrContext } */) => {
       return true
     }
 
-    if (requiresAuth && !auth.isAuthenticated) {
-      return {
-        name: 'login',
-        query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined,
-      }
-    }
-
-    if (guestOnly && auth.isAuthenticated) {
-      return { name: 'dashboard' }
-    }
-
     // ── Licença ─────────────────────────────────────────────────────
     // Rotas que sempre passam (mesmo sem licença):
     //   - /locked         (a própria página de bloqueio)
-    //   - /auth/*         (login e amigos)
-    if (to.name === 'locked' || to.path.startsWith('/auth/')) {
+    if (to.name === 'locked') {
       return true
     }
 
@@ -72,6 +60,17 @@ export default defineRouter((/* { store, ssrContext } */) => {
 
     if (status && status.status !== 'licensed') {
       return { name: 'locked' }
+    }
+
+    if (requiresAuth && !auth.isAuthenticated) {
+      return {
+        name: 'login',
+        query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined,
+      }
+    }
+
+    if (guestOnly && auth.isAuthenticated) {
+      return { name: 'dashboard' }
     }
 
     // ── Mudança obrigatória de password ─────────────────────────────
