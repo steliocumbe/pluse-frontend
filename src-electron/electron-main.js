@@ -23,7 +23,7 @@ let needsSetup = false
  *     }
  *   }
  *
- * Em modo "local" o Electron spawna PLUSE-backend.exe localmente.
+ * Em modo "local" o Electron spawna pluse-backend.exe localmente.
  * Em modo "remote" o Electron não spawna nada — usa remoteUrl como API.
  * ────────────────────────────────────────────────────────────────────*/
 
@@ -61,10 +61,10 @@ function normaliseUrl(u) {
 }
 
 /* ────────────────────────────────────────────────────────────────────
- * Backend Python (PLUSE-backend.exe)
+ * Backend Python (pluse-backend.exe)
  *
  * Em modo "local" + packaged, o instalador NSIS coloca o backend em
- *   process.resourcesPath/backend/PLUSE-backend.exe
+ *   process.resourcesPath/backend/pluse-backend.exe
  *
  * No arranque (se for "local"), lançamos esse executável e fazemos
  * polling em status.json até encontrar `{"event":"ready","url":...}`.
@@ -77,7 +77,7 @@ function backendExecutablePath() {
   if (!app.isPackaged) {
     return process.env.ELECTRON_BACKEND_EXE || null
   }
-  const exeName = process.platform === 'win32' ? 'PLUSE-backend.exe' : 'PLUSE-backend'
+  const exeName = process.platform === 'win32' ? 'pluse-backend.exe' : 'pluse-backend'
   return path.join(process.resourcesPath, 'backend', exeName)
 }
 

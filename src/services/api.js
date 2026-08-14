@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Prioridade da URL do backend:
 //   1. `window.pluseDesktop.backendUrl` — injectado pelo preload do
-//      Electron com a URL do PLUSE-backend.exe local (porto detectado em
+//      Electron com a URL do pluse-backend.exe local (porto detectado em
 //      runtime).
 //   2. `VITE_API_URL` — definido no .env do frontend (dev local, ou
 //      build web para um servidor remoto).
