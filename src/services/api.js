@@ -6,10 +6,10 @@ import axios from 'axios'
 //      runtime).
 //   2. `VITE_API_URL` — definido no .env do frontend (dev local, ou
 //      build web para um servidor remoto).
-//   3. 'http://127.0.0.1:8000' — backend local usado no desenvolvimento.
+//   3. 'http://127.0.0.1:8765' — backend local empacotado no desktop.
 const desktopBackend =
   typeof window !== 'undefined' ? window.pluseDesktop?.backendUrl : null
-const initialBaseURL = (desktopBackend || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(
+const initialBaseURL = (desktopBackend || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8765').replace(
   /\/+$/,
   '',
 )

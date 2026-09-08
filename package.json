@@ -12,7 +12,8 @@
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev",
     "desktop:dev": "quasar dev -m electron",
-    "desktop:build": "quasar build -m electron",
+    "desktop:clean": "node scripts/clean-electron-build.mjs",
+    "desktop:build": "node scripts/clean-electron-build.mjs && quasar build -m electron",
     "build": "quasar build",
     "quasar:prepare": "quasar prepare"
   },

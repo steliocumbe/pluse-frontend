@@ -257,6 +257,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { absoluteFileUrl } from 'src/utils/file-url'
 import { clientService } from 'src/services/client.service'
 import { employeeService } from 'src/services/employee.service'
 import {
@@ -307,10 +308,7 @@ function openDetail(group, item) {
 }
 
 function detailFileUrl(url) {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  const base = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return absoluteFileUrl(url)
 }
 
 function rows(data) {
