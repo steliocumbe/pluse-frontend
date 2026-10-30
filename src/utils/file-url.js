@@ -14,7 +14,7 @@ export function backendBaseUrl() {
   return (
     desktopBackend ||
     import.meta.env.VITE_API_URL ||
-    'http://127.0.0.1:8765'
+    'http://127.0.0.1:8000'
   ).replace(/\/+$/, '')
 }
 
