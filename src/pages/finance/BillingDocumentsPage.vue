@@ -787,13 +787,19 @@ function buildBillingDocumentHtml(doc) {
       }]).map((item) => ({
         qty: Number(item.quantity || 1).toFixed(3),
         desc: [
-          item.service_name_snapshot || item.service_name || '',
+          // Itens criados na app têm serviço do catálogo; itens importados do
+          // legado têm apenas `description` em texto livre.
+          item.service_name_snapshot || item.service_name || item.description || '',
           item.service_sku_snapshot || item.service_sku || '',
           item.periodicity_enabled && item.billing_period ? `Periodicidade: ${billingPeriodLabel(item.billing_period)}` : '',
         ].filter(Boolean).join(' • '),
         tax: computedTaxRate,
         unit: formatDocumentMoney(item.unit_price),
-        total: formatDocumentMoney(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0))),
+        total: formatDocumentMoney(
+          item.legacy_line_total != null
+            ? item.legacy_line_total
+            : (item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0))),
+        ),
       })),
     },
     paymentBlocks,

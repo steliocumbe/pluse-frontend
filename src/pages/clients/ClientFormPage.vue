@@ -43,8 +43,9 @@
               emit-value map-options :rules="[req]"
               :error="!!fieldErrors.client_type" :error-message="fieldErrors.client_type"
               @update:model-value="() => clearField('client_type')" />
-            <q-input v-model="form.nuit" label="NUIT" outlined dense hint="9 dígitos (opcional)"
-              :rules="[nuit()]"
+            <q-input v-model="form.nuit" label="NUIT" outlined dense
+              :hint="isEdit ? 'NUIT (formato legado aceite)' : '9 dígitos (opcional)'"
+              :rules="[isEdit ? nuitLenient() : nuit()]"
               :error="!!fieldErrors.nuit" :error-message="fieldErrors.nuit"
               @update:model-value="() => clearField('nuit')" />
             <q-input v-model="form.address" label="Morada" type="textarea" outlined dense autogrow
@@ -115,7 +116,7 @@ import { clientService } from 'src/services/client.service'
 import { clientTypeOptions, riskLevelOptions } from 'src/config/clients'
 import { useToast } from 'src/composables/useToast'
 import { useFormErrors } from 'src/composables/useFormErrors'
-import { nuit, mozambicanPhone, email } from 'src/utils/validators'
+import { nuit, nuitLenient, mozambicanPhone, email } from 'src/utils/validators'
 import AdminPageTemplate from 'src/components/layout/AdminPageTemplate.vue'
 import ClientDocumentSlots from 'src/components/clients/ClientDocumentSlots.vue'
 

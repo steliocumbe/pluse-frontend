@@ -51,6 +51,15 @@ export const nuit = (msg = 'NUIT inválido. Deve ter 9 dígitos.') => (v) => {
   return NUIT_RE.test(String(v).replace(/\s+/g, '')) || msg
 }
 
+// Versão tolerante para dados legados: muitos clientes importados têm NUIT
+// fora do formato de 9 dígitos (incompleto, com espaços, repetido). Usada ao
+// EDITAR clientes existentes para não bloquear a gravação; a criação de novos
+// continua a usar `nuit()` (estrita).
+export const nuitLenient = (msg = 'NUIT demasiado longo (máx. 30 caracteres).') => (v) => {
+  if (!v) return true
+  return String(v).trim().length <= 30 || msg
+}
+
 // ── M-pesa ───────────────────────────────────────────────────────────────
 // Conta M-pesa em Moçambique é um número de telemóvel — mesma validação que telefone.
 export const mpesa = (msg = 'Conta M-pesa inválida. Use o número de telemóvel.') =>
