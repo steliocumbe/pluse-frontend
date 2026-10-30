@@ -9,7 +9,7 @@ import axios from 'axios'
 //   3. 'http://127.0.0.1:8765' — backend local empacotado no desktop.
 const desktopBackend =
   typeof window !== 'undefined' ? window.pluseDesktop?.backendUrl : null
-const initialBaseURL = (desktopBackend || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(
+const initialBaseURL = (desktopBackend || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8765').replace(
   /\/+$/,
   '',
 )
